@@ -8,10 +8,12 @@ from .contracts import validator_app_def, get_pool_logicsig
 from tinyman.utils import int_to_bytes
 
 
-def get_bootstrap_with_algo_transactions(client: AlgodClient, sender, asset1_id, validator_app_id):
+def get_bootstrap_with_algo_transactions(client: AlgodClient, sender, asset1_id, asset1_unit_name, validator_app_id):
     suggested_params = client.suggested_params()
     pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, 0)
     pool_address = pool_logicsig.address()
+
+    asset1_unit_name = asset1_unit_name.upper()
 
     txns = [
         PaymentTxn(
@@ -33,7 +35,7 @@ def get_bootstrap_with_algo_transactions(client: AlgodClient, sender, asset1_id,
             total=0xFFFFFFFFFFFFFFFF,
             decimals=6,
             unit_name='TM1POOL',
-            asset_name='Tinyman Pool USDC-ALGO',
+            asset_name=f'Tinyman Pool {asset1_unit_name}-ALGO',
             url='https://tinyman.org',
             default_frozen=False,
         ),
@@ -41,6 +43,60 @@ def get_bootstrap_with_algo_transactions(client: AlgodClient, sender, asset1_id,
             sender=pool_address,
             sp=suggested_params,
             index=asset1_id,
+        )
+    ]
+    txns = assign_group_id(txns)
+
+    signed_transactions = []
+    for txn in txns:
+        if txn.sender == pool_address:
+            signed_transactions.append(LogicSigTransaction(txn, pool_logicsig))
+        else:
+            signed_transactions.append(None)
+    return txns, signed_transactions
+
+
+def get_bootstrap_without_algo_transactions(client: AlgodClient, sender, asset1_id, asset2_id, asset1_unit_name, asset2_unit_name, validator_app_id):
+    suggested_params = client.suggested_params()
+    pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, asset2_id)
+    pool_address = pool_logicsig.address()
+
+    asset1_unit_name = asset1_unit_name.upper()
+    asset2_unit_name = asset2_unit_name.upper()
+
+    txns = [
+        PaymentTxn(
+            sender=sender,
+            sp=suggested_params,
+            receiver=pool_address,
+            amt=961000,
+        ),
+        ApplicationOptInTxn(
+            sender=pool_address,
+            sp=suggested_params,
+            index=validator_app_id,
+            app_args=['bootstrap', int_to_bytes(asset1_id), int_to_bytes(0)],
+            foreign_assets=[asset1_id, asset2_id],
+        ),
+        AssetCreateTxn(
+            sender=pool_address,
+            sp=suggested_params,
+            total=0xFFFFFFFFFFFFFFFF,
+            decimals=6,
+            unit_name='TM1POOL',
+            asset_name=f'Tinyman Pool {asset1_unit_name}-{asset2_unit_name}',
+            url='https://tinyman.org',
+            default_frozen=False,
+        ),
+        AssetOptInTxn(
+            sender=pool_address,
+            sp=suggested_params,
+            index=asset1_id,
+        ),
+        AssetOptInTxn(
+            sender=pool_address,
+            sp=suggested_params,
+            index=asset2_id,
         )
     ]
     txns = assign_group_id(txns)

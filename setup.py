@@ -19,6 +19,6 @@ setuptools.setup(
     install_requires=["py-algorand-sdk >= 1.6.0"],
     packages=setuptools.find_packages(),
     python_requires=">=3.7",
-    package_data={'': ['tinyman/v1/contracts.json']},
+    package_data={'tinyman.v1': ['contracts.json']},
     include_package_data=True,
 )

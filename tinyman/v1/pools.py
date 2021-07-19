@@ -52,8 +52,8 @@ class Pool:
     def __init__(self, client: AlgodClient, validator_app_id, asset1_id, asset2_id, info=None, fetch=True) -> None:
         self.client = client
         self.validator_app_id = validator_app_id
-        self.asset1_id = asset1_id
-        self.asset2_id = asset2_id
+        self.asset1_id = max(asset1_id, asset2_id)
+        self.asset2_id = min(asset1_id, asset2_id)
 
         self.liquidity_asset_id = None
         self.liquidity_asset_name = None

@@ -4,7 +4,7 @@ from algosdk.future.transaction import LogicSig
 import tinyman.v1
 from tinyman.utils import get_program
 
-_contracts = json.loads(importlib.resources.read_text(tinyman.v1, 'contracts.json'))
+_contracts = json.loads(importlib.resources.read_text(tinyman.v1, 'asc.json'))
 
 pool_logicsig_def = _contracts['contracts']['pool_logicsig']['logic']
 

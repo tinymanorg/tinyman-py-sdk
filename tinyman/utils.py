@@ -5,7 +5,7 @@ def get_program(definition, variables=None):
     """
     Return a byte array to be used in LogicSig.
     """
-    template = definition['program']
+    template = definition['bytecode']
     template_bytes = list(b64decode(template))
 
     offset = 0

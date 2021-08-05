@@ -9,7 +9,7 @@ setuptools.setup(
     description="Tinyman Python SDK",
     author="Tinyman",
     author_email="hello@tinyman.org",
-    version="0.0.1",
+    version="0.0.2",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",
@@ -19,6 +19,6 @@ setuptools.setup(
     install_requires=["py-algorand-sdk >= 1.6.0"],
     packages=setuptools.find_packages(),
     python_requires=">=3.7",
-    package_data={'tinyman.v1': ['contracts.json']},
+    package_data={'tinyman.v1': ['asc.json']},
     include_package_data=True,
 )

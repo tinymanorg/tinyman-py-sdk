@@ -23,6 +23,7 @@ def prepare_bootstrap_transactions(validator_app_id, asset1_id, asset2_id, asset
             sp=suggested_params,
             receiver=pool_address,
             amt=961000 if asset2_id > 0 else 860000,
+            note='fee',
         ),
         ApplicationOptInTxn(
             sender=pool_address,

@@ -17,6 +17,7 @@ def prepare_burn_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             sp=suggested_params,
             receiver=pool_address,
             amt=4000,
+            note='fee',
         ),
         ApplicationNoOpTxn(
             sender=pool_address,

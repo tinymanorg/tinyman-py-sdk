@@ -28,7 +28,7 @@
             "length": 10
           }
         ],
-        "source": "https:/github.com/tinymanorg/tinyman-contracts-v1/tree/6e150df8e3e74458f947f3399c6f37e7d4289d21/contracts/pool_logicsig.teal.tmpl"
+        "source": "https://github.com/tinymanorg/tinyman-contracts-v1/tree/6e150df8e3e74458f947f3399c6f37e7d4289d21/contracts/pool_logicsig.teal.tmpl"
       },
       "name": "pool_logicsig"
     },
@@ -39,14 +39,14 @@
         "address": "PWOZOLBQJ5IMSYIFBZH5YOCP4NQ72MLWN3VD37WMWG2HHBEEIZJSJDRLFY",
         "size": 1296,
         "variables": [],
-        "source": "https:/github.com/tinymanorg/tinyman-contracts-v1/tree/6e150df8e3e74458f947f3399c6f37e7d4289d21/contracts/validator_approval.teal"
+        "source": "https://github.com/tinymanorg/tinyman-contracts-v1/tree/6e150df8e3e74458f947f3399c6f37e7d4289d21/contracts/validator_approval.teal"
       },
       "clear_program": {
         "bytecode": "BIEB",
         "address": "P7GEWDXXW5IONRW6XRIRVPJCT2XXEQGOBGG65VJPBUOYZEJCBZWTPHS3VQ",
         "size": 3,
         "variables": [],
-        "source": "https:/github.com/tinymanorg/tinyman-contracts-v1/tree/6e150df8e3e74458f947f3399c6f37e7d4289d21/contracts/validator_clear_state.teal"
+        "source": "https://github.com/tinymanorg/tinyman-contracts-v1/tree/6e150df8e3e74458f947f3399c6f37e7d4289d21/contracts/validator_clear_state.teal"
       },
       "global_state_schema": {
         "num_uints": 0,

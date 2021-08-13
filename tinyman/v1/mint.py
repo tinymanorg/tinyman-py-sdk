@@ -1,16 +1,14 @@
 import base64
 from os import name
 import algosdk
-from algosdk.future.transaction import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn, assign_group_id, LogicSigTransaction
-from algosdk.v2client.algod import AlgodClient
+from algosdk.future.transaction import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn
 
-from .contracts import validator_app_def, get_pool_logicsig
-from tinyman.utils import int_to_bytes
+from tinyman.utils import TransactionGroup
+from .contracts import get_pool_logicsig
 
 
-def get_mint_with_algo_transactions(client: AlgodClient, sender, validator_app_id, asset1_id, liquidity_asset_id, asset1_amount, asset2_amount, liquidity_asset_amount):
-    suggested_params = client.suggested_params()
-    pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, 0)
+def prepare_mint_transactions(validator_app_id, asset1_id, asset2_id, liquidity_asset_id, asset1_amount, asset2_amount, liquidity_asset_amount, sender, suggested_params):
+    pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, asset2_id)
     pool_address = pool_logicsig.address()
 
     txns = [
@@ -26,7 +24,7 @@ def get_mint_with_algo_transactions(client: AlgodClient, sender, validator_app_i
             index=validator_app_id,
             app_args=['mint'],
             accounts=[sender],
-            foreign_assets=[asset1_id, liquidity_asset_id],
+            foreign_assets=[asset1_id, liquidity_asset_id] if asset2_id == 0 else [asset1_id, asset2_id, liquidity_asset_id],
         ),
         AssetTransferTxn(
             sender=sender,
@@ -35,7 +33,13 @@ def get_mint_with_algo_transactions(client: AlgodClient, sender, validator_app_i
             amt=int(asset1_amount),
             index=asset1_id,
         ),
-        PaymentTxn(
+        AssetTransferTxn(
+            sender=sender,
+            sp=suggested_params,
+            receiver=pool_address,
+            amt=int(asset2_amount),
+            index=asset2_id,
+        ) if asset2_id != 0 else PaymentTxn(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
@@ -49,12 +53,6 @@ def get_mint_with_algo_transactions(client: AlgodClient, sender, validator_app_i
             index=liquidity_asset_id,
         ),
     ]
-    txns = assign_group_id(txns)
-
-    signed_transactions = []
-    for txn in txns:
-        if txn.sender == pool_address:
-            signed_transactions.append(LogicSigTransaction(txn, pool_logicsig))
-        else:
-            signed_transactions.append(None)
-    return txns, signed_transactions
+    txn_group = TransactionGroup(txns)
+    txn_group.sign_with_logicisg(pool_logicsig)
+    return txn_group

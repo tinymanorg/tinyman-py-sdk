@@ -1,4 +1,6 @@
 from base64 import b64decode, b64encode
+from algosdk.future.transaction import LogicSigTransaction, assign_group_id
+from algosdk.error import AlgodHTTPError
 
 
 def get_program(definition, variables=None):
@@ -63,6 +65,7 @@ def wait_for_confirmation(client, txid):
         last_round += 1
         client.status_after_block(last_round)
         txinfo = client.pending_transaction_info(txid)
+    txinfo['txid'] = txid
     print("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')))
     return txinfo
 
@@ -72,10 +75,45 @@ def int_to_bytes(num):
 
 
 def get_state_int(state, key):
-    k = b64encode(key.encode()).decode()
-    return state.get(k, {'uint': 0})['uint']
+    if type(key) == str:
+        key = b64encode(key.encode())
+    return state.get(key.decode(), {'uint': 0})['uint']
 
 
 def get_state_bytes(state, key):
-    k = b64encode(key.encode()).decode()
-    return state.get(k, {'bytes': ''})['bytes']
+    if type(key) == str:
+        key = b64encode(key.encode())
+    return state.get(key.decode(), {'bytes': ''})['bytes']
+
+
+class TransactionGroup:
+
+    def __init__(self, transactions):
+        transactions = assign_group_id(transactions)
+        self.transactions = transactions
+        self.signed_transactions = [None for _ in self.transactions]
+    
+    def sign(self, user):
+        user.sign_transaction_group(self)
+    
+    def sign_with_logicisg(self, logicsig):
+        address = logicsig.address()
+        for i, txn in enumerate(self.transactions):
+            if txn.sender == address:
+                self.signed_transactions[i] = LogicSigTransaction(txn, logicsig)
+
+    def sign_with_private_key(self, address, private_key):
+        for i, txn in enumerate(self.transactions):
+            if txn.sender == address:
+                self.signed_transactions[i] = txn.sign(private_key)
+    
+    def submit(self, algod, wait=False):
+        try:
+            txid = algod.send_transactions(self.signed_transactions)
+        except AlgodHTTPError as e:
+            raise Exception(str(e))
+        if wait:
+            return wait_for_confirmation(algod, txid)
+        return {'txid': txid}
+
+

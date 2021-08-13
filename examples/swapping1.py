@@ -1,7 +1,14 @@
+# This sample is provided for demonstration purposes only.
+# It is not intended for production use.
+# This example does not constitute trading advice.
+
+
 from tinyman.v1.client import TinymanTestnetClient
 
 client = TinymanTestnetClient()
 
+# Hardcoding account keys is not a great practice. This is for demonstration purposes only.
+# See the README & Docs for alternative signing methods.
 account = {
     'address': 'ALGORAND_ADDRESS_HERE',
     'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if neccessary

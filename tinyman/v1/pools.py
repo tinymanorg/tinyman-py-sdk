@@ -13,7 +13,6 @@ from .burn import prepare_burn_transactions
 from .redeem import prepare_redeem_transactions
 from .optin import prepare_asset_optin_transactions
 from .client import TinymanClient
-from .users import User
 from tinyman.v1 import swap
 
 

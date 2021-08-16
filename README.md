@@ -9,6 +9,11 @@ It is designed to be reasonably low level so that pieces can be used in isolatio
 ## Status
 This SDK is currently under active early development and should not be considered stable.
 
+## Installation
+tinyman-py-sdk is not yet released on PYPI. It can be installed directly from this repository with pip:
+
+`pip install git+https://github.com/tinymanorg/tinyman-py-sdk.git`
+
 
 ## Sneak Preview
 

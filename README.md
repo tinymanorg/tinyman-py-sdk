@@ -47,6 +47,14 @@ This example demonstrates basic functionality including:
 * checking excess amounts
 * preparing redeem transactions
 
+[swapping1_less_convenience.py](examples/swapping1_less_convenience.py)
+This example has exactly the same functionality as [swapping1.py](examples/swapping1.py) but is purposely more verbose, using less convenience functions.
+
+
+### Basic Pooling
+[pooling1.py](examples/pooling1.py)
+This example demonstrates retrieving the current pool position/share for an address.
+
 ### Basic Minting
 TODO
 

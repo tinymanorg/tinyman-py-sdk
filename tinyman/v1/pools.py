@@ -284,9 +284,6 @@ class Pool:
         asset1_amount = (liquidity_asset_in.amount * self.asset1_reserves) / self.issued_liquidity
         asset2_amount = (liquidity_asset_in.amount * self.asset2_reserves) / self.issued_liquidity
 
-        asset1_amount_with_slippage = asset1_amount - (asset1_amount * slippage)
-        asset2_amount_with_slippage = asset2_amount - (asset2_amount * slippage)
-
         quote = BurnQuote(
             amounts_out={
                 self.asset1: AssetAmount(self.asset1, asset1_amount),
@@ -515,6 +512,7 @@ class Pool:
             self.asset1: quote.amounts_out[self.asset1],
             self.asset2: quote.amounts_out[self.asset2],
             self.liquidity_asset: quote.liquidity_asset_amount,
+            'share': (liquidity_asset_amount / self.issued_liquidity),
         }
 
     def fetch_state(self, key=None):

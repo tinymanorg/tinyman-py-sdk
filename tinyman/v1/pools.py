@@ -284,6 +284,9 @@ class Pool:
         asset1_amount = (liquidity_asset_in.amount * self.asset1_reserves) / self.issued_liquidity
         asset2_amount = (liquidity_asset_in.amount * self.asset2_reserves) / self.issued_liquidity
 
+        asset1_amount_with_slippage = asset1_amount - (asset1_amount * slippage)
+        asset2_amount_with_slippage = asset2_amount - (asset2_amount * slippage)
+
         quote = BurnQuote(
             amounts_out={
                 self.asset1: AssetAmount(self.asset1, asset1_amount),
@@ -305,7 +308,7 @@ class Pool:
             asset_out = self.asset1
             input_supply = self.asset2_reserves
             output_supply = self.asset1_reserves
-        
+
         if not input_supply or not output_supply:
             raise Exception('Pool has no liquidity!')
         
@@ -361,7 +364,8 @@ class Pool:
 
         return quote
 
-    def prepare_swap_transactions(self, amount_in: AssetAmount, amount_out: AssetAmount, swap_type, swapper_address):
+    def prepare_swap_transactions(self, amount_in: AssetAmount, amount_out: AssetAmount, swap_type, swapper_address=None):
+        swapper_address = swapper_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_swap_transactions(
             validator_app_id=self.client.validator_app_id,
@@ -377,7 +381,7 @@ class Pool:
         )
         return txn_group
     
-    def prepare_swap_transactions_from_quote(self, quote: SwapQuote, swapper_address):
+    def prepare_swap_transactions_from_quote(self, quote: SwapQuote, swapper_address=None):
         return self.prepare_swap_transactions(
             amount_in=quote.amount_in_with_slippage,
             amount_out=quote.amount_out_with_slippage,
@@ -385,7 +389,8 @@ class Pool:
             swapper_address=swapper_address,
         )
 
-    def prepare_bootstrap_transactions(self, pooler_address):
+    def prepare_bootstrap_transactions(self, pooler_address=None):
+        pooler_address = pooler_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_bootstrap_transactions(
             validator_app_id=self.client.validator_app_id,
@@ -398,7 +403,8 @@ class Pool:
         )
         return txn_group
 
-    def prepare_mint_transactions(self, amounts_in: "dict[AssetAmount]", liquidity_asset_amount: AssetAmount, pooler_address):
+    def prepare_mint_transactions(self, amounts_in: "dict[Asset, AssetAmount]", liquidity_asset_amount: AssetAmount, pooler_address=None):
+        pooler_address = pooler_address or self.client.user_address
         asset1_amount = amounts_in[self.asset1.id]
         asset2_amount = amounts_in[self.asset2.id]
         suggested_params = self.client.algod.suggested_params()
@@ -415,16 +421,17 @@ class Pool:
         )
         return txn_group
 
-    def prepare_mint_transactions_from_quote(self, quote: MintQuote, pooler_address):
+    def prepare_mint_transactions_from_quote(self, quote: MintQuote, pooler_address=None):
         return self.prepare_mint_transactions(
             amounts_in=quote.amounts_in,
             liquidity_asset_amount=quote.liquidity_asset_amount_with_slippage,
             pooler_address=pooler_address,
         )
 
-    def prepare_burn_transactions(self, liquidity_asset_amount: AssetAmount, amounts_out, pooler_address):
+    def prepare_burn_transactions(self, liquidity_asset_amount: AssetAmount, amounts_out, pooler_address=None):
         if isinstance(liquidity_asset_amount, int):
             liquidity_asset_amount = AssetAmount(self.liquidity_asset, liquidity_asset_amount)
+        pooler_address = pooler_address or self.client.user_address
         asset1_amount = amounts_out[self.asset1.id]
         asset2_amount = amounts_out[self.asset2.id]
         suggested_params = self.client.algod.suggested_params()
@@ -441,14 +448,15 @@ class Pool:
         )
         return txn_group
 
-    def prepare_burn_transactions_from_quote(self, quote, pooler_address):
+    def prepare_burn_transactions_from_quote(self, quote, pooler_address=None):
         return self.prepare_burn_transactions(
             liquidity_asset_amount=quote['liquidity_asset_out_with_slippage'],
             amounts_out=quote['amounts_out_with_slippage'],
             pooler_address=pooler_address,
         )
 
-    def prepare_redeem_transactions(self, amount_out: AssetAmount, user_address):
+    def prepare_redeem_transactions(self, amount_out: AssetAmount, user_address=None):
+        user_address = user_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_redeem_transactions(
             validator_app_id=self.client.validator_app_id,
@@ -462,7 +470,8 @@ class Pool:
         )
         return txn_group
 
-    def prepare_liquidity_asset_optin_transactions(self, user_address):
+    def prepare_liquidity_asset_optin_transactions(self, user_address=None):
+        user_address = user_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_asset_optin_transactions(
             asset_id=self.liquidity_asset.id,
@@ -491,11 +500,13 @@ class Pool:
         (MIN_BALANCE_PER_APP_BYTESLICE * total_byteslices)
         return total
 
-    def fetch_excess_amounts(self, user_address):
+    def fetch_excess_amounts(self, user_address=None):
+        user_address = user_address or self.client.user_address
         pool_excess = self.client.fetch_excess_amounts(user_address).get(self.address, {})
         return pool_excess
     
-    def fetch_pool_position(self, pooler_address):
+    def fetch_pool_position(self, pooler_address=None):
+        pooler_address = pooler_address or self.client.user_address
         account_info = self.client.algod.account_info(pooler_address)
         assets = {a['asset-id']: a for a in account_info['assets']}
         liquidity_asset_amount = assets.get(self.liquidity_asset.id, {}).get('amount', 0)

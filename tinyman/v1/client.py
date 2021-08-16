@@ -9,10 +9,11 @@ from .optin import prepare_app_optin_transactions
 from .constants import TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID
 
 class TinymanClient:
-    def __init__(self, algod_client: AlgodClient, validator_app_id: int):
+    def __init__(self, algod_client: AlgodClient, validator_app_id: int, user_address=None):
         self.algod = algod_client
         self.validator_app_id = validator_app_id
         self.assets_cache = {}
+        self.user_address = user_address
     
     def fetch_pool(self, asset1, asset2, fetch=True):
         from .pools import Pool
@@ -35,7 +36,8 @@ class TinymanClient:
             return wait_for_confirmation(self.algod, txid)
         return {'txid': txid}
 
-    def prepare_app_optin_transactions(self, user_address):
+    def prepare_app_optin_transactions(self, user_address=None):
+        user_address = user_address or self.user_address
         suggested_params = self.algod.suggested_params()
         txn_group = prepare_app_optin_transactions(
             validator_app_id=self.validator_app_id,
@@ -44,7 +46,8 @@ class TinymanClient:
         )
         return txn_group
 
-    def fetch_excess_amounts(self, user_address):
+    def fetch_excess_amounts(self, user_address=None):
+        user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
         try:
             validator_app = [a for a in account_info['apps-local-state'] if a['id'] == self.validator_app_id][0]
@@ -68,7 +71,8 @@ class TinymanClient:
 
         return pools
     
-    def is_opted_in(self, user_address):
+    def is_opted_in(self, user_address=None):
+        user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
         for a in account_info['apps-local-state']:
             if a['id'] == self.validator_app_id:
@@ -78,16 +82,16 @@ class TinymanClient:
 
 
 class TinymanTestnetClient(TinymanClient):
-    def __init__(self, algod_client=None):
+    def __init__(self, algod_client=None, user_address=None):
         if algod_client is None:
             algod_client = AlgodClient('', 'https://api.testnet.algoexplorer.io', headers={'User-Agent': 'algosdk'})
-        super().__init__(algod_client, validator_app_id=TESTNET_VALIDATOR_APP_ID)
+        super().__init__(algod_client, validator_app_id=TESTNET_VALIDATOR_APP_ID, user_address=user_address)
 
 
 class TinymanMainnetClient(TinymanClient):
-    def __init__(self, algod_client=None):
+    def __init__(self, algod_client=None, user_address=None):
         raise Exception('Not on mainnet yet!')
         if algod_client is None:
             algod_client = AlgodClient('', 'https://api.algoexplorer.io', headers={'User-Agent': 'algosdk'})
-        super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID)
+        super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID, user_address=user_address)
 

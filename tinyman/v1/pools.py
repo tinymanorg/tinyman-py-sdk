@@ -148,6 +148,7 @@ class Pool:
             self.asset1 = asset_b
             self.asset2 = asset_a
 
+        self.exists = None
         self.liquidity_asset: Asset = None
         self.liquidity_asset_name = None
         self.asset1_reserves = None
@@ -177,6 +178,8 @@ class Pool:
         self.update_from_info(info)
     
     def update_from_info(self, info):
+        if info['liquidity_asset_id'] is not None:
+            self.exists = True
         self.liquidity_asset = Asset(info['liquidity_asset_id'])
         self.liquidity_asset_name = info['liquidity_asset_name']
         self.asset1_reserves = info['asset1_reserves']
@@ -244,6 +247,8 @@ class Pool:
         amount1 = amounts_in[self.asset1]
         amount2 = amounts_in[self.asset2]
         self.refresh()
+        if not self.exists:
+            raise Exception('Pool has not been bootstrapped yet!')
         if self.issued_liquidity:
             if amount1 is None:
                 amount1 = self.convert(amount2)
@@ -256,6 +261,8 @@ class Pool:
                 amount2.amount * self.issued_liquidity / self.asset2_reserves,
             )
         else: # first mint
+            if not amount1 or not amount2:
+                raise Exception('Amounts required for both assets for first mint!')
             liquidity_asset_amount = math.sqrt(amount1.amount * amount2.amount) - 1000
             # don't apply slippage tolerance to first mint
             slippage = 0
@@ -301,6 +308,9 @@ class Pool:
             asset_out = self.asset1
             input_supply = self.asset2_reserves
             output_supply = self.asset1_reserves
+        
+        if not input_supply or not output_supply:
+            raise Exception('Pool has no liquidity!')
         
         # k = input_supply * output_supply
         # ignoring fees, k must remain constant 

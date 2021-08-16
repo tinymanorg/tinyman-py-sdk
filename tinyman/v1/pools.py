@@ -243,9 +243,9 @@ class Pool:
         elif amount.asset == self.asset2:
             return AssetAmount(self.asset1, int(amount.amount * self.asset2_price))
     
-    def fetch_mint_quote(self, amounts_in: "dict[AssetAmount]", slippage=0.05):
-        amount1 = amounts_in[self.asset1]
-        amount2 = amounts_in[self.asset2]
+    def fetch_mint_quote(self, amounts_in: "dict[Asset, AssetAmount]", slippage=0.05):
+        amount1 = amounts_in.get(self.asset1)
+        amount2 = amounts_in.get(self.asset2)
         self.refresh()
         if not self.exists:
             raise Exception('Pool has not been bootstrapped yet!')
@@ -283,9 +283,6 @@ class Pool:
         self.refresh()
         asset1_amount = (liquidity_asset_in.amount * self.asset1_reserves) / self.issued_liquidity
         asset2_amount = (liquidity_asset_in.amount * self.asset2_reserves) / self.issued_liquidity
-
-        asset1_amount_with_slippage = asset1_amount - (asset1_amount * slippage)
-        asset2_amount_with_slippage = asset2_amount - (asset2_amount * slippage)
 
         quote = BurnQuote(
             amounts_out={
@@ -331,7 +328,7 @@ class Pool:
         )
         return quote
 
-    def fetch_fixed_output_swap_quote(self, amount_out, slippage=0.05) -> SwapQuote:
+    def fetch_fixed_output_swap_quote(self, amount_out: AssetAmount, slippage=0.05) -> SwapQuote:
         asset_out, asset_out_amount = amount_out.asset, amount_out.amount
         self.refresh()
         if asset_out == self.asset1:
@@ -410,8 +407,8 @@ class Pool:
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             liquidity_asset_id=self.liquidity_asset.id,
-            asset1_amount=asset1_amount,
-            asset2_amount=asset2_amount,
+            asset1_amount=asset1_amount.amount,
+            asset2_amount=asset2_amount.amount,
             liquidity_asset_amount=liquidity_asset_amount.amount,
             sender=pooler_address,
             suggested_params=suggested_params,
@@ -425,7 +422,9 @@ class Pool:
             pooler_address=pooler_address,
         )
 
-    def prepare_burn_transactions(self, liquidity_asset_amount, amounts_out, pooler_address):
+    def prepare_burn_transactions(self, liquidity_asset_amount: AssetAmount, amounts_out, pooler_address):
+        if isinstance(liquidity_asset_amount, int):
+            liquidity_asset_amount = AssetAmount(self.liquidity_asset, liquidity_asset_amount)
         asset1_amount = amounts_out[self.asset1.id]
         asset2_amount = amounts_out[self.asset2.id]
         suggested_params = self.client.algod.suggested_params()
@@ -436,7 +435,7 @@ class Pool:
             liquidity_asset_id=self.liquidity_asset.id,
             asset1_amount=asset1_amount,
             asset2_amount=asset2_amount,
-            liquidity_asset_amount=liquidity_asset_amount,
+            liquidity_asset_amount=liquidity_asset_amount.amount,
             sender=pooler_address,
             suggested_params=suggested_params,
         )

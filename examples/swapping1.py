@@ -2,22 +2,22 @@
 # It is not intended for production use.
 # This example does not constitute trading advice.
 
+# For a more verbose version of this example see swapping1_less_convenience.py
 
 from tinyman.v1.client import TinymanTestnetClient
 
 
 # Hardcoding account keys is not a great practice. This is for demonstration purposes only.
 # See the README & Docs for alternative signing methods.
-from accounts import account
-# account = {
-#     'address': 'ALGORAND_ADDRESS_HERE',
-#     'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if neccessary
-# }
+account = {
+    'address': 'ALGORAND_ADDRESS_HERE',
+    'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
+}
 
 client = TinymanTestnetClient(user_address=account['address'])
 # By default all subsequent operations are on behalf of user_address
 
-# Check if the account is opted into Tinyman and optin if neccessary
+# Check if the account is opted into Tinyman and optin if necessary
 if(not client.is_opted_in()):
     print('Account not opted into app, opting in now..')
     transaction_group = client.prepare_app_optin_transactions()

@@ -48,7 +48,7 @@ def get_pool_info_from_account_info(account_info):
 
     outstanding_asset1_amount = get_state_int(validator_app_state, b64encode(b'o' + (asset1_id).to_bytes(8, 'big')))
     outstanding_asset2_amount = get_state_int(validator_app_state, b64encode(b'o' + (asset2_id).to_bytes(8, 'big')))
-    outstanding_liquidity_asset_amount = get_state_int(validator_app_state, b64encode(b'o' + (asset2_id).to_bytes(8, 'big')))
+    outstanding_liquidity_asset_amount = get_state_int(validator_app_state, b64encode(b'o' + (liquidity_asset_id).to_bytes(8, 'big')))
 
     pool = {
         'address': pool_address,

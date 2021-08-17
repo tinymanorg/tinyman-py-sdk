@@ -9,7 +9,7 @@ setuptools.setup(
     description="Tinyman Python SDK",
     author="Tinyman",
     author_email="hello@tinyman.org",
-    version="0.0.3",
+    version="0.0.4",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",

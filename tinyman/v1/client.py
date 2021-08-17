@@ -67,7 +67,7 @@ class TinymanClient:
                 pools[pool_address] = pools.get(pool_address, {})
                 asset_id = int.from_bytes(b[-8:], 'big')
                 asset = self.fetch_asset(asset_id)
-                pools[pool_address][asset_id] = AssetAmount(asset, value)
+                pools[pool_address][asset] = AssetAmount(asset, value)
 
         return pools
     

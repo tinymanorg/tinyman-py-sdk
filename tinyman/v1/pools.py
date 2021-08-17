@@ -243,9 +243,9 @@ class Pool:
         elif amount.asset == self.asset2:
             return AssetAmount(self.asset1, int(amount.amount * self.asset2_price))
     
-    def fetch_mint_quote(self, amounts_in: "dict[Asset, AssetAmount]", slippage=0.05):
-        amount1 = amounts_in.get(self.asset1)
-        amount2 = amounts_in.get(self.asset2)
+    def fetch_mint_quote(self, amount_a: AssetAmount, amount_b: AssetAmount=None, slippage=0.05):
+        amount1 = amount_a if amount_a.asset == self.asset1 else amount_b
+        amount2 = amount_a if amount_a.asset == self.asset2 else amount_b
         self.refresh()
         if not self.exists:
             raise Exception('Pool has not been bootstrapped yet!')
@@ -402,8 +402,8 @@ class Pool:
 
     def prepare_mint_transactions(self, amounts_in: "dict[Asset, AssetAmount]", liquidity_asset_amount: AssetAmount, pooler_address=None):
         pooler_address = pooler_address or self.client.user_address
-        asset1_amount = amounts_in[self.asset1.id]
-        asset2_amount = amounts_in[self.asset2.id]
+        asset1_amount = amounts_in[self.asset1]
+        asset2_amount = amounts_in[self.asset2]
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_mint_transactions(
             validator_app_id=self.client.validator_app_id,

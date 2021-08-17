@@ -60,8 +60,9 @@ This example has exactly the same functionality as [swapping1.py](examples/swapp
 [pooling1.py](examples/pooling1.py)
 This example demonstrates retrieving the current pool position/share for an address.
 
-### Basic Minting
-TODO
+### Basic Add Liquidity (Minting)
+[add_liquidity1.py](examples/add_liquidity1.py)
+This example demonstrates add liquidity to an existing pool.
 
 ### Basic Burning
 TODO

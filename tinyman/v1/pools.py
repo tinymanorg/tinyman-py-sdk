@@ -133,8 +133,9 @@ class BurnQuote:
 
 
 class Pool:
-    def __init__(self, client: TinymanClient, asset_a: Asset, asset_b: Asset, info=None, fetch=True) -> None:
+    def __init__(self, client: TinymanClient, asset_a: Asset, asset_b: Asset, info=None, fetch=True, validator_app_id=None) -> None:
         self.client = client
+        self.validator_app_id = validator_app_id if validator_app_id is not None else client.validator_app_id
 
         if isinstance(asset_a, int):
             asset_a = client.fetch_asset(asset_a)
@@ -150,7 +151,6 @@ class Pool:
 
         self.exists = None
         self.liquidity_asset: Asset = None
-        self.liquidity_asset_name = None
         self.asset1_reserves = None
         self.asset2_reserves = None
         self.issued_liquidity = None
@@ -167,12 +167,12 @@ class Pool:
     @classmethod
     def from_account_info(cls, account_info):
         info = get_pool_info_from_account_info(account_info)
-        pool = Pool(None, info['validator_app_id'], info['asset1_id'], info['asset2_id'], info)
+        pool = Pool(None, info['asset1_id'], info['asset2_id'], info, validator_app_id=info['validator_app_id'])
         return pool
 
     def refresh(self, info=None):
         if info is None:
-            info = get_pool_info(self.client.algod, self.client.validator_app_id, self.asset1.id, self.asset2.id)
+            info = get_pool_info(self.client.algod, self.validator_app_id, self.asset1.id, self.asset2.id)
             if not info:
                 return
         self.update_from_info(info)
@@ -194,12 +194,9 @@ class Pool:
         self.min_balance = self.get_minimum_balance()
         if self.asset2.id == 0:
             self.asset2_reserves = (self.algo_balance - self.min_balance) - self.outstanding_asset2_amount
-
-        if self.issued_liquidity:
-            self.liquidity_asset = self.client.fetch_asset(self.liquidity_asset.id)
     
     def get_logicsig(self):
-        pool_logicsig = get_pool_logicsig(self.client.validator_app_id, self.asset1.id, self.asset2.id)
+        pool_logicsig = get_pool_logicsig(self.validator_app_id, self.asset1.id, self.asset2.id)
         return pool_logicsig
     
     @property
@@ -364,7 +361,7 @@ class Pool:
         swapper_address = swapper_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_swap_transactions(
-            validator_app_id=self.client.validator_app_id,
+            validator_app_id=self.validator_app_id,
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             liquidity_asset_id=self.liquidity_asset.id,
@@ -389,7 +386,7 @@ class Pool:
         pooler_address = pooler_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_bootstrap_transactions(
-            validator_app_id=self.client.validator_app_id,
+            validator_app_id=self.validator_app_id,
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             asset1_unit_name=self.asset1.unit_name,
@@ -405,7 +402,7 @@ class Pool:
         asset2_amount = amounts_in[self.asset2]
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_mint_transactions(
-            validator_app_id=self.client.validator_app_id,
+            validator_app_id=self.validator_app_id,
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             liquidity_asset_id=self.liquidity_asset.id,
@@ -432,7 +429,7 @@ class Pool:
         asset2_amount = amounts_out[self.asset2.id]
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_burn_transactions(
-            validator_app_id=self.client.validator_app_id,
+            validator_app_id=self.validator_app_id,
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             liquidity_asset_id=self.liquidity_asset.id,
@@ -455,7 +452,7 @@ class Pool:
         user_address = user_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_redeem_transactions(
-            validator_app_id=self.client.validator_app_id,
+            validator_app_id=self.validator_app_id,
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             liquidity_asset_id=self.liquidity_asset.id,

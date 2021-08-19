@@ -180,8 +180,7 @@ class Pool:
     def update_from_info(self, info):
         if info['liquidity_asset_id'] is not None:
             self.exists = True
-        self.liquidity_asset = Asset(info['liquidity_asset_id'])
-        self.liquidity_asset_name = info['liquidity_asset_name']
+        self.liquidity_asset = Asset(info['liquidity_asset_id'], name=info['liquidity_asset_name'], unit_name='TM1POOL', decimals=6)
         self.asset1_reserves = info['asset1_reserves']
         self.asset2_reserves = info['asset2_reserves']
         self.issued_liquidity = info['issued_liquidity']

@@ -125,7 +125,7 @@ class BurnQuote:
     slippage: float
 
     @property
-    def amounts_out_with_slippage(self) -> int:
+    def amounts_out_with_slippage(self) -> dict:
         out = {}
         for k in self.amounts_out:
             out[k] = self.amounts_out[k] - (self.amounts_out[k] * self.slippage)
@@ -425,26 +425,26 @@ class Pool:
         if isinstance(liquidity_asset_amount, int):
             liquidity_asset_amount = AssetAmount(self.liquidity_asset, liquidity_asset_amount)
         pooler_address = pooler_address or self.client.user_address
-        asset1_amount = amounts_out[self.asset1.id]
-        asset2_amount = amounts_out[self.asset2.id]
+        asset1_amount = amounts_out[self.asset1]
+        asset2_amount = amounts_out[self.asset2]
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_burn_transactions(
             validator_app_id=self.validator_app_id,
             asset1_id=self.asset1.id,
             asset2_id=self.asset2.id,
             liquidity_asset_id=self.liquidity_asset.id,
-            asset1_amount=asset1_amount,
-            asset2_amount=asset2_amount,
+            asset1_amount=asset1_amount.amount,
+            asset2_amount=asset2_amount.amount,
             liquidity_asset_amount=liquidity_asset_amount.amount,
             sender=pooler_address,
             suggested_params=suggested_params,
         )
         return txn_group
 
-    def prepare_burn_transactions_from_quote(self, quote, pooler_address=None):
+    def prepare_burn_transactions_from_quote(self, quote: BurnQuote, pooler_address=None):
         return self.prepare_burn_transactions(
-            liquidity_asset_amount=quote['liquidity_asset_out_with_slippage'],
-            amounts_out=quote['amounts_out_with_slippage'],
+            liquidity_asset_amount=quote.liquidity_asset_amount,
+            amounts_out=quote.amounts_out_with_slippage,
             pooler_address=pooler_address,
         )
 
@@ -523,3 +523,4 @@ class Pool:
             return get_state_int(validator_app_state, key)
         else:
             return validator_app_state
+

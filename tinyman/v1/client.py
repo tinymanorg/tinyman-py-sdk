@@ -84,7 +84,7 @@ class TinymanClient:
     def is_opted_in(self, user_address=None):
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
-        for a in account_info['apps-local-state']:
+        for a in account_info.get('apps-local-state', []):
             if a['id'] == self.validator_app_id:
                 return True
         return False
@@ -92,7 +92,7 @@ class TinymanClient:
     def asset_is_opted_in(self, asset_id, user_address=None):
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
-        for a in account_info['assets']:
+        for a in account_info.get('assets', []):
             if a['asset-id']==asset_id:
                 return True
         return False

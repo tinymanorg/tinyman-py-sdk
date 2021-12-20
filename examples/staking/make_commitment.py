@@ -14,7 +14,6 @@ account = {
 }
 
 client = TinymanTestnetClient(user_address=account['address'])
-# By default all subsequent operations are on behalf of user_address
 
 # Fetch our two assets of interest
 TINYUSDC = client.fetch_asset(21582668)
@@ -31,7 +30,7 @@ txn_group = prepare_commit_transaction(
     program_id=1,
     program_account='B4XVZ226UPFEIQBPIY6H454YA4B7HYXGEM7UDQR2RJP66HVLOARZTUTS6Q',
     pool_asset_id=pool.liquidity_asset.id,
-    amount=700_000_000,
+    amount=600_000_000,
     sender=account['address'],
     suggested_params=sp,
 )

@@ -1,10 +1,10 @@
 from base64 import b64decode, b64encode
 from algosdk.future.transaction import ApplicationCreateTxn, OnComplete, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
 from tinyman.utils import TransactionGroup, int_to_bytes
-from .contracts import staking_app_def
 
 
 def prepare_create_transaction(sender, suggested_params):
+    from .contracts import staking_app_def
     txn = ApplicationCreateTxn(
         sender=sender,
         sp=suggested_params,
@@ -18,6 +18,7 @@ def prepare_create_transaction(sender, suggested_params):
 
 
 def prepare_update_transaction(app_id, sender, suggested_params):
+    from .contracts import staking_app_def
     txn = ApplicationUpdateTxn(
         index=app_id,
         sender=sender,
@@ -43,13 +44,20 @@ def prepare_commit_transaction(app_id, program_id, program_account, pool_asset_i
 def parse_commit_transaction(txn, app_id):
     if txn.get('application-transaction'):
         app_call = txn['application-transaction']
-        if app_call['application-id'] == app_id and app_call['application-args'][0] == b64encode('commit'):
+        if app_call['on-completion'] != 'noop':
+            return
+        if app_call['application-id'] != app_id:
+            return
+        if  app_call['application-args'][0] == b64encode(b'commit').decode():
             result = {}
-            result['pooler'] = txn['sender']
-            result['program_address'] = app_call['accounts'][0]
-            result['pool_asset_id'] = app_call['foreign-assets'][0]
-            result['program_id'] = int.from_bytes(b64decode(app_call['application-args'][2]), 'big')
-            result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
-            result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
-            return result
-    return None
+            try:
+                result['pooler'] = txn['sender']
+                result['program_address'] = app_call['accounts'][0]
+                result['pool_asset_id'] = app_call['foreign-assets'][0]
+                result['program_id'] = int.from_bytes(b64decode(app_call['application-args'][2]), 'big')
+                result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
+                result['balance'] = int.from_bytes(txn['logs'][0].encode()[8:], 'big')
+                return result
+            except Exception as e:
+                return
+    return

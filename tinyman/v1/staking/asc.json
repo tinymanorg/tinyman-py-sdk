@@ -1,0 +1,32 @@
+{
+  "repo": "https://github.com/tinymanorg/tinyman-staking",
+  "ref": "main",
+  "contracts": {
+    "staking_app": {
+      "type": "app",
+      "approval_program": {
+        "bytecode": "BSACAQAxGSMSQAAgMRkiEkAAiTEZgQISQACDMRmBBBJAAHsxGYEFEkAAeQA2GgCABmNvbW1pdBJAAAFDgBN0aW55bWFuU3Rha2luZy92MTpiMQVRABMSMQVXEwA1ATQBI1s2GgIXEjQBgQhbNjAAEkQ0AYEQWzYaARcSRCM2MABwAERJFoAIYmFsYW5jZSBMULA2GgEXD0QiQyJDIkMyCTEAEkMyCTEAEkMA",
+        "address": "NSQUSJZUSE3HABWUHTW6TIEY5MQ55FRIKU7IF2WVLQ6V77OOVCREWHYF5E",
+        "size": 171,
+        "variables": [],
+        "source": "https://github.com/tinymanorg/tinyman-staking/tree/main/contracts/staking.teal"
+      },
+      "clear_program": {
+        "bytecode": "BIEB",
+        "address": "P7GEWDXXW5IONRW6XRIRVPJCT2XXEQGOBGG65VJPBUOYZEJCBZWTPHS3VQ",
+        "size": 3,
+        "variables": [],
+        "source": "https://github.com/tinymanorg/tinyman-staking/tree/main/contracts/clear_state.teal"
+      },
+      "global_state_schema": {
+        "num_uints": 2,
+        "num_byte_slices": 2
+      },
+      "local_state_schema": {
+        "num_uints": 5,
+        "num_byte_slices": 11
+      },
+      "name": "staking_app"
+    }
+  }
+}

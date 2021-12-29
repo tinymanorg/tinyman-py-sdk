@@ -1,4 +1,5 @@
 import math
+from decimal import Decimal
 from dataclasses import dataclass
 from base64 import b64encode, b64decode
 from algosdk.v2client.algod import AlgodClient
@@ -100,11 +101,26 @@ class SwapQuote:
 
     @property
     def price(self) -> float:
-        return self.amount_out.amount / self.amount_in.amount
+        return self.calculate_quote_price()
 
     @property
     def price_with_slippage(self) -> float:
-        return self.amount_out_with_slippage.amount / self.amount_in_with_slippage.amount
+        return self.calculate_quote_price(with_slippage=True)
+
+    def calculate_quote_price(self, with_slippage=True):
+        if with_slippage:
+            quote_amount_in = self.amount_in_with_slippage.amount
+            quote_amount_out = self.amount_out_with_slippage.amount
+        else:
+            quote_amount_in = self.amount_in.amount
+            quote_amount_out = self.amount_out.amount
+        amount_in = (
+            Decimal(quote_amount_in) 
+            / Decimal(10**self.amount_in.asset.decimals))
+        amount_out = (
+            Decimal(quote_amount_out) 
+            / Decimal(10**self.amount_out.asset.decimals))
+        return float(amount_out / amount_in)
 
 
 @dataclass

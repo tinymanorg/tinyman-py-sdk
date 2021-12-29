@@ -23,7 +23,7 @@ class Asset:
                 'unit-name': 'ALGO',
                 'decimals': 6,
             }
-        self.name = params['name']
+        self.name = params.get('name', '')
         self.unit_name = params['unit-name']
         self.decimals = params['decimals']
         return self

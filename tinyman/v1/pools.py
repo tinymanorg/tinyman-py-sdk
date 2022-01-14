@@ -208,12 +208,18 @@ class Pool:
 
     @property
     def asset1_price(self):
-        return self.asset2_reserves / self.asset1_reserves
+        if self.asset1.decimals != None and self.asset2.decimals != None:
+            return self.asset2_reserves / self.asset1_reserves * 10**(self.asset1.decimals - self.asset2.decimals)
+        else:
+            return self.asset2_reserves / self.asset1_reserves
 
     @property
     def asset2_price(self):
-        return self.asset1_reserves / self.asset2_reserves
-
+        if self.asset1.decimals != None and self.asset2.decimals != None:
+            return self.asset1_reserves / self.asset2_reserves * 10**(self.asset2.decimals - self.asset1.decimals)
+        else:
+            return self.asset1_reserves / self.asset2_reserves
+    
     def info(self):
         pool = {
             'address': self.address,

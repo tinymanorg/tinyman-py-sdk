@@ -12,6 +12,7 @@ from .mint import prepare_mint_transactions
 from .burn import prepare_burn_transactions
 from .redeem import prepare_redeem_transactions
 from .optin import prepare_asset_optin_transactions
+from .fees import prepare_redeem_fees_transactions
 from .client import TinymanClient
 from tinyman.v1 import swap
 
@@ -165,9 +166,9 @@ class Pool:
             self.update_from_info(info)
     
     @classmethod
-    def from_account_info(cls, account_info):
+    def from_account_info(cls, account_info, client=None):
         info = get_pool_info_from_account_info(account_info)
-        pool = Pool(None, info['asset1_id'], info['asset2_id'], info, validator_app_id=info['validator_app_id'])
+        pool = Pool(client, info['asset1_id'], info['asset2_id'], info, validator_app_id=info['validator_app_id'])
         return pool
 
     def refresh(self, info=None):
@@ -180,7 +181,7 @@ class Pool:
     def update_from_info(self, info):
         if info['liquidity_asset_id'] is not None:
             self.exists = True
-        self.liquidity_asset = Asset(info['liquidity_asset_id'], name=info['liquidity_asset_name'], unit_name='TM1POOL', decimals=6)
+        self.liquidity_asset = Asset(info['liquidity_asset_id'], name=info['liquidity_asset_name'], unit_name='TMPOOL11', decimals=6)
         self.asset1_reserves = info['asset1_reserves']
         self.asset2_reserves = info['asset2_reserves']
         self.issued_liquidity = info['issued_liquidity']
@@ -468,6 +469,21 @@ class Pool:
         suggested_params = self.client.algod.suggested_params()
         txn_group = prepare_asset_optin_transactions(
             asset_id=self.liquidity_asset.id,
+            sender=user_address,
+            suggested_params=suggested_params,
+        )
+        return txn_group
+    
+    def prepare_redeem_fees_transactions(self, amount, creator, user_address=None):
+        user_address = user_address or self.client.user_address
+        suggested_params = self.client.algod.suggested_params()
+        txn_group = prepare_redeem_fees_transactions(
+            validator_app_id=self.validator_app_id,
+            asset1_id=self.asset1.id,
+            asset2_id=self.asset2.id,
+            liquidity_asset_id=self.liquidity_asset.id,
+            amount=amount,
+            creator=creator,
             sender=user_address,
             suggested_params=suggested_params,
         )

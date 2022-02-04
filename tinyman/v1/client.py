@@ -28,10 +28,7 @@ class TinymanClient:
 
 
     def submit(self, transaction_group, wait=False):
-        try:
-            txid = self.algod.send_transactions(transaction_group.signed_transactions)
-        except AlgodHTTPError as e:
-            raise Exception(json.loads(e.args[0])['message']) from None
+        txid = self.algod.send_transactions(transaction_group.signed_transactions)
         if wait:
             return wait_for_confirmation(self.algod, txid)
         return {'txid': txid}

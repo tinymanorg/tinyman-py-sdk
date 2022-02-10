@@ -28,13 +28,14 @@ def prepare_update_transaction(app_id, sender, suggested_params):
     )
     return TransactionGroup([txn])
 
-def prepare_commit_transaction(app_id, program_id, program_account, pool_asset_id, amount, sender, suggested_params):
+
+def prepare_commit_transaction(app_id, program_id, program_account, pool_asset_id, amount, reward_asset_id, sender, suggested_params):
     txn = ApplicationNoOpTxn(
         index=app_id,
         sender=sender,
         sp=suggested_params,
         app_args=['commit', int_to_bytes(amount), int_to_bytes(program_id)],
-        foreign_assets=[pool_asset_id],
+        foreign_assets=[pool_asset_id, reward_asset_id],
         accounts=[program_account],
         note=b'tinymanStaking/v1:b' + int_to_bytes(program_id) + int_to_bytes(pool_asset_id) + int_to_bytes(amount)
     )

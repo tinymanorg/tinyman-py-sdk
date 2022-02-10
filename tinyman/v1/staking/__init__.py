@@ -56,7 +56,7 @@ def parse_commit_transaction(txn, app_id):
                 result['pool_asset_id'] = app_call['foreign-assets'][0]
                 result['program_id'] = int.from_bytes(b64decode(app_call['application-args'][2]), 'big')
                 result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
-                result['balance'] = int.from_bytes(txn['logs'][0].encode()[8:], 'big')
+                result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
                 return result
             except Exception as e:
                 return

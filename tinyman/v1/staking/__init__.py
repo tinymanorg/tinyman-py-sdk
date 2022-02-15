@@ -1,9 +1,13 @@
+from hashlib import sha256
+from datetime import datetime
 from base64 import b64decode, b64encode
-from algosdk.future.transaction import ApplicationCreateTxn, OnComplete, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
-from tinyman.utils import TransactionGroup, int_to_bytes
+import json
+from typing import List
+from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
+from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes
 
 
-def prepare_create_transaction(sender, suggested_params):
+def prepare_create_transaction(args, sender, suggested_params):
     from .contracts import staking_app_def
     txn = ApplicationCreateTxn(
         sender=sender,
@@ -13,11 +17,12 @@ def prepare_create_transaction(sender, suggested_params):
         clear_program=b64decode(staking_app_def['clear_program']['bytecode']),
         global_schema=StateSchema(**staking_app_def['global_state_schema']),
         local_schema=StateSchema(**staking_app_def['local_state_schema']),
+        app_args=args,
     )
     return TransactionGroup([txn])
 
 
-def prepare_update_transaction(app_id, sender, suggested_params):
+def prepare_update_transaction(app_id: int, sender, suggested_params):
     from .contracts import staking_app_def
     txn = ApplicationUpdateTxn(
         index=app_id,
@@ -29,7 +34,7 @@ def prepare_update_transaction(app_id, sender, suggested_params):
     return TransactionGroup([txn])
 
 
-def prepare_commit_transaction(app_id, program_id, program_account, pool_asset_id, amount, reward_asset_id, sender, suggested_params):
+def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount:int, reward_asset_id:int , sender, suggested_params):
     txn = ApplicationNoOpTxn(
         index=app_id,
         sender=sender,
@@ -42,7 +47,7 @@ def prepare_commit_transaction(app_id, program_id, program_account, pool_asset_i
     return TransactionGroup([txn])
 
 
-def parse_commit_transaction(txn, app_id):
+def parse_commit_transaction(txn, app_id: int):
     if txn.get('application-transaction'):
         app_call = txn['application-transaction']
         if app_call['on-completion'] != 'noop':
@@ -62,3 +67,163 @@ def parse_commit_transaction(txn, app_id):
             except Exception as e:
                 return
     return
+
+
+def parse_program_config_transaction(txn, app_id: int):
+    if txn.get('application-transaction'):
+        app_call = txn['application-transaction']
+        if app_call['application-id'] != app_id:
+            return
+        if app_call['on-completion'] == 'clear':
+            return ('clear', None)
+        arg1 = b64decode(app_call['application-args'][0]).decode()
+        local_delta = txn['local-state-delta'][0]['delta']
+        return (arg1, local_delta)
+    return
+
+
+def parse_program_update_transaction(txn, app_id: int):
+    if txn.get('application-transaction'):
+        app_call = txn['application-transaction']
+        if app_call['on-completion'] != 'noop':
+            return
+        if app_call['application-id'] != app_id:
+            return
+        if  app_call['application-args'][0] == b64encode(b'update').decode():
+            try:
+                local_delta = txn['local-state-delta'][0]['delta']
+                state = apply_delta({}, local_delta)
+                result = parse_program_state(txn['sender'], state)
+                return result
+            except Exception as e:
+                return
+    return
+
+
+def parse_program_state(address, state):
+    result = {}
+    result['program_address'] = address
+    result['id'] = state[b'id']
+    result['url'] = state[b'url']
+    result['reward_asset_id'] = state[b'reward_asset_id']
+    result['reward_period'] = state[b'reward_period']
+    result['start_date'] = datetime.fromtimestamp(state[b'start_time']).date()
+    result['end_date'] = datetime.fromtimestamp(state[b'end_time']).date()
+    result['pools'] = []
+    asset_ids = bytes_to_int_list(state[b'assets'])
+    mins = bytes_to_int_list(state[b'mins'])
+    empty_rewards_bytes = int_list_to_bytes([0] * 15)
+    rewards = []
+    for i in range(1, 8):
+        r = bytes_to_int_list(state.get(f'r{i}'.encode(), empty_rewards_bytes))
+        start = r[0]
+        amounts = r[1:]
+        if start:
+            rewards.append({'start_date': str(datetime.fromtimestamp(start).date()), 'amounts': amounts})
+    for i in range(len(asset_ids)):
+        if asset_ids[i] > 0:
+            result['pools'].append({
+                'asset_id': asset_ids[i],
+                'min_amount': mins[i],
+                'reward_amounts': {x['start_date']: x['amounts'][i] for x in rewards},
+            })
+    return result
+
+
+def prepare_setup_transaction(app_id: int, url: str, reward_asset_id: int, reward_period: int, start_time: int, end_time: int, asset_ids: List[int], min_amounts: List[int], sender, suggested_params):
+    assets = [0] * 14
+    mins = [0] * 14
+    for i in range(len(asset_ids)):
+        assets[i] = asset_ids[i]
+        mins[i] = min_amounts[i]
+    txn = ApplicationOptInTxn(
+        index=app_id,
+        sender=sender,
+        sp=suggested_params,
+        # setup, url, reward_asset_id, reward_period, start_time, end_time, int[14]{asset_id_1, asset_id_2, ...}
+        app_args=[
+            'setup',
+            url,
+            int_to_bytes(reward_asset_id),
+            int_to_bytes(reward_period),
+            int_to_bytes(start_time),
+            int_to_bytes(end_time),
+            int_list_to_bytes(assets),
+            int_list_to_bytes(mins),
+        ],
+        foreign_assets=[reward_asset_id],
+    )
+    return TransactionGroup([txn])
+
+
+def prepare_clear_state_transaction(app_id, sender, suggested_params):
+    clear_txn = ApplicationClearStateTxn(index=app_id, sender=sender, sp=suggested_params)
+    return TransactionGroup([clear_txn])
+
+
+def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, sender, suggested_params):
+    r = [
+        [0] * 15,
+        [0] * 15,
+        [0] * 15,
+        [0] * 15,
+        [0] * 15,
+        [0] * 15,
+        [0] * 15,
+    ]
+    for i, start_time in enumerate(sorted(reward_amounts_dict.keys())):
+        amounts = reward_amounts_dict[start_time]
+        r[i][0] = start_time
+        for j, x in enumerate(amounts):
+            r[i][j+1] = x
+
+    txn = ApplicationNoOpTxn(
+        index=app_id,
+        sender=sender,
+        sp=suggested_params,
+        # ("update_rewards", int[15]{rewards_first_valid_time, rewards_asset_1, rewards_asset_2, ...}, int[15]{rewards_first_valid_time, rewards_asset_1, rewards_asset_2, ...}, ...)
+        app_args=[
+            'update_rewards',
+            int_list_to_bytes(r[0]),
+            int_list_to_bytes(r[1]),
+            int_list_to_bytes(r[2]),
+            int_list_to_bytes(r[3]),
+            int_list_to_bytes(r[4]),
+            int_list_to_bytes(r[5]),
+            int_list_to_bytes(r[6]),
+        ],
+    )
+    return TransactionGroup([txn])
+
+
+def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amount: int, metadata: dict, sender, suggested_params):
+    note = b'tinymanStaking/v1:j' + json.dumps(metadata, sort_keys=True).encode()
+    # Compose a lease key from the distribution key (date, pool_address) and staker_address
+    # This is to prevent accidently submitting multiple payments for the same staker for the same cycles
+    # Note: the lease is only ensured unique between first_valid & last_valid
+    lease_data = json.dumps([metadata['distribution'], staker_address]).encode()
+    lease = sha256(lease_data).digest()
+    if reward_asset_id == 0:
+        txn = PaymentTxn(
+            sender=sender,
+            sp=suggested_params,
+            receiver=staker_address,
+            amt=amount,
+            note=note,
+            lease=lease,
+        )
+        return txn
+    else:
+        raise NotImplemented()
+
+
+def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: List[List], pool_address: int, pool_token: int, pool_name: str):
+
+    data = {
+        "distribution": distribution_date + '_' + pool_address,
+        "pool_address": pool_address,
+        "pool_token": pool_token,
+        "pool_name": pool_name,
+        "rewards": [[str(cycle), str(amount)] for (cycle, amount) in cycles_rewards],
+    }
+    return data

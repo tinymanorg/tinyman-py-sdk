@@ -74,6 +74,19 @@ def int_to_bytes(num):
     return num.to_bytes(8, 'big')
 
 
+def int_list_to_bytes(nums):
+    return b''.join([int_to_bytes(x) for x in nums])
+
+
+def bytes_to_int(b):
+    return int.from_bytes(b, 'big')
+
+
+def bytes_to_int_list(b):
+    n = len(b) // 8
+    return [bytes_to_int(b[(i * 8):((i + 1) * 8)]) for i in range(n)]
+
+
 def get_state_int(state, key):
     if type(key) == str:
         key = b64encode(key.encode())
@@ -84,6 +97,41 @@ def get_state_bytes(state, key):
     if type(key) == str:
         key = b64encode(key.encode())
     return state.get(key.decode(), {'bytes': ''})['bytes']
+
+
+def get_state_from_account_info(account_info, app_id):
+    try:
+        app = [a for a in account_info['apps-local-state'] if a['id'] == app_id][0]
+    except IndexError:
+        return {}
+    try:
+        app_state = {}
+        for x in app['key-value']:
+            key = b64decode(x['key'])
+            if x['value']['type'] == 1:
+                value = b64decode(x['value'].get('bytes', ''))
+            else:
+                value = x['value'].get('uint', 0)
+            app_state[key] = value
+    except KeyError:
+        return {}
+    return app_state
+
+
+def apply_delta(state, delta):
+    state = dict(state)
+    for d in delta:
+        key = b64decode(d['key'])
+        if d['value']['action'] == 1:
+            state[key] = b64decode(d['value'].get('bytes', ''))
+        elif d['value']['action'] == 2:
+            state[key] = d['value'].get('uint', 0)
+        elif d['value']['action'] == 3:
+            state.pop(key)
+        else:
+            raise Exception(d['value']['action'])
+    return state
+
 
 
 class TransactionGroup:

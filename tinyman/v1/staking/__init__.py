@@ -1,9 +1,13 @@
-from hashlib import sha256
-from datetime import datetime
-from base64 import b64decode, b64encode
 import json
+from base64 import b64decode, b64encode
+from datetime import datetime
+from hashlib import sha256
 from typing import List
+
+from algosdk.constants import payment_txn, assettransfer_txn
+from algosdk.encoding import is_valid_address
 from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
+
 from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes
 
 
@@ -54,7 +58,7 @@ def parse_commit_transaction(txn, app_id: int):
             return
         if app_call['application-id'] != app_id:
             return
-        if  app_call['application-args'][0] == b64encode(b'commit').decode():
+        if app_call['application-args'][0] == b64encode(b'commit').decode():
             result = {}
             try:
                 result['pooler'] = txn['sender']
@@ -89,7 +93,7 @@ def parse_program_update_transaction(txn, app_id: int):
             return
         if app_call['application-id'] != app_id:
             return
-        if  app_call['application-args'][0] == b64encode(b'update').decode():
+        if app_call['application-args'][0] == b64encode(b'update').decode():
             try:
                 local_delta = txn['local-state-delta'][0]['delta']
                 state = apply_delta({}, local_delta)
@@ -227,3 +231,80 @@ def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: 
         "rewards": [[str(cycle), str(amount)] for (cycle, amount) in cycles_rewards],
     }
     return data
+
+
+def parse_reward_payment_transaction(txn):
+    prefix = "tinymanStaking/v1:j"
+    date_format = "%Y%m%d"
+
+    if "note" not in txn:
+        return
+
+    if txn["tx-type"] == payment_txn:
+        reward_asset_id = 0
+        staker_address = txn["payment-transaction"]["receiver"]
+        transfer_amount = txn["payment-transaction"]["amount"]
+    elif txn["tx-type"] == assettransfer_txn:
+        reward_asset_id = txn["asset-transfer-transaction"]["asset-id"]
+        staker_address = txn["asset-transfer-transaction"]["receiver"]
+        transfer_amount = txn["asset-transfer-transaction"]["amount"]
+    else:
+        return
+
+    note = b64decode(txn['note']).decode()
+    if not note.startswith(prefix):
+        return
+
+    payment_data = json.loads(note.removeprefix(prefix))
+    if not {"distribution", "pool_address", "pool_name", "pool_token", "rewards"} <= set(payment_data):
+        return
+
+    if not isinstance(payment_data["rewards"], list):
+        return
+
+    if not payment_data["rewards"]:
+        return
+
+    try:
+        distribution_date, pool_address = payment_data["distribution"].split("_")
+        distribution_date = datetime.strptime(distribution_date, date_format).date()
+    except ValueError:
+        return
+
+    if pool_address != payment_data["pool_address"]:
+        return
+
+    if not is_valid_address(pool_address):
+        return
+
+    try:
+        pool_asset_id = int(payment_data["pool_asset_id"])
+    except ValueError:
+        return
+
+    rewards = []
+    try:
+        for cycle, reward_amount in payment_data["rewards"]:
+            rewards.append({
+                "cycle": datetime.strptime(cycle, date_format).date(),
+                "amount": int(reward_amount)
+            })
+    except ValueError:
+        return
+
+    total_reward = sum([reward["amount"] for reward in rewards])
+
+    if total_reward < transfer_amount:
+        return
+
+    result = {
+        "distribution_date": distribution_date,
+        "program_address": txn["sender"],
+        "staker_address": staker_address,
+        "pool_address": pool_address,
+        "pool_name": payment_data["pool_name"],
+        "pool_asset_id": pool_asset_id,
+        "reward_asset_id": reward_asset_id,
+        "rewards": rewards,
+    }
+    return result

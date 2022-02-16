@@ -240,7 +240,7 @@ def generate_note_from_metadata(metadata):
 
 
 def get_note_prefix_for_distribution(distribution_date, pool_address):
-    metadata = prepare_reward_metadata_for_payment(distribution_date, cycles_rewards=[], pool_address=pool_address, pool_token=None, pool_name=None)
+    metadata = prepare_reward_metadata_for_payment(distribution_date, cycles_rewards=[], pool_address=pool_address, pool_asset_id=None, pool_name=None)
     note = generate_note_from_metadata(metadata)
     prefix = note.split(b', "pool_address"')[0]
     return prefix

@@ -233,7 +233,7 @@ def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: 
     return data
 
 
-def parse_payment_transaction(txn):
+def parse_reward_payment_transaction(txn):
     prefix = "tinymanStaking/v1:j"
     date_format = "%Y%m%d"
 
@@ -241,12 +241,12 @@ def parse_payment_transaction(txn):
         return
 
     if txn["tx-type"] == payment_txn:
-        reward_token = 0
-        pooler = txn["payment-transaction"]["receiver"]
+        reward_asset_id = 0
+        staker_address = txn["payment-transaction"]["receiver"]
         transfer_amount = txn["payment-transaction"]["amount"]
     elif txn["tx-type"] == assettransfer_txn:
-        reward_token = txn["asset-transfer-transaction"]["asset-id"]
-        pooler = txn["asset-transfer-transaction"]["receiver"]
+        reward_asset_id = txn["asset-transfer-transaction"]["asset-id"]
+        staker_address = txn["asset-transfer-transaction"]["receiver"]
         transfer_amount = txn["asset-transfer-transaction"]["amount"]
     else:
         return
@@ -278,15 +278,15 @@ def parse_payment_transaction(txn):
         return
 
     try:
-        pool_token = int(payment_data["pool_token"])
+        pool_asset_id = int(payment_data["pool_asset_id"])
     except ValueError:
         return
 
     rewards = []
     try:
-        for reward_date, reward_amount in payment_data["rewards"]:
+        for cycle, reward_amount in payment_data["rewards"]:
             rewards.append({
-                "date": datetime.strptime(reward_date, date_format).date(),
+                "cycle": datetime.strptime(cycle, date_format).date(),
                 "amount": int(reward_amount)
             })
     except ValueError:
@@ -300,11 +300,11 @@ def parse_payment_transaction(txn):
     result = {
         "distribution_date": distribution_date,
         "program_address": txn["sender"],
-        "pooler": pooler,
+        "staker_address": staker_address,
         "pool_address": pool_address,
         "pool_name": payment_data["pool_name"],
-        "pool_token": pool_token,
-        "reward_token": reward_token,
+        "pool_asset_id": pool_asset_id,
+        "reward_asset_id": reward_asset_id,
         "rewards": rewards,
     }
     return result

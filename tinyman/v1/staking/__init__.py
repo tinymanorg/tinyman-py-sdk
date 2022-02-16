@@ -201,11 +201,11 @@ def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, s
 
 
 def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amount: int, metadata: dict, sender, suggested_params):
-    note = b'tinymanStaking/v1:j' + json.dumps(metadata, sort_keys=True).encode()
+    note = generate_note_from_metadata(metadata)
     # Compose a lease key from the distribution key (date, pool_address) and staker_address
     # This is to prevent accidently submitting multiple payments for the same staker for the same cycles
     # Note: the lease is only ensured unique between first_valid & last_valid
-    lease_data = json.dumps([metadata['distribution'], staker_address]).encode()
+    lease_data = json.dumps([metadata['rewards']['distribution'], staker_address]).encode()
     lease = sha256(lease_data).digest()
     if reward_asset_id == 0:
         txn = PaymentTxn(
@@ -221,16 +221,29 @@ def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amoun
         raise NotImplemented()
 
 
-def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: List[List], pool_address: int, pool_token: int, pool_name: str):
-
+def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: List[List], pool_address: int, pool_asset_id: int, pool_name: str):
     data = {
-        "distribution": distribution_date + '_' + pool_address,
-        "pool_address": pool_address,
-        "pool_token": pool_token,
-        "pool_name": pool_name,
-        "rewards": [[str(cycle), str(amount)] for (cycle, amount) in cycles_rewards],
+        "rewards": {
+            "distribution": distribution_date + '_' + pool_address,
+            "pool_address": pool_address,
+            "pool_asset_id": pool_asset_id,
+            "pool_name": pool_name,
+            "rewards": [[str(cycle), str(amount)] for (cycle, amount) in cycles_rewards],
+        },
     }
     return data
+
+
+def generate_note_from_metadata(metadata):
+    note = b'tinymanStaking/v1:j' + json.dumps(metadata, sort_keys=True).encode()
+    return note
+
+
+def get_note_prefix_for_distribution(distribution_date, pool_address):
+    metadata = prepare_reward_metadata_for_payment(distribution_date, cycles_rewards=[], pool_address=pool_address, pool_token=None, pool_name=None)
+    note = generate_note_from_metadata(metadata)
+    prefix = note.split(b', "pool_address"')[0]
+    return prefix
 
 
 def parse_reward_payment_transaction(txn):
@@ -255,8 +268,13 @@ def parse_reward_payment_transaction(txn):
     if not note.startswith(prefix):
         return
 
-    payment_data = json.loads(note.removeprefix(prefix))
-    if not {"distribution", "pool_address", "pool_name", "pool_token", "rewards"} <= set(payment_data):
+    data = json.loads(note.lstrip(prefix))
+    if "rewards" not in data:
+        return
+
+    payment_data = data["rewards"]
+
+    if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "rewards"} <= set(payment_data):
         return
 
     if not isinstance(payment_data["rewards"], list):

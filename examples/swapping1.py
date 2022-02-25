@@ -5,6 +5,7 @@
 # For a more verbose version of this example see swapping1_less_convenience.py
 
 from tinyman.v1.client import TinymanTestnetClient
+from algosdk.v2client.algod import AlgodClient
 
 
 # Hardcoding account keys is not a great practice. This is for demonstration purposes only.
@@ -14,7 +15,8 @@ account = {
     'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
 }
 
-client = TinymanTestnetClient(user_address=account['address'])
+algod = AlgodClient('<TOKEN>', 'http://localhost:8080', headers={'User-Agent': 'algosdk'})
+client = TinymanTestnetClient(algod_client=algod, user_address=account['address'])
 # By default all subsequent operations are on behalf of user_address
 
 # Check if the account is opted into Tinyman and optin if necessary

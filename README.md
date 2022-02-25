@@ -22,8 +22,11 @@ tinyman-py-sdk is not yet released on PYPI. It can be installed directly from th
 
 ```python
 from tinyman.v1.client import TinymanTestnetClient
+from algosdk.v2client.algod import AlgodClient
 
-client = TinymanTestnetClient()
+
+algod = AlgodClient('<TOKEN>', 'http://localhost:8080', headers={'User-Agent': 'algosdk'})
+client = TinymanTestnetClient(algod_client=algod)
 
 # Fetch our two assets of interest
 TINYUSDC = client.fetch_asset(21582668)

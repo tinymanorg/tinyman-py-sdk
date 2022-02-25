@@ -96,15 +96,10 @@ class TinymanClient:
 
 
 class TinymanTestnetClient(TinymanClient):
-    def __init__(self, algod_client=None, user_address=None):
-        if algod_client is None:
-            algod_client = AlgodClient('', 'https://api.testnet.algoexplorer.io', headers={'User-Agent': 'algosdk'})
+    def __init__(self, algod_client: AlgodClient, user_address=None):
         super().__init__(algod_client, validator_app_id=TESTNET_VALIDATOR_APP_ID, user_address=user_address)
 
 
 class TinymanMainnetClient(TinymanClient):
-    def __init__(self, algod_client=None, user_address=None):
-        if algod_client is None:
-            algod_client = AlgodClient('', 'https://api.algoexplorer.io', headers={'User-Agent': 'algosdk'})
+    def __init__(self, algod_client: AlgodClient, user_address=None):
         super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID, user_address=user_address)
-

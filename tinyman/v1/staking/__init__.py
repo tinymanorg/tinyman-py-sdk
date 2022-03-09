@@ -8,7 +8,7 @@ from algosdk.constants import payment_txn, assettransfer_txn
 from algosdk.encoding import is_valid_address
 from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
 
-from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes
+from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes, timestamp_to_date_str
 
 
 def prepare_create_transaction(args, sender, suggested_params):
@@ -106,16 +106,18 @@ def parse_program_update_transaction(txn, app_id: int):
 
 def parse_program_state(address, state):
     result = {}
-    result['program_address'] = address
+    result['address'] = address
     result['id'] = state[b'id']
     result['url'] = state[b'url']
     result['reward_asset_id'] = state[b'reward_asset_id']
     result['reward_period'] = state[b'reward_period']
-    result['start_date'] = datetime.fromtimestamp(state[b'start_time']).date()
-    result['end_date'] = datetime.fromtimestamp(state[b'end_time']).date()
+    result['start_date'] = timestamp_to_date_str(state[b'start_time'])
+    result['end_date'] = timestamp_to_date_str(state[b'end_time'])
     result['pools'] = []
     asset_ids = bytes_to_int_list(state[b'assets'])
+    result['asset_ids'] = asset_ids
     mins = bytes_to_int_list(state[b'mins'])
+    result['mins'] = mins
     empty_rewards_bytes = int_list_to_bytes([0] * 15)
     rewards = []
     for i in range(1, 8):
@@ -123,7 +125,8 @@ def parse_program_state(address, state):
         start = r[0]
         amounts = r[1:]
         if start:
-            rewards.append({'start_date': str(datetime.fromtimestamp(start).date()), 'amounts': amounts})
+            rewards.append({'start_date': timestamp_to_date_str(start), 'amounts': amounts})
+    result['reward_amounts_dict'] = rewards
     for i in range(len(asset_ids)):
         if asset_ids[i] > 0:
             result['pools'].append({
@@ -172,8 +175,6 @@ def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, s
         [0] * 15,
         [0] * 15,
         [0] * 15,
-        [0] * 15,
-        [0] * 15,
     ]
     for i, start_time in enumerate(sorted(reward_amounts_dict.keys())):
         amounts = reward_amounts_dict[start_time]
@@ -193,8 +194,6 @@ def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, s
             int_list_to_bytes(r[2]),
             int_list_to_bytes(r[3]),
             int_list_to_bytes(r[4]),
-            int_list_to_bytes(r[5]),
-            int_list_to_bytes(r[6]),
         ],
     )
     return TransactionGroup([txn])
@@ -326,3 +325,5 @@ def parse_reward_payment_transaction(txn):
         "rewards": rewards,
     }
     return result
+
+

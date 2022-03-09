@@ -6,7 +6,7 @@ from algosdk.encoding import encode_address
 from tinyman.utils import wait_for_confirmation
 from tinyman.assets import Asset, AssetAmount
 from .optin import prepare_app_optin_transactions,prepare_asset_optin_transactions
-from .constants import TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID, TESTNET_STAKING_APP_ID
+from .constants import TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID, TESTNET_STAKING_APP_ID, MAINNET_STAKING_APP_ID
 
 class TinymanClient:
     def __init__(self, algod_client: AlgodClient, validator_app_id: int, user_address=None, staking_app_id: int=None):
@@ -107,5 +107,11 @@ class TinymanMainnetClient(TinymanClient):
     def __init__(self, algod_client=None, user_address=None):
         if algod_client is None:
             algod_client = AlgodClient('', 'https://api.algoexplorer.io', headers={'User-Agent': 'algosdk'})
-        super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID, user_address=user_address)
+        super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID, user_address=user_address, staking_app_id=MAINNET_STAKING_APP_ID)
 
+
+class TinymanSandboxClient(TinymanClient):
+    def __init__(self, algod_client=None, user_address=None):
+        if algod_client is None:
+            algod_client = AlgodClient('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'http://localhost:4001', headers={'User-Agent': 'algosdk'})
+        super().__init__(algod_client, validator_app_id=TESTNET_VALIDATOR_APP_ID, user_address=user_address, staking_app_id=6)

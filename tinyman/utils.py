@@ -1,4 +1,5 @@
 from base64 import b64decode, b64encode
+from datetime import datetime
 from algosdk.future.transaction import LogicSigTransaction, assign_group_id
 from algosdk.error import AlgodHTTPError
 
@@ -132,6 +133,10 @@ def apply_delta(state, delta):
             raise Exception(d['value']['action'])
     return state
 
+
+def timestamp_to_date_str(t):
+    d = datetime.fromtimestamp(t).date()
+    return d.strftime('%Y-%m-%d')
 
 
 class TransactionGroup:

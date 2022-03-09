@@ -263,7 +263,12 @@ def parse_reward_payment_transaction(txn):
     else:
         return
 
-    note = b64decode(txn['note']).decode()
+    note = b64decode(txn['note'])
+    try:
+        note = note.decode()
+    except UnicodeDecodeError:
+        return
+
     if not note.startswith(prefix):
         return
 
@@ -272,6 +277,8 @@ def parse_reward_payment_transaction(txn):
         return
 
     payment_data = data["rewards"]
+    if not isinstance(payment_data, dict):
+        return
 
     if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "rewards"} <= set(payment_data):
         return

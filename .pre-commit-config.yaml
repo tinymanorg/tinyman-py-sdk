@@ -1,0 +1,7 @@
+repos:
+-   repo: https://github.com/pycqa/flake8
+    rev: '3.9.2'  # pick a git hash / tag to point to
+    hooks:
+    -   id: flake8
+        args: ['--ignore=E501,F403,F405,E126,E121,W503']
+        exclude: ^(env|venv)

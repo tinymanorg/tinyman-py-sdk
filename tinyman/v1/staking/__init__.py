@@ -38,7 +38,7 @@ def prepare_update_transaction(app_id: int, sender, suggested_params):
     return TransactionGroup([txn])
 
 
-def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount:int, reward_asset_id:int , sender, suggested_params):
+def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount: int, reward_asset_id: int, sender, suggested_params):
     txn = ApplicationNoOpTxn(
         index=app_id,
         sender=sender,
@@ -65,11 +65,11 @@ def parse_commit_transaction(txn, app_id: int):
                 result['pooler'] = txn['sender']
                 result['program_address'] = app_call['accounts'][0]
                 result['pool_asset_id'] = app_call['foreign-assets'][0]
-                result['program_id'] = int.from_bytes(b64decode(note)[19:19+8], 'big')
+                result['program_id'] = int.from_bytes(b64decode(note)[19:19 + 8], 'big')
                 result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
                 result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
                 return result
-            except Exception as e:
+            except Exception:
                 return
     return
 
@@ -100,7 +100,7 @@ def parse_program_update_transaction(txn, app_id: int):
                 state = apply_delta({}, local_delta)
                 result = parse_program_state(txn['sender'], state)
                 return result
-            except Exception as e:
+            except Exception:
                 return
     return
 
@@ -181,7 +181,7 @@ def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, s
         amounts = reward_amounts_dict[start_time]
         r[i][0] = start_time
         for j, x in enumerate(amounts):
-            r[i][j+1] = x
+            r[i][j + 1] = x
 
     txn = ApplicationNoOpTxn(
         index=app_id,
@@ -218,7 +218,7 @@ def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amoun
         )
         return txn
     else:
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: List[List], pool_address: int, pool_asset_id: int, pool_name: str):
@@ -333,5 +333,3 @@ def parse_reward_payment_transaction(txn):
         "rewards": rewards,
     }
     return result
-
-

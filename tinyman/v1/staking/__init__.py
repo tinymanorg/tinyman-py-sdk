@@ -258,11 +258,26 @@ def get_note_version(note):
 
     m = re.match(r"^tinymanStaking/v(?P<version>\w+):j.*", note)
     if m is None:
-        raise ValueError("Couldn't determine the version.")
+        raise ValueError("Invalid note.")
 
-    version = m.groupdict()["version"]
+    version = m.group("version")
     assert version in ["1", "2"]
     return version
+
+
+def get_reward_metadata_from_note(note: str):
+    assert isinstance(note, (bytes, str))
+
+    if isinstance(note, bytes):
+        note = note.decode()
+
+    m = re.match(r"^tinymanStaking/v(?P<version>\w+):j(?P<metadata>.*)", note)
+    if m is None:
+        raise ValueError("Invalid note.")
+
+    metadata = m.group("metadata")
+    metadata = json.loads(metadata)
+    return metadata
 
 
 def parse_reward_payment_transaction(txn):

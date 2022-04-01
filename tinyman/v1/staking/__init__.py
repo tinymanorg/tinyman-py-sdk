@@ -1,4 +1,5 @@
 import json
+import re
 from base64 import b64decode, b64encode
 from datetime import datetime
 from hashlib import sha256
@@ -221,33 +222,50 @@ def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amoun
         raise NotImplementedError()
 
 
-def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: List[List], pool_address: int, pool_asset_id: int, pool_name: str):
+def prepare_reward_metadata_for_payment(distribution_date: str, program_id: str, pool_address: str, pool_asset_id: int, pool_name: str, first_cycle: str, last_cycle: str):
     data = {
         "rewards": {
-            "distribution": distribution_date + '_' + pool_address,
+            "distribution": f"{pool_asset_id}_{program_id}_{distribution_date}",
             "pool_address": pool_address,
+            "distribution_date": distribution_date,
             "pool_asset_id": pool_asset_id,
+            "program_id": program_id,
             "pool_name": pool_name,
-            "rewards": [[str(cycle), str(amount)] for (cycle, amount) in cycles_rewards],
+            "first_cycle": first_cycle,
+            "last_cycle": last_cycle,
         },
     }
     return data
 
 
 def generate_note_from_metadata(metadata):
-    note = b'tinymanStaking/v1:j' + json.dumps(metadata, sort_keys=True).encode()
+    note = b'tinymanStaking/v2:j' + json.dumps(metadata, sort_keys=True).encode()
     return note
 
 
 def get_note_prefix_for_distribution(distribution_date, pool_address):
-    metadata = prepare_reward_metadata_for_payment(distribution_date, cycles_rewards=[], pool_address=pool_address, pool_asset_id=None, pool_name=None)
+    metadata = prepare_reward_metadata_for_payment(distribution_date, program_id=None, pool_address=pool_address, pool_asset_id=None, pool_name=None, first_cycle=None, last_cycle=None)
     note = generate_note_from_metadata(metadata)
-    prefix = note.split(b', "pool_address"')[0]
+    prefix = note.split(b', "distribution_date"')[0]
     return prefix
 
 
+def get_note_version(note):
+    assert isinstance(note, (bytes, str))
+
+    if isinstance(note, bytes):
+        note = note.decode()
+
+    m = re.match(r"^tinymanStaking/v(?P<version>\w+):j.*", note)
+    if m is None:
+        raise ValueError("Couldn't determine the version.")
+
+    version = m.groupdict()["version"]
+    assert version in ["1", "2"]
+    return version
+
+
 def parse_reward_payment_transaction(txn):
-    prefix = "tinymanStaking/v1:j"
     date_format = "%Y%m%d"
 
     if "note" not in txn:
@@ -265,15 +283,18 @@ def parse_reward_payment_transaction(txn):
         return
 
     note = b64decode(txn['note'])
+    note_version = get_note_version(note)
+    note_prefix = f"tinymanStaking/v{note_version}:j"
+
     try:
         note = note.decode()
     except UnicodeDecodeError:
         return
 
-    if not note.startswith(prefix):
+    if not note.startswith(note_prefix):
         return
 
-    data = json.loads(note.lstrip(prefix))
+    data = json.loads(note.lstrip(note_prefix))
     if "rewards" not in data:
         return
 
@@ -281,6 +302,28 @@ def parse_reward_payment_transaction(txn):
     if not isinstance(payment_data, dict):
         return
 
+    if note_version == "1":
+        return _parse_reward_payment_transaction_v1(
+            payment_data=payment_data,
+            txn=txn,
+            reward_asset_id=reward_asset_id,
+            transfer_amount=transfer_amount,
+            staker_address=staker_address,
+            date_format=date_format
+        )
+
+    if note_version == "2":
+        return _parse_reward_payment_transaction_v2(
+            payment_data=payment_data,
+            txn=txn,
+            reward_asset_id=reward_asset_id,
+            transfer_amount=transfer_amount,
+            staker_address=staker_address,
+            date_format=date_format
+        )
+
+
+def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address, date_format):
     if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "rewards"} <= set(payment_data):
         return
 
@@ -323,6 +366,8 @@ def parse_reward_payment_transaction(txn):
         return
 
     result = {
+        "version": "1",
+        "distribution": payment_data["distribution"],
         "distribution_date": distribution_date,
         "program_address": txn["sender"],
         "staker_address": staker_address,
@@ -330,6 +375,63 @@ def parse_reward_payment_transaction(txn):
         "pool_name": payment_data["pool_name"],
         "pool_asset_id": pool_asset_id,
         "reward_asset_id": reward_asset_id,
+        "total_amount": transfer_amount,
         "rewards": rewards,
+    }
+    return result
+
+
+def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address, date_format):
+    if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "program_id", "distribution_date", "first_cycle", "last_cycle"} <= set(payment_data):
+        return
+
+    try:
+        pool_asset_id, program_id, distribution_date = payment_data["distribution"].split("_")
+    except ValueError:
+        return
+
+    if pool_asset_id != payment_data["pool_asset_id"]:
+        return
+
+    if program_id != payment_data["program_id"]:
+        return
+
+    if distribution_date != payment_data["distribution_date"]:
+        return
+
+    try:
+        pool_asset_id = int(pool_asset_id)
+    except ValueError:
+        return
+
+    try:
+        program_id = int(program_id)
+    except ValueError:
+        return
+
+    try:
+        distribution_date = datetime.strptime(distribution_date, date_format).date()
+        first_cycle = datetime.strptime(payment_data["first_cycle"], date_format).date()
+        last_cycle = datetime.strptime(payment_data["last_cycle"], date_format).date()
+    except ValueError:
+        return
+
+    if not is_valid_address(payment_data["pool_address"]):
+        return
+
+    result = {
+        "version": "2",
+        "distribution": payment_data["distribution"],
+        "distribution_date": distribution_date,
+        "program_id": program_id,
+        "program_address": txn["sender"],
+        "staker_address": staker_address,
+        "pool_address": payment_data["pool_address"],
+        "pool_name": payment_data["pool_name"],
+        "pool_asset_id": pool_asset_id,
+        "reward_asset_id": reward_asset_id,
+        "total_amount": transfer_amount,
+        "first_cycle": first_cycle,
+        "last_cycle": last_cycle,
     }
     return result

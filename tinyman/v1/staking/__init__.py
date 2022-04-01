@@ -10,6 +10,7 @@ from algosdk.encoding import is_valid_address
 from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
 
 from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes, timestamp_to_date_str
+from tinyman.v1.staking.constants import DATE_FORMAT
 
 
 def prepare_create_transaction(args, sender, suggested_params):
@@ -281,8 +282,6 @@ def get_reward_metadata_from_note(note: str):
 
 
 def parse_reward_payment_transaction(txn):
-    date_format = "%Y%m%d"
-
     if "note" not in txn:
         return
 
@@ -324,7 +323,6 @@ def parse_reward_payment_transaction(txn):
             reward_asset_id=reward_asset_id,
             transfer_amount=transfer_amount,
             staker_address=staker_address,
-            date_format=date_format
         )
 
     if note_version == "2":
@@ -334,11 +332,10 @@ def parse_reward_payment_transaction(txn):
             reward_asset_id=reward_asset_id,
             transfer_amount=transfer_amount,
             staker_address=staker_address,
-            date_format=date_format
         )
 
 
-def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address, date_format):
+def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address):
     if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "rewards"} <= set(payment_data):
         return
 
@@ -350,7 +347,7 @@ def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, 
 
     try:
         distribution_date, pool_address = payment_data["distribution"].split("_")
-        distribution_date = datetime.strptime(distribution_date, date_format).date()
+        distribution_date = datetime.strptime(distribution_date, DATE_FORMAT).date()
     except ValueError:
         return
 
@@ -369,7 +366,7 @@ def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, 
     try:
         for cycle, reward_amount in payment_data["rewards"]:
             rewards.append({
-                "cycle": datetime.strptime(cycle, date_format).date(),
+                "cycle": datetime.strptime(cycle, DATE_FORMAT).date(),
                 "amount": int(reward_amount)
             })
     except ValueError:
@@ -396,7 +393,7 @@ def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, 
     return result
 
 
-def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address, date_format):
+def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address):
     if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "program_id", "distribution_date", "first_cycle", "last_cycle"} <= set(payment_data):
         return
 
@@ -425,9 +422,9 @@ def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, 
         return
 
     try:
-        distribution_date = datetime.strptime(distribution_date, date_format).date()
-        first_cycle = datetime.strptime(payment_data["first_cycle"], date_format).date()
-        last_cycle = datetime.strptime(payment_data["last_cycle"], date_format).date()
+        distribution_date = datetime.strptime(distribution_date, DATE_FORMAT).date()
+        first_cycle = datetime.strptime(payment_data["first_cycle"], DATE_FORMAT).date()
+        last_cycle = datetime.strptime(payment_data["last_cycle"], DATE_FORMAT).date()
     except ValueError:
         return
 

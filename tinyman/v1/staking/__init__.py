@@ -399,6 +399,8 @@ def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, 
 
     try:
         pool_asset_id, program_id, distribution_date = payment_data["distribution"].split("_")
+        pool_asset_id = int(pool_asset_id)
+        program_id = int(program_id)
     except ValueError:
         return
 
@@ -409,16 +411,6 @@ def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, 
         return
 
     if distribution_date != payment_data["distribution_date"]:
-        return
-
-    try:
-        pool_asset_id = int(pool_asset_id)
-    except ValueError:
-        return
-
-    try:
-        program_id = int(program_id)
-    except ValueError:
         return
 
     try:
@@ -436,7 +428,7 @@ def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, 
         "distribution": payment_data["distribution"],
         "distribution_date": distribution_date,
         "program_id": program_id,
-        "program_address": txn["sender"],
+        "program_distribution_address": txn["sender"],
         "staker_address": staker_address,
         "pool_address": payment_data["pool_address"],
         "pool_name": payment_data["pool_name"],

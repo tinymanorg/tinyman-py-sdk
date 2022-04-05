@@ -297,7 +297,10 @@ def parse_reward_payment_transaction(txn):
         return
 
     note = b64decode(txn['note'])
-    note_version = get_note_version(note)
+    try:
+        note_version = get_note_version(note)
+    except ValueError:
+        return
     note_prefix = f"tinymanStaking/v{note_version}:j"
 
     try:

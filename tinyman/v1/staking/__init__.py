@@ -223,14 +223,14 @@ def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amoun
         raise NotImplementedError()
 
 
-def prepare_reward_metadata_for_payment(distribution_date: str, program_id: str, pool_address: str, pool_asset_id: int, pool_name: str, first_cycle: str, last_cycle: str):
+def prepare_reward_metadata_for_payment(distribution_date: str, program_id: int, pool_address: str, pool_asset_id: int, pool_name: str, first_cycle: str, last_cycle: str):
     data = {
         "rewards": {
             "distribution": f"{pool_asset_id}_{program_id}_{distribution_date}",
             "pool_address": pool_address,
             "distribution_date": distribution_date,
-            "pool_asset_id": pool_asset_id,
-            "program_id": program_id,
+            "pool_asset_id": int(pool_asset_id),
+            "program_id": int(program_id),
             "pool_name": pool_name,
             "first_cycle": first_cycle,
             "last_cycle": last_cycle,

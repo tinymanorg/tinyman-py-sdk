@@ -1,4 +1,5 @@
 import json
+import re
 from base64 import b64decode, b64encode
 from datetime import datetime
 from hashlib import sha256
@@ -9,6 +10,7 @@ from algosdk.encoding import is_valid_address
 from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
 
 from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes, timestamp_to_date_str
+from tinyman.v1.staking.constants import DATE_FORMAT
 
 
 def prepare_create_transaction(args, sender, suggested_params):
@@ -38,7 +40,7 @@ def prepare_update_transaction(app_id: int, sender, suggested_params):
     return TransactionGroup([txn])
 
 
-def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount:int, reward_asset_id:int , sender, suggested_params):
+def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount: int, reward_asset_id: int, sender, suggested_params):
     txn = ApplicationNoOpTxn(
         index=app_id,
         sender=sender,
@@ -65,11 +67,11 @@ def parse_commit_transaction(txn, app_id: int):
                 result['pooler'] = txn['sender']
                 result['program_address'] = app_call['accounts'][0]
                 result['pool_asset_id'] = app_call['foreign-assets'][0]
-                result['program_id'] = int.from_bytes(b64decode(note)[19:19+8], 'big')
+                result['program_id'] = int.from_bytes(b64decode(note)[19:19 + 8], 'big')
                 result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
                 result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
                 return result
-            except Exception as e:
+            except Exception:
                 return
     return
 
@@ -100,7 +102,7 @@ def parse_program_update_transaction(txn, app_id: int):
                 state = apply_delta({}, local_delta)
                 result = parse_program_state(txn['sender'], state)
                 return result
-            except Exception as e:
+            except Exception:
                 return
     return
 
@@ -181,7 +183,7 @@ def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, s
         amounts = reward_amounts_dict[start_time]
         r[i][0] = start_time
         for j, x in enumerate(amounts):
-            r[i][j+1] = x
+            r[i][j + 1] = x
 
     txn = ApplicationNoOpTxn(
         index=app_id,
@@ -218,38 +220,68 @@ def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amoun
         )
         return txn
     else:
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
-def prepare_reward_metadata_for_payment(distribution_date: str, cycles_rewards: List[List], pool_address: int, pool_asset_id: int, pool_name: str):
+def prepare_reward_metadata_for_payment(distribution_date: str, program_id: int, pool_address: str, pool_asset_id: int, pool_name: str, first_cycle: str, last_cycle: str):
     data = {
         "rewards": {
-            "distribution": distribution_date + '_' + pool_address,
+            "distribution": f"{pool_asset_id}_{program_id}_{distribution_date}",
             "pool_address": pool_address,
-            "pool_asset_id": pool_asset_id,
+            "distribution_date": distribution_date,
+            "pool_asset_id": int(pool_asset_id),
+            "program_id": int(program_id),
             "pool_name": pool_name,
-            "rewards": [[str(cycle), str(amount)] for (cycle, amount) in cycles_rewards],
+            "first_cycle": first_cycle,
+            "last_cycle": last_cycle,
         },
     }
     return data
 
 
 def generate_note_from_metadata(metadata):
-    note = b'tinymanStaking/v1:j' + json.dumps(metadata, sort_keys=True).encode()
+    note = b'tinymanStaking/v2:j' + json.dumps(metadata, sort_keys=True).encode()
     return note
 
 
 def get_note_prefix_for_distribution(distribution_date, pool_address):
-    metadata = prepare_reward_metadata_for_payment(distribution_date, cycles_rewards=[], pool_address=pool_address, pool_asset_id=None, pool_name=None)
+    metadata = prepare_reward_metadata_for_payment(distribution_date, program_id=None, pool_address=pool_address, pool_asset_id=None, pool_name=None, first_cycle=None, last_cycle=None)
     note = generate_note_from_metadata(metadata)
-    prefix = note.split(b', "pool_address"')[0]
+    prefix = note.split(b', "distribution_date"')[0]
     return prefix
 
 
-def parse_reward_payment_transaction(txn):
-    prefix = "tinymanStaking/v1:j"
-    date_format = "%Y%m%d"
+def get_note_version(note):
+    assert isinstance(note, (bytes, str))
 
+    if isinstance(note, bytes):
+        note = note.decode()
+
+    m = re.match(r"^tinymanStaking/v(?P<version>\w+):j.*", note)
+    if m is None:
+        raise ValueError("Invalid note.")
+
+    version = m.group("version")
+    assert version in ["1", "2"]
+    return version
+
+
+def get_reward_metadata_from_note(note: str):
+    assert isinstance(note, (bytes, str))
+
+    if isinstance(note, bytes):
+        note = note.decode()
+
+    m = re.match(r"^tinymanStaking/v(?P<version>\w+):j(?P<metadata>.*)", note)
+    if m is None:
+        raise ValueError("Invalid note.")
+
+    metadata = m.group("metadata")
+    metadata = json.loads(metadata)
+    return metadata
+
+
+def parse_reward_payment_transaction(txn):
     if "note" not in txn:
         return
 
@@ -266,14 +298,20 @@ def parse_reward_payment_transaction(txn):
 
     note = b64decode(txn['note'])
     try:
+        note_version = get_note_version(note)
+    except ValueError:
+        return
+    note_prefix = f"tinymanStaking/v{note_version}:j"
+
+    try:
         note = note.decode()
     except UnicodeDecodeError:
         return
 
-    if not note.startswith(prefix):
+    if not note.startswith(note_prefix):
         return
 
-    data = json.loads(note.lstrip(prefix))
+    data = json.loads(note.lstrip(note_prefix))
     if "rewards" not in data:
         return
 
@@ -281,6 +319,26 @@ def parse_reward_payment_transaction(txn):
     if not isinstance(payment_data, dict):
         return
 
+    if note_version == "1":
+        return _parse_reward_payment_transaction_v1(
+            payment_data=payment_data,
+            txn=txn,
+            reward_asset_id=reward_asset_id,
+            transfer_amount=transfer_amount,
+            staker_address=staker_address,
+        )
+
+    if note_version == "2":
+        return _parse_reward_payment_transaction_v2(
+            payment_data=payment_data,
+            txn=txn,
+            reward_asset_id=reward_asset_id,
+            transfer_amount=transfer_amount,
+            staker_address=staker_address,
+        )
+
+
+def _parse_reward_payment_transaction_v1(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address):
     if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "rewards"} <= set(payment_data):
         return
 
@@ -292,7 +350,7 @@ def parse_reward_payment_transaction(txn):
 
     try:
         distribution_date, pool_address = payment_data["distribution"].split("_")
-        distribution_date = datetime.strptime(distribution_date, date_format).date()
+        distribution_date = datetime.strptime(distribution_date, DATE_FORMAT).date()
     except ValueError:
         return
 
@@ -311,7 +369,7 @@ def parse_reward_payment_transaction(txn):
     try:
         for cycle, reward_amount in payment_data["rewards"]:
             rewards.append({
-                "cycle": datetime.strptime(cycle, date_format).date(),
+                "cycle": datetime.strptime(cycle, DATE_FORMAT).date(),
                 "amount": int(reward_amount)
             })
     except ValueError:
@@ -323,6 +381,8 @@ def parse_reward_payment_transaction(txn):
         return
 
     result = {
+        "version": "1",
+        "distribution": payment_data["distribution"],
         "distribution_date": distribution_date,
         "program_address": txn["sender"],
         "staker_address": staker_address,
@@ -330,8 +390,55 @@ def parse_reward_payment_transaction(txn):
         "pool_name": payment_data["pool_name"],
         "pool_asset_id": pool_asset_id,
         "reward_asset_id": reward_asset_id,
+        "total_amount": transfer_amount,
         "rewards": rewards,
     }
     return result
 
 
+def _parse_reward_payment_transaction_v2(*, payment_data, txn, reward_asset_id, transfer_amount, staker_address):
+    if not {"distribution", "pool_address", "pool_name", "pool_asset_id", "program_id", "distribution_date", "first_cycle", "last_cycle"} <= set(payment_data):
+        return
+
+    try:
+        pool_asset_id, program_id, distribution_date = payment_data["distribution"].split("_")
+        pool_asset_id = int(pool_asset_id)
+        program_id = int(program_id)
+    except ValueError:
+        return
+
+    if pool_asset_id != payment_data["pool_asset_id"]:
+        return
+
+    if program_id != payment_data["program_id"]:
+        return
+
+    if distribution_date != payment_data["distribution_date"]:
+        return
+
+    try:
+        distribution_date = datetime.strptime(distribution_date, DATE_FORMAT).date()
+        first_cycle = datetime.strptime(payment_data["first_cycle"], DATE_FORMAT).date()
+        last_cycle = datetime.strptime(payment_data["last_cycle"], DATE_FORMAT).date()
+    except ValueError:
+        return
+
+    if not is_valid_address(payment_data["pool_address"]):
+        return
+
+    result = {
+        "version": "2",
+        "distribution": payment_data["distribution"],
+        "distribution_date": distribution_date,
+        "program_id": program_id,
+        "program_distribution_address": txn["sender"],
+        "staker_address": staker_address,
+        "pool_address": payment_data["pool_address"],
+        "pool_name": payment_data["pool_name"],
+        "pool_asset_id": pool_asset_id,
+        "reward_asset_id": reward_asset_id,
+        "total_amount": transfer_amount,
+        "first_cycle": first_cycle,
+        "last_cycle": last_cycle,
+    }
+    return result

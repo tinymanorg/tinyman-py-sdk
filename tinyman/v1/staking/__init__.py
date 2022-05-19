@@ -5,9 +5,9 @@ from datetime import datetime
 from hashlib import sha256
 from typing import List
 
-from algosdk.constants import payment_txn, assettransfer_txn
+from algosdk.constants import PAYMENT_TXN, ASSETTRANSFER_TXN
 from algosdk.encoding import is_valid_address
-from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn
+from algosdk.future.transaction import ApplicationClearStateTxn, ApplicationCreateTxn, ApplicationOptInTxn, OnComplete, PaymentTxn, StateSchema, ApplicationUpdateTxn, ApplicationNoOpTxn, AssetTransferTxn
 
 from tinyman.utils import TransactionGroup, apply_delta, bytes_to_int_list, int_list_to_bytes, int_to_bytes, timestamp_to_date_str
 from tinyman.v1.staking.constants import DATE_FORMAT
@@ -40,13 +40,13 @@ def prepare_update_transaction(app_id: int, sender, suggested_params):
     return TransactionGroup([txn])
 
 
-def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount: int, reward_asset_id: int, sender, suggested_params):
+def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount: int, sender, suggested_params):
     txn = ApplicationNoOpTxn(
         index=app_id,
         sender=sender,
         sp=suggested_params,
         app_args=['commit', int_to_bytes(amount)],
-        foreign_assets=[pool_asset_id, reward_asset_id],
+        foreign_assets=[pool_asset_id],
         accounts=[program_account],
         note=b'tinymanStaking/v1:b' + int_to_bytes(program_id) + int_to_bytes(pool_asset_id) + int_to_bytes(amount)
     )
@@ -234,7 +234,16 @@ def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amoun
         )
         return txn
     else:
-        raise NotImplementedError()
+        txn = AssetTransferTxn(
+            sender=sender,
+            sp=suggested_params,
+            receiver=staker_address,
+            index=reward_asset_id,
+            amt=amount,
+            note=note,
+            lease=lease,
+        )
+        return txn
 
 
 def prepare_reward_metadata_for_payment(distribution_date: str, program_id: int, pool_address: str, pool_asset_id: int, pool_name: str, first_cycle: str, last_cycle: str):
@@ -299,11 +308,11 @@ def parse_reward_payment_transaction(txn):
     if "note" not in txn:
         return
 
-    if txn["tx-type"] == payment_txn:
+    if txn["tx-type"] == PAYMENT_TXN:
         reward_asset_id = 0
         staker_address = txn["payment-transaction"]["receiver"]
         transfer_amount = txn["payment-transaction"]["amount"]
-    elif txn["tx-type"] == assettransfer_txn:
+    elif txn["tx-type"] == ASSETTRANSFER_TXN:
         reward_asset_id = txn["asset-transfer-transaction"]["asset-id"]
         staker_address = txn["asset-transfer-transaction"]["receiver"]
         transfer_amount = txn["asset-transfer-transaction"]["amount"]

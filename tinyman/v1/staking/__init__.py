@@ -70,6 +70,7 @@ def parse_commit_transaction(txn, app_id: int):
                 result['program_id'] = int.from_bytes(b64decode(note)[19:19 + 8], 'big')
                 result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
                 result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
+                result['round'] = txn['confirmed-round']
                 return result
             except Exception:
                 return

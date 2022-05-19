@@ -203,6 +203,19 @@ def prepare_update_rewards_transaction(app_id: int, reward_amounts_dict: dict, s
     return TransactionGroup([txn])
 
 
+def prepare_end_program_transaction(app_id: int, end_time: int, sender, suggested_params):
+    txn = ApplicationNoOpTxn(
+        index=app_id,
+        sender=sender,
+        sp=suggested_params,
+        app_args=[
+            'end_program',
+            int_to_bytes(end_time),
+        ],
+    )
+    return TransactionGroup([txn])
+
+
 def prepare_payment_transaction(staker_address: str, reward_asset_id: int, amount: int, metadata: dict, sender, suggested_params):
     note = generate_note_from_metadata(metadata)
     # Compose a lease key from the distribution key (date, pool_address) and staker_address

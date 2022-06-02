@@ -3,7 +3,7 @@ import re
 from base64 import b64decode, b64encode
 from datetime import datetime
 from hashlib import sha256
-from typing import List
+from typing import List, Optional
 
 from algosdk.constants import PAYMENT_TXN, ASSETTRANSFER_TXN
 from algosdk.encoding import is_valid_address
@@ -40,8 +40,8 @@ def prepare_update_transaction(app_id: int, sender, suggested_params):
     return TransactionGroup([txn])
 
 
-def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount: int, sender, suggested_params):
-    txn = ApplicationNoOpTxn(
+def prepare_commit_transaction(app_id: int, program_id: int, program_account: str, pool_asset_id: int, amount: int, sender: str, suggested_params, required_asset_id: Optional[int] = None):
+    commitment_txn = ApplicationNoOpTxn(
         index=app_id,
         sender=sender,
         sp=suggested_params,
@@ -50,7 +50,19 @@ def prepare_commit_transaction(app_id: int, program_id: int, program_account: st
         accounts=[program_account],
         note=b'tinymanStaking/v1:b' + int_to_bytes(program_id) + int_to_bytes(pool_asset_id) + int_to_bytes(amount)
     )
-    return TransactionGroup([txn])
+    transactions = [commitment_txn]
+
+    if required_asset_id is not None:
+        nft_log_balance_txn = ApplicationNoOpTxn(
+            index=app_id,
+            sender=sender,
+            sp=suggested_params,
+            app_args=['log_balance'],
+            foreign_assets=[required_asset_id],
+        )
+        transactions.append(nft_log_balance_txn)
+
+    return TransactionGroup(transactions)
 
 
 def parse_commit_transaction(txn, app_id: int):
@@ -69,6 +81,26 @@ def parse_commit_transaction(txn, app_id: int):
                 result['pool_asset_id'] = app_call['foreign-assets'][0]
                 result['program_id'] = int.from_bytes(b64decode(note)[19:19 + 8], 'big')
                 result['amount'] = int.from_bytes(b64decode(app_call['application-args'][1]), 'big')
+                result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
+                result['round'] = txn['confirmed-round']
+                return result
+            except Exception:
+                return
+    return
+
+
+def parse_log_balance_transaction(txn, app_id: int):
+    if txn.get('application-transaction'):
+        app_call = txn['application-transaction']
+        if app_call['on-completion'] != 'noop':
+            return
+        if app_call['application-id'] != app_id:
+            return
+        if app_call['application-args'][0] == b64encode(b'log_balance').decode():
+            result = {}
+            try:
+                result['pooler'] = txn['sender']
+                result['asset_id'] = app_call['foreign-assets'][0]
                 result['balance'] = int.from_bytes(b64decode(txn['logs'][0])[8:], 'big')
                 result['round'] = txn['confirmed-round']
                 return result

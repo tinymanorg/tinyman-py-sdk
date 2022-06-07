@@ -21,7 +21,7 @@ account = {
 }
 
 
-algod = AlgodClient('', 'https://api.testnet.algoexplorer.io', headers={'User-Agent': 'algosdk'})
+algod = AlgodClient('<TOKEN>', 'http://localhost:8080', headers={'User-Agent': 'algosdk'})
 
 client = TinymanClient(
     algod_client=algod,

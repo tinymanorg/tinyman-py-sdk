@@ -52,7 +52,7 @@ def sign_and_submit_transactions(client, transactions, signed_transactions, send
             signed_transactions[i] = txn.sign(sender_sk)
     
     txid = client.send_transactions(signed_transactions)
-    return wait_for_confirmation(client, txid)
+    return wait_for_confirmation_algosdk(client, txid)
 
 
 def wait_for_confirmation(client, txid):
@@ -108,7 +108,7 @@ class TransactionGroup:
         except AlgodHTTPError as e:
             raise Exception(str(e))
         if wait:
-            return wait_for_confirmation(algod, txid)
+            return wait_for_confirmation_algosdk(algod, txid)
         return {'txid': txid}
 
 

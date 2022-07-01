@@ -1,7 +1,9 @@
 from base64 import b64decode, b64encode
-from algosdk.future.transaction import LogicSigTransaction, assign_group_id
+import warnings
+from algosdk.future.transaction import LogicSigTransaction, assign_group_id, wait_for_confirmation as wait_for_confirmation_algosdk
 from algosdk.error import AlgodHTTPError
 
+warnings.simplefilter('always', DeprecationWarning)
 
 def get_program(definition, variables=None):
     """
@@ -55,18 +57,11 @@ def sign_and_submit_transactions(client, transactions, signed_transactions, send
 
 def wait_for_confirmation(client, txid):
     """
-    Utility function to wait until the transaction is
-    confirmed before proceeding.
+    Deprecated.
+    Use algosdk if you are importing wait_for_confirmation individually.
     """
-    last_round = client.status().get('last-round')
-    txinfo = client.pending_transaction_info(txid)
-    while not (txinfo.get('confirmed-round') and txinfo.get('confirmed-round') > 0):
-        print("Waiting for confirmation")
-        last_round += 1
-        client.status_after_block(last_round)
-        txinfo = client.pending_transaction_info(txid)
-    txinfo['txid'] = txid
-    print("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')))
+    warnings.warn('tinyman.utils.wait_for_confirmation is deprecated. Use algosdk.future.transaction.wait_for_confirmation instead if you are importing individually.', DeprecationWarning, stacklevel=2)
+    txinfo = wait_for_confirmation_algosdk(client, txid)
     return txinfo
 
 

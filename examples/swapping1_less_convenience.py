@@ -37,7 +37,7 @@ if(not client.is_opted_in(account['address'])):
         if txn.sender == account['address']:
             transaction_group.signed_transactions[i] = txn.sign(account['private_key'])
     txid = client.algod.send_transactions(transaction_group.signed_transactions)
-    wait_for_confirmation(txid)
+    wait_for_confirmation(algod, txid)
 
 
 # Fetch our two assets of interest

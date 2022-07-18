@@ -3,7 +3,7 @@ from base64 import b64decode
 from algosdk.v2client.algod import AlgodClient
 from algosdk.error import AlgodHTTPError
 from algosdk.encoding import encode_address
-from tinyman.utils import wait_for_confirmation
+from algosdk.future.transaction import wait_for_confirmation
 from tinyman.assets import Asset, AssetAmount
 from .optin import prepare_app_optin_transactions,prepare_asset_optin_transactions
 from .constants import TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID, TESTNET_STAKING_APP_ID, MAINNET_STAKING_APP_ID
@@ -97,16 +97,12 @@ class TinymanClient:
 
 
 class TinymanTestnetClient(TinymanClient):
-    def __init__(self, algod_client=None, user_address=None):
-        if algod_client is None:
-            algod_client = AlgodClient('', 'https://api.testnet.algoexplorer.io', headers={'User-Agent': 'algosdk'})
+    def __init__(self, algod_client: AlgodClient, user_address=None):
         super().__init__(algod_client, validator_app_id=TESTNET_VALIDATOR_APP_ID, user_address=user_address, staking_app_id=TESTNET_STAKING_APP_ID)
 
 
 class TinymanMainnetClient(TinymanClient):
-    def __init__(self, algod_client=None, user_address=None):
-        if algod_client is None:
-            algod_client = AlgodClient('', 'https://api.algoexplorer.io', headers={'User-Agent': 'algosdk'})
+    def __init__(self, algod_client: AlgodClient, user_address=None):
         super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID, user_address=user_address, staking_app_id=MAINNET_STAKING_APP_ID)
 
 

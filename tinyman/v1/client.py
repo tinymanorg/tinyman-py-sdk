@@ -1,21 +1,22 @@
-import json
 from base64 import b64decode
-from algosdk.v2client.algod import AlgodClient
-from algosdk.error import AlgodHTTPError
+
 from algosdk.encoding import encode_address
 from algosdk.future.transaction import wait_for_confirmation
+from algosdk.v2client.algod import AlgodClient
 from tinyman.assets import Asset, AssetAmount
-from .optin import prepare_app_optin_transactions,prepare_asset_optin_transactions
-from .constants import TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID, TESTNET_STAKING_APP_ID, MAINNET_STAKING_APP_ID
+
+from .constants import MAINNET_STAKING_APP_ID, MAINNET_VALIDATOR_APP_ID, TESTNET_STAKING_APP_ID, TESTNET_VALIDATOR_APP_ID
+from .optin import prepare_app_optin_transactions, prepare_asset_optin_transactions
+
 
 class TinymanClient:
-    def __init__(self, algod_client: AlgodClient, validator_app_id: int, user_address=None, staking_app_id: int=None):
+    def __init__(self, algod_client: AlgodClient, validator_app_id: int, user_address=None, staking_app_id: int = None):
         self.algod = algod_client
         self.validator_app_id = validator_app_id
         self.staking_app_id = staking_app_id
         self.assets_cache = {}
         self.user_address = user_address
-    
+
     def fetch_pool(self, asset1, asset2, fetch=True):
         from .pools import Pool
         return Pool(self, asset1, asset2, fetch=fetch)
@@ -26,7 +27,6 @@ class TinymanClient:
             asset.fetch(self.algod)
             self.assets_cache[asset_id] = asset
         return self.assets_cache[asset_id]
-
 
     def submit(self, transaction_group, wait=False):
         txid = self.algod.send_transactions(transaction_group.signed_transactions)
@@ -78,7 +78,7 @@ class TinymanClient:
                 pools[pool_address][asset] = AssetAmount(asset, value)
 
         return pools
-    
+
     def is_opted_in(self, user_address=None):
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
@@ -91,7 +91,7 @@ class TinymanClient:
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
         for a in account_info.get('assets', []):
-            if a['asset-id']==asset_id:
+            if a['asset-id'] == asset_id:
                 return True
         return False
 

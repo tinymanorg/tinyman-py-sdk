@@ -1,10 +1,10 @@
 import math
 from dataclasses import dataclass
-from base64 import b64encode, b64decode
+from base64 import b64encode
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
 from .contracts import get_pool_logicsig
-from tinyman.utils import get_state_int, get_state_bytes
+from tinyman.utils import get_state_int
 from tinyman.assets import Asset, AssetAmount
 from .swap import prepare_swap_transactions
 from .bootstrap import prepare_bootstrap_transactions
@@ -14,7 +14,6 @@ from .redeem import prepare_redeem_transactions
 from .optin import prepare_asset_optin_transactions
 from .fees import prepare_redeem_fees_transactions
 from .client import TinymanClient
-from tinyman.v1 import swap
 
 
 def get_pool_info(client: AlgodClient, validator_app_id, asset1_id, asset2_id):
@@ -164,7 +163,7 @@ class Pool:
             self.refresh()
         elif info is not None:
             self.update_from_info(info)
-    
+
     @classmethod
     def from_account_info(cls, account_info, client=None):
         info = get_pool_info_from_account_info(account_info)
@@ -177,7 +176,7 @@ class Pool:
             if not info:
                 return
         self.update_from_info(info)
-    
+
     def update_from_info(self, info):
         if info['liquidity_asset_id'] is not None:
             self.exists = True
@@ -195,11 +194,11 @@ class Pool:
         self.min_balance = self.get_minimum_balance()
         if self.asset2.id == 0:
             self.asset2_reserves = (self.algo_balance - self.min_balance) - self.outstanding_asset2_amount
-    
+
     def get_logicsig(self):
         pool_logicsig = get_pool_logicsig(self.validator_app_id, self.asset1.id, self.asset2.id)
         return pool_logicsig
-    
+
     @property
     def address(self):
         logicsig = self.get_logicsig()
@@ -239,8 +238,8 @@ class Pool:
             return AssetAmount(self.asset2, int(amount.amount * self.asset1_price))
         elif amount.asset == self.asset2:
             return AssetAmount(self.asset1, int(amount.amount * self.asset2_price))
-    
-    def fetch_mint_quote(self, amount_a: AssetAmount, amount_b: AssetAmount=None, slippage=0.05):
+
+    def fetch_mint_quote(self, amount_a: AssetAmount, amount_b: AssetAmount = None, slippage=0.05):
         amount1 = amount_a if amount_a.asset == self.asset1 else amount_b
         amount2 = amount_a if amount_a.asset == self.asset2 else amount_b
         self.refresh()
@@ -257,7 +256,7 @@ class Pool:
                 amount1.amount * self.issued_liquidity / self.asset1_reserves,
                 amount2.amount * self.issued_liquidity / self.asset2_reserves,
             )
-        else: # first mint
+        else:   # first mint
             if not amount1 or not amount2:
                 raise Exception('Amounts required for both assets for first mint!')
             liquidity_asset_amount = math.sqrt(amount1.amount * amount2.amount) - 1000
@@ -305,9 +304,9 @@ class Pool:
 
         if not input_supply or not output_supply:
             raise Exception('Pool has no liquidity!')
-        
+
         # k = input_supply * output_supply
-        # ignoring fees, k must remain constant 
+        # ignoring fees, k must remain constant
         # (input_supply + asset_in) * (output_supply - amount_out) = k
         k = input_supply * output_supply
         asset_in_amount_minus_fee = (asset_in_amount * 997) / 1000
@@ -336,14 +335,14 @@ class Pool:
             asset_in = self.asset1
             input_supply = self.asset1_reserves
             output_supply = self.asset2_reserves
-        
+
         # k = input_supply * output_supply
-        # ignoring fees, k must remain constant 
+        # ignoring fees, k must remain constant
         # (input_supply + asset_in) * (output_supply - amount_out) = k
         k = input_supply * output_supply
 
         calculated_amount_in_without_fee = (k / (output_supply - asset_out_amount)) - input_supply
-        asset_in_amount = calculated_amount_in_without_fee * 1000/997
+        asset_in_amount = calculated_amount_in_without_fee * 1000 / 997
         swap_fees = asset_in_amount - calculated_amount_in_without_fee
 
         amount_in = AssetAmount(asset_in, int(asset_in_amount))
@@ -368,13 +367,13 @@ class Pool:
             liquidity_asset_id=self.liquidity_asset.id,
             asset_in_id=amount_in.asset.id,
             asset_in_amount=amount_in.amount,
-            asset_out_amount=amount_out.amount, 
-            swap_type=swap_type, 
+            asset_out_amount=amount_out.amount,
+            swap_type=swap_type,
             sender=swapper_address,
             suggested_params=suggested_params,
         )
         return txn_group
-    
+
     def prepare_swap_transactions_from_quote(self, quote: SwapQuote, swapper_address=None):
         return self.prepare_swap_transactions(
             amount_in=quote.amount_in_with_slippage,
@@ -473,7 +472,7 @@ class Pool:
             suggested_params=suggested_params,
         )
         return txn_group
-    
+
     def prepare_redeem_fees_transactions(self, amount, creator, user_address=None):
         user_address = user_address or self.client.user_address
         suggested_params = self.client.algod.suggested_params()
@@ -503,17 +502,17 @@ class Pool:
         total_byteslices = 0
 
         total = MIN_BALANCE_PER_ACCOUNT + \
-        (MIN_BALANCE_PER_ASSET * num_assets) + \
-        (MIN_BALANCE_PER_APP * (num_created_apps + num_local_apps)) + \
-        (MIN_BALANCE_PER_APP_UINT * total_uints) + \
-        (MIN_BALANCE_PER_APP_BYTESLICE * total_byteslices)
+            (MIN_BALANCE_PER_ASSET * num_assets) + \
+            (MIN_BALANCE_PER_APP * (num_created_apps + num_local_apps)) + \
+            (MIN_BALANCE_PER_APP_UINT * total_uints) + \
+            (MIN_BALANCE_PER_APP_BYTESLICE * total_byteslices)
         return total
 
     def fetch_excess_amounts(self, user_address=None):
         user_address = user_address or self.client.user_address
         pool_excess = self.client.fetch_excess_amounts(user_address).get(self.address, {})
         return pool_excess
-    
+
     def fetch_pool_position(self, pooler_address=None):
         pooler_address = pooler_address or self.client.user_address
         account_info = self.client.algod.account_info(pooler_address)
@@ -530,7 +529,7 @@ class Pool:
     def fetch_state(self, key=None):
         account_info = self.client.algod.account_info(self.address)
         try:
-            validator_app_id = account_info['apps-local-state'][0]['id']
+            account_info['apps-local-state'][0]['id']    # validator_app_id
         except IndexError:
             return {}
         validator_app_state = {x['key']: x['value'] for x in account_info['apps-local-state'][0]['key-value']}
@@ -539,4 +538,3 @@ class Pool:
             return get_state_int(validator_app_state, key)
         else:
             return validator_app_state
-

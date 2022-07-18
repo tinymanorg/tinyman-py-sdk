@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
+
 @dataclass
 class Asset:
     id: int
@@ -10,7 +11,7 @@ class Asset:
 
     def __call__(self, amount: int) -> "AssetAmount":
         return AssetAmount(self, amount)
-    
+
     def __hash__(self) -> int:
         return self.id
 

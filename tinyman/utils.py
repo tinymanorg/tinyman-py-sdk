@@ -52,7 +52,9 @@ def sign_and_submit_transactions(client, transactions, signed_transactions, send
             signed_transactions[i] = txn.sign(sender_sk)
     
     txid = client.send_transactions(signed_transactions)
-    return wait_for_confirmation_algosdk(client, txid)
+    txinfo = wait_for_confirmation_algosdk(client, txid)
+    txinfo["txid"] = txid
+    return txinfo
 
 
 def wait_for_confirmation(client, txid):
@@ -62,6 +64,7 @@ def wait_for_confirmation(client, txid):
     """
     warnings.warn('tinyman.utils.wait_for_confirmation is deprecated. Use algosdk.future.transaction.wait_for_confirmation instead if you are importing individually.', DeprecationWarning, stacklevel=2)
     txinfo = wait_for_confirmation_algosdk(client, txid)
+    txinfo["txid"] = txid
     return txinfo
 
 
@@ -108,7 +111,9 @@ class TransactionGroup:
         except AlgodHTTPError as e:
             raise Exception(str(e))
         if wait:
-            return wait_for_confirmation_algosdk(algod, txid)
+            txinfo = wait_for_confirmation_algosdk(algod, txid)
+            txinfo["txid"] = txid
+            return txinfo
         return {'txid': txid}
 
 

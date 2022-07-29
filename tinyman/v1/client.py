@@ -30,7 +30,9 @@ class TinymanClient:
     def submit(self, transaction_group, wait=False):
         txid = self.algod.send_transactions(transaction_group.signed_transactions)
         if wait:
-            return wait_for_confirmation(self.algod, txid)
+            txinfo = wait_for_confirmation(self.algod, txid)
+            txinfo["txid"] = txid
+            return txinfo
         return {'txid': txid}
 
     def prepare_app_optin_transactions(self, user_address=None):

@@ -84,6 +84,7 @@ class SwapQuote:
     amount_out: AssetAmount
     swap_fees: int
     slippage: float
+    price_impact: float
 
     @property
     def amount_out_with_slippage(self) -> AssetAmount:
@@ -316,12 +317,17 @@ class Pool:
 
         amount_out = AssetAmount(asset_out, int(asset_out_amount))
 
+        swap_price = amount_out.amount / amount_in.amount
+        pool_price = output_supply / input_supply
+        price_impact = abs(round((swap_price / pool_price) - 1, 5))
+
         quote = SwapQuote(
             swap_type='fixed-input',
             amount_in=amount_in,
             amount_out=amount_out,
             swap_fees=AssetAmount(amount_in.asset, int(swap_fees)),
             slippage=slippage,
+            price_impact=price_impact
         )
         return quote
 
@@ -348,12 +354,17 @@ class Pool:
 
         amount_in = AssetAmount(asset_in, int(asset_in_amount))
 
+        swap_price = amount_out.amount / amount_in.amount
+        pool_price = output_supply / input_supply
+        price_impact = abs(round((swap_price / pool_price) - 1, 5))
+
         quote = SwapQuote(
             swap_type='fixed-output',
             amount_out=amount_out,
             amount_in=amount_in,
             swap_fees=AssetAmount(amount_in.asset, int(swap_fees)),
             slippage=slippage,
+            price_impact=price_impact
         )
 
         return quote

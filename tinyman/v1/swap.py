@@ -4,13 +4,24 @@ from tinyman.utils import TransactionGroup
 from .contracts import get_pool_logicsig
 
 
-def prepare_swap_transactions(validator_app_id, asset1_id, asset2_id, liquidity_asset_id, asset_in_id, asset_in_amount, asset_out_amount, swap_type, sender, suggested_params):
+def prepare_swap_transactions(
+    validator_app_id,
+    asset1_id,
+    asset2_id,
+    liquidity_asset_id,
+    asset_in_id,
+    asset_in_amount,
+    asset_out_amount,
+    swap_type,
+    sender,
+    suggested_params,
+):
     pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, asset2_id)
     pool_address = pool_logicsig.address()
 
     swap_types = {
-        'fixed-input': 'fi',
-        'fixed-output': 'fo',
+        "fixed-input": "fi",
+        "fixed-output": "fo",
     }
 
     asset_out_id = asset2_id if asset_in_id == asset1_id else asset1_id
@@ -21,15 +32,17 @@ def prepare_swap_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             sp=suggested_params,
             receiver=pool_address,
             amt=2000,
-            note='fee',
+            note="fee",
         ),
         ApplicationNoOpTxn(
             sender=pool_address,
             sp=suggested_params,
             index=validator_app_id,
-            app_args=['swap', swap_types[swap_type]],
+            app_args=["swap", swap_types[swap_type]],
             accounts=[sender],
-            foreign_assets=[asset1_id, liquidity_asset_id] if asset2_id == 0 else [asset1_id, asset2_id, liquidity_asset_id],
+            foreign_assets=[asset1_id, liquidity_asset_id]
+            if asset2_id == 0
+            else [asset1_id, asset2_id, liquidity_asset_id],
         ),
         AssetTransferTxn(
             sender=sender,
@@ -37,7 +50,9 @@ def prepare_swap_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             receiver=pool_address,
             amt=int(asset_in_amount),
             index=asset_in_id,
-        ) if asset_in_id != 0 else PaymentTxn(
+        )
+        if asset_in_id != 0
+        else PaymentTxn(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
@@ -49,7 +64,9 @@ def prepare_swap_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             receiver=sender,
             amt=int(asset_out_amount),
             index=asset_out_id,
-        ) if asset_out_id != 0 else PaymentTxn(
+        )
+        if asset_out_id != 0
+        else PaymentTxn(
             sender=pool_address,
             sp=suggested_params,
             receiver=sender,

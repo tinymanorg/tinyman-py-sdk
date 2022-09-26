@@ -4,7 +4,17 @@ from tinyman.utils import TransactionGroup
 from .contracts import get_pool_logicsig
 
 
-def prepare_burn_transactions(validator_app_id, asset1_id, asset2_id, liquidity_asset_id, asset1_amount, asset2_amount, liquidity_asset_amount, sender, suggested_params):
+def prepare_burn_transactions(
+    validator_app_id,
+    asset1_id,
+    asset2_id,
+    liquidity_asset_id,
+    asset1_amount,
+    asset2_amount,
+    liquidity_asset_amount,
+    sender,
+    suggested_params,
+):
     pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, asset2_id)
     pool_address = pool_logicsig.address()
 
@@ -14,15 +24,17 @@ def prepare_burn_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             sp=suggested_params,
             receiver=pool_address,
             amt=3000,
-            note='fee',
+            note="fee",
         ),
         ApplicationNoOpTxn(
             sender=pool_address,
             sp=suggested_params,
             index=validator_app_id,
-            app_args=['burn'],
+            app_args=["burn"],
             accounts=[sender],
-            foreign_assets=[asset1_id, liquidity_asset_id] if asset2_id == 0 else [asset1_id, asset2_id, liquidity_asset_id],
+            foreign_assets=[asset1_id, liquidity_asset_id]
+            if asset2_id == 0
+            else [asset1_id, asset2_id, liquidity_asset_id],
         ),
         AssetTransferTxn(
             sender=pool_address,
@@ -37,7 +49,9 @@ def prepare_burn_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             receiver=sender,
             amt=int(asset2_amount),
             index=asset2_id,
-        ) if asset2_id != 0 else PaymentTxn(
+        )
+        if asset2_id != 0
+        else PaymentTxn(
             sender=pool_address,
             sp=suggested_params,
             receiver=sender,

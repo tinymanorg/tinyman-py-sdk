@@ -4,11 +4,22 @@ from algosdk.encoding import encode_address
 from algosdk.future.transaction import wait_for_confirmation
 from tinyman.assets import Asset, AssetAmount
 from .optin import prepare_app_optin_transactions, prepare_asset_optin_transactions
-from .constants import TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID, TESTNET_STAKING_APP_ID, MAINNET_STAKING_APP_ID
+from .constants import (
+    TESTNET_VALIDATOR_APP_ID,
+    MAINNET_VALIDATOR_APP_ID,
+    TESTNET_STAKING_APP_ID,
+    MAINNET_STAKING_APP_ID,
+)
 
 
 class TinymanClient:
-    def __init__(self, algod_client: AlgodClient, validator_app_id: int, user_address=None, staking_app_id: int = None):
+    def __init__(
+        self,
+        algod_client: AlgodClient,
+        validator_app_id: int,
+        user_address=None,
+        staking_app_id: int = None,
+    ):
         self.algod = algod_client
         self.validator_app_id = validator_app_id
         self.staking_app_id = staking_app_id
@@ -17,6 +28,7 @@ class TinymanClient:
 
     def fetch_pool(self, asset1, asset2, fetch=True):
         from .pools import Pool
+
         return Pool(self, asset1, asset2, fetch=fetch)
 
     def fetch_asset(self, asset_id):
@@ -32,7 +44,7 @@ class TinymanClient:
             txinfo = wait_for_confirmation(self.algod, txid)
             txinfo["txid"] = txid
             return txinfo
-        return {'txid': txid}
+        return {"txid": txid}
 
     def prepare_app_optin_transactions(self, user_address=None):
         user_address = user_address or self.user_address
@@ -58,22 +70,28 @@ class TinymanClient:
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
         try:
-            validator_app = [a for a in account_info['apps-local-state'] if a['id'] == self.validator_app_id][0]
+            validator_app = [
+                a
+                for a in account_info["apps-local-state"]
+                if a["id"] == self.validator_app_id
+            ][0]
         except IndexError:
             return {}
         try:
-            validator_app_state = {x['key']: x['value'] for x in validator_app['key-value']}
+            validator_app_state = {
+                x["key"]: x["value"] for x in validator_app["key-value"]
+            }
         except KeyError:
             return {}
 
         pools = {}
         for key in validator_app_state:
             b = b64decode(key.encode())
-            if b[-9:-8] == b'e':
-                value = validator_app_state[key]['uint']
+            if b[-9:-8] == b"e":
+                value = validator_app_state[key]["uint"]
                 pool_address = encode_address(b[:-9])
                 pools[pool_address] = pools.get(pool_address, {})
-                asset_id = int.from_bytes(b[-8:], 'big')
+                asset_id = int.from_bytes(b[-8:], "big")
                 asset = self.fetch_asset(asset_id)
                 pools[pool_address][asset] = AssetAmount(asset, value)
 
@@ -82,25 +100,35 @@ class TinymanClient:
     def is_opted_in(self, user_address=None):
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
-        for a in account_info.get('apps-local-state', []):
-            if a['id'] == self.validator_app_id:
+        for a in account_info.get("apps-local-state", []):
+            if a["id"] == self.validator_app_id:
                 return True
         return False
 
     def asset_is_opted_in(self, asset_id, user_address=None):
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
-        for a in account_info.get('assets', []):
-            if a['asset-id'] == asset_id:
+        for a in account_info.get("assets", []):
+            if a["asset-id"] == asset_id:
                 return True
         return False
 
 
 class TinymanTestnetClient(TinymanClient):
     def __init__(self, algod_client: AlgodClient, user_address=None):
-        super().__init__(algod_client, validator_app_id=TESTNET_VALIDATOR_APP_ID, user_address=user_address, staking_app_id=TESTNET_STAKING_APP_ID)
+        super().__init__(
+            algod_client,
+            validator_app_id=TESTNET_VALIDATOR_APP_ID,
+            user_address=user_address,
+            staking_app_id=TESTNET_STAKING_APP_ID,
+        )
 
 
 class TinymanMainnetClient(TinymanClient):
     def __init__(self, algod_client: AlgodClient, user_address=None):
-        super().__init__(algod_client, validator_app_id=MAINNET_VALIDATOR_APP_ID, user_address=user_address, staking_app_id=MAINNET_STAKING_APP_ID)
+        super().__init__(
+            algod_client,
+            validator_app_id=MAINNET_VALIDATOR_APP_ID,
+            user_address=user_address,
+            staking_app_id=MAINNET_STAKING_APP_ID,
+        )

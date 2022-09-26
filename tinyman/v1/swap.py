@@ -1,6 +1,3 @@
-import base64
-from os import name
-import algosdk
 from algosdk.future.transaction import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn
 
 from tinyman.utils import TransactionGroup
@@ -40,7 +37,7 @@ def prepare_swap_transactions(validator_app_id, asset1_id, asset2_id, liquidity_
             receiver=pool_address,
             amt=int(asset_in_amount),
             index=asset_in_id,
-        ) if asset_in_id != 0  else PaymentTxn(
+        ) if asset_in_id != 0 else PaymentTxn(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,

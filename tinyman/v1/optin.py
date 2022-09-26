@@ -1,7 +1,4 @@
-import base64
-import algosdk
 from algosdk.future.transaction import ApplicationOptInTxn, AssetOptInTxn
-from algosdk.v2client.algod import AlgodClient
 
 from tinyman.utils import TransactionGroup
 

@@ -1,6 +1,3 @@
-import base64
-from os import name
-import algosdk
 from algosdk.future.transaction import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn
 
 from tinyman.utils import TransactionGroup

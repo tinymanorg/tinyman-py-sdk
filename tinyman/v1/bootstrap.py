@@ -1,8 +1,4 @@
-import base64
-from os import name
-import algosdk
 from algosdk.future.transaction import ApplicationOptInTxn, PaymentTxn, AssetCreateTxn, AssetOptInTxn
-from algosdk.v2client.algod import AlgodClient
 
 from tinyman.utils import int_to_bytes, TransactionGroup
 from .contracts import get_pool_logicsig

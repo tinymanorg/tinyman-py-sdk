@@ -12,7 +12,7 @@ from algosdk.v2client.algod import AlgodClient
 # See the README & Docs for alternative signing methods.
 account = {
     'address': 'ALGORAND_ADDRESS_HERE',
-    'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
+    'private_key': 'base64_private_key_here',   # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
 }
 
 algod = AlgodClient('<TOKEN>', 'http://localhost:8080', headers={'User-Agent': 'algosdk'})

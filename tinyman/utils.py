@@ -6,6 +6,7 @@ from algosdk.error import AlgodHTTPError
 
 warnings.simplefilter('always', DeprecationWarning)
 
+
 def get_program(definition, variables=None):
     """
     Return a byte array to be used in LogicSig.
@@ -51,7 +52,7 @@ def sign_and_submit_transactions(client, transactions, signed_transactions, send
     for i, txn in enumerate(transactions):
         if txn.sender == sender:
             signed_transactions[i] = txn.sign(sender_sk)
-    
+
     txid = client.send_transactions(signed_transactions)
     txinfo = wait_for_confirmation_algosdk(client, txid)
     txinfo["txid"] = txid
@@ -143,10 +144,10 @@ class TransactionGroup:
         transactions = assign_group_id(transactions)
         self.transactions = transactions
         self.signed_transactions = [None for _ in self.transactions]
-    
+
     def sign(self, user):
         user.sign_transaction_group(self)
-    
+
     def sign_with_logicisg(self, logicsig):
         address = logicsig.address()
         for i, txn in enumerate(self.transactions):
@@ -157,7 +158,7 @@ class TransactionGroup:
         for i, txn in enumerate(self.transactions):
             if txn.sender == address:
                 self.signed_transactions[i] = txn.sign(private_key)
-    
+
     def submit(self, algod, wait=False):
         try:
             txid = algod.send_transactions(self.signed_transactions)
@@ -168,5 +169,3 @@ class TransactionGroup:
             txinfo["txid"] = txid
             return txinfo
         return {'txid': txid}
-
-

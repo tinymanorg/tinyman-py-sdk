@@ -10,7 +10,7 @@ from tinyman.v1.staking import prepare_commit_transaction
 # See the README & Docs for alternative signing methods.
 account = {
     'address': 'ALGORAND_ADDRESS_HERE',
-    'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
+    'private_key': 'base64_private_key_here',   # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
 }
 
 client = TinymanTestnetClient(user_address=account['address'])
@@ -38,5 +38,3 @@ txn_group = prepare_commit_transaction(
 txn_group.sign_with_private_key(account['address'], account['private_key'])
 result = client.submit(txn_group, wait=True)
 print(result)
-
-

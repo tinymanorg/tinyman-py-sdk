@@ -1,14 +1,11 @@
 from base64 import b64decode, b64encode
-import warnings
 from datetime import datetime
 from algosdk.future.transaction import (
     LogicSigTransaction,
     assign_group_id,
-    wait_for_confirmation as wait_for_confirmation_algosdk,
+    wait_for_confirmation,
 )
 from algosdk.error import AlgodHTTPError
-
-warnings.simplefilter("always", DeprecationWarning)
 
 
 def get_program(definition, variables=None):
@@ -60,22 +57,7 @@ def sign_and_submit_transactions(
             signed_transactions[i] = txn.sign(sender_sk)
 
     txid = client.send_transactions(signed_transactions)
-    txinfo = wait_for_confirmation_algosdk(client, txid)
-    txinfo["txid"] = txid
-    return txinfo
-
-
-def wait_for_confirmation(client, txid):
-    """
-    Deprecated.
-    Use algosdk if you are importing wait_for_confirmation individually.
-    """
-    warnings.warn(
-        "tinyman.utils.wait_for_confirmation is deprecated. Use algosdk.future.transaction.wait_for_confirmation instead if you are importing individually.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    txinfo = wait_for_confirmation_algosdk(client, txid)
+    txinfo = wait_for_confirmation(client, txid)
     txinfo["txid"] = txid
     return txinfo
 
@@ -174,7 +156,7 @@ class TransactionGroup:
         except AlgodHTTPError as e:
             raise Exception(str(e))
         if wait:
-            txinfo = wait_for_confirmation_algosdk(algod, txid)
+            txinfo = wait_for_confirmation(algod, txid)
             txinfo["txid"] = txid
             return txinfo
         return {"txid": txid}

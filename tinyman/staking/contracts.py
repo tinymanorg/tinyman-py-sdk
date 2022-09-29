@@ -1,7 +1,7 @@
 import importlib.resources
 import json
 
-import tinyman.v1.staking
+import tinyman.staking
 
 _contracts = json.loads(importlib.resources.read_text(tinyman.v1.staking, "asc.json"))
 

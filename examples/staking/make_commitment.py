@@ -4,7 +4,7 @@
 
 from tinyman.v1.client import TinymanTestnetClient
 
-from tinyman.v1.staking import prepare_commit_transaction
+from tinyman.staking import prepare_commit_transaction
 
 # Hardcoding account keys is not a great practice. This is for demonstration purposes only.
 # See the README & Docs for alternative signing methods.

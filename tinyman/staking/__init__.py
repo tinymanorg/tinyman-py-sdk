@@ -27,7 +27,7 @@ from tinyman.utils import (
     int_to_bytes,
     timestamp_to_date_str,
 )
-from tinyman.v1.staking.constants import DATE_FORMAT
+from tinyman.staking.constants import DATE_FORMAT
 
 
 def prepare_create_transaction(args, sender, suggested_params):

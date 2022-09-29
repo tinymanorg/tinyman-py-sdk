@@ -48,7 +48,7 @@ print(f'TINYUSDC per ALGO (worst case): {quote.price_with_slippage}')
 ## Examples
 
 ### Basic Swapping
-[swapping1.py](examples/swapping1.py)
+[swapping1.py](examples/v1/swapping1.py)
 This example demonstrates basic functionality including:
 * retrieving Pool details
 * getting a swap quote
@@ -58,16 +58,16 @@ This example demonstrates basic functionality including:
 * checking excess amounts
 * preparing redeem transactions
 
-[swapping1_less_convenience.py](examples/swapping1_less_convenience.py)
-This example has exactly the same functionality as [swapping1.py](examples/swapping1.py) but is purposely more verbose, using less convenience functions.
+[swapping1_less_convenience.py](examples/v1/swapping1_less_convenience.py)
+This example has exactly the same functionality as [swapping1.py](examples/v1/swapping1.py) but is purposely more verbose, using less convenience functions.
 
 
 ### Basic Pooling
-[pooling1.py](examples/pooling1.py)
+[pooling1.py](examples/v1/pooling1.py)
 This example demonstrates retrieving the current pool position/share for an address.
 
 ### Basic Add Liquidity (Minting)
-[add_liquidity1.py](examples/add_liquidity1.py)
+[add_liquidity1.py](examples/v1/add_liquidity1.py)
 This example demonstrates add liquidity to an existing pool.
 
 ### Basic Burning

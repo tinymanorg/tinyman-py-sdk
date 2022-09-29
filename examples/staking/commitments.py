@@ -1,5 +1,5 @@
 import requests
-from tinyman.v1.staking import parse_commit_transaction
+from tinyman.staking import parse_commit_transaction
 
 app_id = 51948952
 result = requests.get(

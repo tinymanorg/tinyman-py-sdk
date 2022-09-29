@@ -8,28 +8,6 @@ from algosdk.future.transaction import (
 from algosdk.error import AlgodHTTPError
 
 
-def get_program(definition, variables=None):
-    """
-    Return a byte array to be used in LogicSig.
-    """
-    template = definition["bytecode"]
-    template_bytes = list(b64decode(template))
-
-    offset = 0
-    for v in sorted(definition["variables"], key=lambda v: v["index"]):
-        name = v["name"].split("TMPL_")[-1].lower()
-        value = variables[name]
-        start = v["index"] - offset
-        end = start + v["length"]
-        value_encoded = encode_value(value, v["type"])
-        value_encoded_len = len(value_encoded)
-        diff = v["length"] - value_encoded_len
-        offset += diff
-        template_bytes[start:end] = list(value_encoded)
-
-    return bytes(template_bytes)
-
-
 def encode_value(value, type):
     if type == "int":
         return encode_varint(value)
@@ -71,6 +49,8 @@ def int_list_to_bytes(nums):
 
 
 def bytes_to_int(b):
+    if type(b) == str:
+        b = b64decode(b)
     return int.from_bytes(b, "big")
 
 
@@ -130,14 +110,30 @@ def timestamp_to_date_str(t):
     return d.strftime("%Y-%m-%d")
 
 
+def calculate_price_impact(
+    input_supply, output_supply, swap_input_amount, swap_output_amount
+):
+    swap_price = swap_output_amount / swap_input_amount
+    pool_price = output_supply / input_supply
+    price_impact = abs(round((swap_price / pool_price) - 1, 5))
+    return price_impact
+
+
 class TransactionGroup:
     def __init__(self, transactions):
         transactions = assign_group_id(transactions)
         self.transactions = transactions
         self.signed_transactions = [None for _ in self.transactions]
 
-    def sign(self, user):
-        user.sign_transaction_group(self)
+    @property
+    def id(self):
+        try:
+            byte_group_id = self.transactions[0].group
+        except IndexError:
+            return
+
+        group_id = b64encode(byte_group_id).decode("utf-8")
+        return group_id
 
     def sign_with_logicisg(self, logicsig):
         address = logicsig.address()
@@ -160,3 +156,9 @@ class TransactionGroup:
             txinfo["txid"] = txid
             return txinfo
         return {"txid": txid}
+
+    def __add__(self, other):
+        transactions = self.transactions + other.transactions
+        for txn in transactions:
+            txn.group = None
+        return TransactionGroup(transactions)

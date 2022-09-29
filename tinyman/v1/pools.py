@@ -11,7 +11,7 @@ from .bootstrap import prepare_bootstrap_transactions
 from .mint import prepare_mint_transactions
 from .burn import prepare_burn_transactions
 from .redeem import prepare_redeem_transactions
-from .optin import prepare_asset_optin_transactions
+from tinyman.optin import prepare_asset_optin_transactions
 from .fees import prepare_redeem_fees_transactions
 from .client import TinymanClient
 

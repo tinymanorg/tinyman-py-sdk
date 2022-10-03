@@ -57,11 +57,10 @@ class InternalSwapQuote:
 
 
 @dataclass
-class AddLiquidityQuote:
+class FlexibleAddLiquidityQuote:
     amounts_in: dict[Asset, AssetAmount]
     pool_token_asset_amount: AssetAmount
     slippage: float
-    initial: bool = False
     internal_swap_quote: InternalSwapQuote = None
 
     @property
@@ -69,6 +68,26 @@ class AddLiquidityQuote:
         return self.pool_token_asset_amount.amount - math.ceil(
             self.pool_token_asset_amount.amount * self.slippage
         )
+
+
+@dataclass
+class SingleAssetAddLiquidityQuote:
+    amount_in: AssetAmount
+    pool_token_asset_amount: AssetAmount
+    slippage: float
+    internal_swap_quote: InternalSwapQuote = None
+
+    @property
+    def min_pool_token_asset_amount_with_slippage(self) -> int:
+        return self.pool_token_asset_amount.amount - math.ceil(
+            self.pool_token_asset_amount.amount * self.slippage
+        )
+
+
+@dataclass
+class InitialAddLiquidityQuote:
+    amounts_in: dict[Asset, AssetAmount]
+    pool_token_asset_amount: AssetAmount
 
 
 @dataclass

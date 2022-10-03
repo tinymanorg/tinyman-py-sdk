@@ -27,6 +27,13 @@ account = get_account()
 algod = get_algod()
 client = TinymanV2TestnetClient(algod_client=algod, user_address=account["address"])
 
+account_info = algod.account_info(account["address"])
+if not account_info["amount"]:
+    print(
+        f"Go to https://bank.testnet.algorand.network/?account={account['address']} and fund your account."
+    )
+    exit(1)
+
 ASSET_A_ID = create_asset(algod, account["address"], account["private_key"])
 ASSET_B_ID = create_asset(algod, account["address"], account["private_key"])
 

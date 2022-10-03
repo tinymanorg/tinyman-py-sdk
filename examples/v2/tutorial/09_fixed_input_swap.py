@@ -19,15 +19,11 @@ ASSET_A = client.fetch_asset(ASSET_A_ID)
 ASSET_B = client.fetch_asset(ASSET_B_ID)
 pool = client.fetch_pool(ASSET_A_ID, ASSET_B_ID)
 
-assert pool.exists, "Pool has not been bootstrapped yet!"
-assert pool.issued_pool_tokens, "Pool has no liquidity"
-
 position = pool.fetch_pool_position()
 amount_in = AssetAmount(pool.asset_1, 1_000_000)
 
 quote = pool.fetch_fixed_input_swap_quote(
     amount_in=amount_in,
-    slippage=0,  # TODO: 0.05
 )
 
 print("\nSwap Quote:")
@@ -38,7 +34,7 @@ txn_group = pool.prepare_swap_transactions_from_quote(quote=quote)
 # Sign
 txn_group.sign_with_private_key(account["address"], account["private_key"])
 
-# Submit
+# Submit transactions to the network and wait for confirmation
 txinfo = txn_group.submit(algod, wait=True)
 print("Transaction Info")
 pprint(txinfo)

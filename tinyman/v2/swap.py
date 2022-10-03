@@ -24,7 +24,7 @@ def prepare_swap_transactions(
     swap_type: [str, bytes],
     sender: str,
     suggested_params: SuggestedParams,
-):
+) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
 

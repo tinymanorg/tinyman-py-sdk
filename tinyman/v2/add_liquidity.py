@@ -27,7 +27,7 @@ def prepare_flexible_add_liquidity_transactions(
     min_pool_token_asset_amount: int,
     sender: str,
     suggested_params: SuggestedParams,
-):
+) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
 
@@ -85,7 +85,7 @@ def prepare_single_asset_add_liquidity_transactions(
     suggested_params: SuggestedParams,
     asset_1_amount: Optional[int] = None,
     asset_2_amount: Optional[int] = None,
-):
+) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
 
@@ -102,7 +102,7 @@ def prepare_single_asset_add_liquidity_transactions(
         asset_in_amount = asset_2_amount
 
     else:
-        raise Exception("Invalid asset_1_amount and asset_2_amount")
+        assert False
 
     txns = [
         AssetTransferTxn(
@@ -150,7 +150,7 @@ def prepare_initial_add_liquidity_transactions(
     asset_2_amount: int,
     sender: str,
     suggested_params: SuggestedParams,
-):
+) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
 

@@ -18,7 +18,7 @@ def prepare_bootstrap_transactions(
     app_call_fee: int,
     required_algo: int,
     suggested_params: SuggestedParams,
-):
+) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
     assert asset_1_id > asset_2_id

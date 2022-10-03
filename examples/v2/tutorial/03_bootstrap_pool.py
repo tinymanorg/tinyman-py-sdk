@@ -12,18 +12,24 @@ account = get_account()
 algod = get_algod()
 client = TinymanV2TestnetClient(algod_client=algod, user_address=account["address"])
 
+# Fetch assets
 ASSET_A_ID, ASSET_B_ID = get_assets()["ids"]
-
 ASSET_A = client.fetch_asset(ASSET_A_ID)
 ASSET_B = client.fetch_asset(ASSET_B_ID)
 
-
+# Fetch the pool
 pool = client.fetch_pool(ASSET_A_ID, ASSET_B_ID)
 print(pool)
 
+# Get transaction group
 txn_group = pool.prepare_bootstrap_transactions()
+
+# Sign
 txn_group.sign_with_private_key(account["address"], account["private_key"])
+
+# Submit transactions to the network and wait for confirmation
 txinfo = txn_group.submit(algod, wait=True)
+
 print("Transaction Info")
 pprint(txinfo)
 

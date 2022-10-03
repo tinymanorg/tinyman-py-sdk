@@ -1,9 +1,7 @@
 import math
 
-from tinyman.assets import AssetAmount
 from tinyman.utils import calculate_price_impact
 from tinyman.v2.constants import LOCKED_POOL_TOKENS
-from tinyman.v2.quotes import InternalSwapQuote
 
 
 def calculate_protocol_fee_amount(
@@ -32,14 +30,14 @@ def calculate_fixed_output_fee_amounts(swap_amount: int, total_fee_share: int) -
     return total_fee_amount
 
 
-def get_internal_swap_fee_amount(swap_amount, total_fee_share) -> int:
+def calculate_internal_swap_fee_amount(swap_amount: int, total_fee_share: int) -> int:
     total_fee_amount = int((swap_amount * total_fee_share) / (10_000 - total_fee_share))
     return total_fee_amount
 
 
-def get_initial_add_liquidity(asset_1_amount, asset_2_amount) -> int:
-    assert (
-        not asset_1_amount or not asset_2_amount
+def calculate_initial_add_liquidity(asset_1_amount: int, asset_2_amount: int) -> int:
+    assert bool(asset_1_amount) and bool(
+        asset_2_amount
     ), "Both assets are required for the initial add liquidity"
 
     pool_token_asset_amount = (
@@ -49,7 +47,10 @@ def get_initial_add_liquidity(asset_1_amount, asset_2_amount) -> int:
 
 
 def calculate_remove_liquidity_output_amounts(
-    pool_token_asset_amount, asset_1_reserves, asset_2_reserves, issued_pool_tokens
+    pool_token_asset_amount: int,
+    asset_1_reserves: int,
+    asset_2_reserves: int,
+    issued_pool_tokens: int,
 ) -> (int, int):
     asset_1_output_amount = int(
         (pool_token_asset_amount * asset_1_reserves) / issued_pool_tokens
@@ -60,17 +61,25 @@ def calculate_remove_liquidity_output_amounts(
     return asset_1_output_amount, asset_2_output_amount
 
 
-def get_subsequent_add_liquidity(pool, asset_1_amount, asset_2_amount):
-    # TODO: Remove pool input and don't return quote here.
-    old_k = pool.asset_1_reserves * pool.asset_2_reserves
-    new_asset_1_reserves = pool.asset_1_reserves + asset_1_amount
-    new_asset_2_reserves = pool.asset_2_reserves + asset_2_amount
+def calculate_subsequent_add_liquidity(
+    asset_1_reserves: int,
+    asset_2_reserves: int,
+    issued_pool_tokens: int,
+    total_fee_share: int,
+    asset_1_amount: int,
+    asset_2_amount: int,
+) -> (int, bool, int, int, int, float):
+    assert asset_1_reserves and asset_2_reserves and issued_pool_tokens
+
+    old_k = asset_1_reserves * asset_2_reserves
+    new_asset_1_reserves = asset_1_reserves + asset_1_amount
+    new_asset_2_reserves = asset_2_reserves + asset_2_amount
     new_k = new_asset_1_reserves * new_asset_2_reserves
     new_issued_pool_tokens = int(
-        math.sqrt(int((new_k * (pool.issued_pool_tokens**2)) / old_k))
+        math.sqrt(int((new_k * (issued_pool_tokens**2)) / old_k))
     )
 
-    pool_token_asset_amount = new_issued_pool_tokens - pool.issued_pool_tokens
+    pool_token_asset_amount = new_issued_pool_tokens - issued_pool_tokens
     calculated_asset_1_amount = int(
         (pool_token_asset_amount * new_asset_1_reserves) / new_issued_pool_tokens
     )
@@ -84,53 +93,50 @@ def get_subsequent_add_liquidity(pool, asset_1_amount, asset_2_amount):
     if asset_1_swap_amount > asset_2_swap_amount:
         swap_in_amount_without_fee = asset_1_swap_amount
         swap_out_amount = -min(asset_2_swap_amount, 0)
-        swap_in_asset = pool.asset_1
-        swap_out_asset = pool.asset_2
+        swap_from_asset_1_to_asset_2 = True
 
-        total_fee_amount = get_internal_swap_fee_amount(
+        swap_total_fee_amount = calculate_internal_swap_fee_amount(
             swap_in_amount_without_fee,
-            pool.total_fee_share,
+            total_fee_share,
         )
         fee_as_pool_tokens = int(
-            total_fee_amount * new_issued_pool_tokens / (new_asset_1_reserves * 2)
+            swap_total_fee_amount * new_issued_pool_tokens / (new_asset_1_reserves * 2)
         )
-        swap_in_amount = swap_in_amount_without_fee + total_fee_amount
+        swap_in_amount = swap_in_amount_without_fee + swap_total_fee_amount
         pool_token_asset_amount = pool_token_asset_amount - fee_as_pool_tokens
     else:
         swap_in_amount_without_fee = asset_2_swap_amount
         swap_out_amount = -min(asset_1_swap_amount, 0)
-        swap_in_asset = pool.asset_2
-        swap_out_asset = pool.asset_1
+        swap_from_asset_1_to_asset_2 = False
 
-        total_fee_amount = get_internal_swap_fee_amount(
+        swap_total_fee_amount = calculate_internal_swap_fee_amount(
             swap_in_amount_without_fee,
-            pool.total_fee_share,
+            total_fee_share,
         )
         fee_as_pool_tokens = int(
-            total_fee_amount * new_issued_pool_tokens / (new_asset_2_reserves * 2)
+            swap_total_fee_amount * new_issued_pool_tokens / (new_asset_2_reserves * 2)
         )
-        swap_in_amount = swap_in_amount_without_fee + total_fee_amount
+        swap_in_amount = swap_in_amount_without_fee + swap_total_fee_amount
         pool_token_asset_amount = pool_token_asset_amount - fee_as_pool_tokens
 
-    price_impact = calculate_price_impact(
-        input_supply=pool.asset_1_reserves
-        if swap_in_asset == pool.asset_1
-        else pool.asset_2_reserves,
-        output_supply=pool.asset_1_reserves
-        if swap_out_asset == pool.asset_1
-        else pool.asset_2_reserves,
+    swap_price_impact = calculate_price_impact(
+        input_supply=asset_1_reserves
+        if swap_from_asset_1_to_asset_2
+        else asset_2_reserves,
+        output_supply=asset_2_reserves
+        if swap_from_asset_1_to_asset_2
+        else asset_1_reserves,
         swap_input_amount=swap_in_amount,
         swap_output_amount=swap_out_amount,
     )
-
-    internal_swap_quote = InternalSwapQuote(
-        amount_in=AssetAmount(swap_in_asset, swap_in_amount),
-        amount_out=AssetAmount(swap_out_asset, swap_out_amount),
-        swap_fees=AssetAmount(swap_in_asset, int(total_fee_amount)),
-        price_impact=price_impact,
+    return (
+        pool_token_asset_amount,
+        swap_from_asset_1_to_asset_2,
+        swap_in_amount,
+        swap_out_amount,
+        swap_total_fee_amount,
+        swap_price_impact,
     )
-
-    return pool_token_asset_amount, internal_swap_quote
 
 
 def calculate_output_amount_of_fixed_input_swap(
@@ -173,7 +179,7 @@ def calculate_fixed_input_swap(
 
 def calculate_fixed_output_swap(
     input_supply: int, output_supply: int, swap_output_amount: int, total_fee_share: int
-):
+) -> (int, int, float):
     swap_amount = calculate_swap_amount_of_fixed_output_swap(
         input_supply, output_supply, swap_output_amount
     )

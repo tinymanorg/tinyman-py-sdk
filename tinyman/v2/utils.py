@@ -1,7 +1,7 @@
 from base64 import b64decode
 
 
-def decode_logs(logs):
+def decode_logs(logs: list[[bytes, str]]) -> dict:
     decoded_logs = dict()
     for log in logs:
         if type(log) == str:

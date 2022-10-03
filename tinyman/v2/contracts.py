@@ -14,7 +14,9 @@ pool_logicsig_def = _contracts["contracts"]["pool_logicsig"]["logic"]
 # validator_app_def = _contracts["contracts"]["validator_app"]
 
 
-def get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id):
+def get_pool_logicsig(
+    validator_app_id: int, asset_1_id: int, asset_2_id: int
+) -> LogicSigAccount:
     assets = [asset_1_id, asset_2_id]
     asset_1_id = max(assets)
     asset_2_id = min(assets)

@@ -31,9 +31,9 @@ class BaseTinymanClient:
     def submit(self, transaction_group, wait=False):
         txid = self.algod.send_transactions(transaction_group.signed_transactions)
         if wait:
-            txinfo = wait_for_confirmation(self.algod, txid)
-            txinfo["txid"] = txid
-            return txinfo
+            txn_info = wait_for_confirmation(self.algod, txid)
+            txn_info["txid"] = txid
+            return txn_info
         return {"txid": txid}
 
     def prepare_asset_optin_transactions(

@@ -6,10 +6,10 @@ import os
 
 from examples.v2.tutorial.common import (
     get_account,
-    get_algod,
     get_assets_file_path,
     create_asset,
 )
+from examples.v2.utils import get_algod
 from tinyman.v2.client import TinymanV2TestnetClient
 
 

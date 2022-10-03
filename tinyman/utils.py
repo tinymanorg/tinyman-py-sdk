@@ -35,9 +35,9 @@ def sign_and_submit_transactions(
             signed_transactions[i] = txn.sign(sender_sk)
 
     txid = client.send_transactions(signed_transactions)
-    txinfo = wait_for_confirmation(client, txid)
-    txinfo["txid"] = txid
-    return txinfo
+    txn_info = wait_for_confirmation(client, txid)
+    txn_info["txid"] = txid
+    return txn_info
 
 
 def int_to_bytes(num):
@@ -152,9 +152,9 @@ class TransactionGroup:
         except AlgodHTTPError as e:
             raise Exception(str(e))
         if wait:
-            txinfo = wait_for_confirmation(algod, txid)
-            txinfo["txid"] = txid
-            return txinfo
+            txn_info = wait_for_confirmation(algod, txid)
+            txn_info["txid"] = txid
+            return txn_info
         return {"txid": txid}
 
     def __add__(self, other):

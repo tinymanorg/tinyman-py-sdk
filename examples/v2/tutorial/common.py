@@ -5,7 +5,6 @@ import random
 from pprint import pprint
 
 from algosdk.future.transaction import AssetCreateTxn, wait_for_confirmation
-from algosdk.v2client.algod import AlgodClient
 
 
 def get_account_file_path(filename="account.json"):
@@ -40,13 +39,6 @@ def get_assets(filename="assets.json"):
         raise Exception("Please run generate_account.py to generate a test account.")
 
     return assets
-
-
-def get_algod():
-    # return AlgodClient(
-    #     "<TOKEN>", "http://localhost:8080", headers={"User-Agent": "algosdk"}
-    # )
-    return AlgodClient("", "https://testnet-api.algonode.network")
 
 
 def create_asset(algod, sender, private_key):

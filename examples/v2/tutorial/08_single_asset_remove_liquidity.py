@@ -4,7 +4,8 @@
 from pprint import pprint
 from urllib.parse import quote_plus
 
-from examples.v2.tutorial.common import get_account, get_algod, get_assets
+from examples.v2.tutorial.common import get_account, get_assets
+from examples.v2.utils import get_algod
 from tinyman.v2.client import TinymanV2TestnetClient
 
 
@@ -23,7 +24,6 @@ pool_token_asset_in = position[pool.pool_token_asset].amount // 8
 quote = pool.fetch_single_asset_remove_liquidity_quote(
     pool_token_asset_in=pool_token_asset_in,
     output_asset=pool.asset_1,
-    slippage=0,  # TODO: 0.05
 )
 
 print("\nSingle Asset Remove Liquidity Quote:")
@@ -35,9 +35,9 @@ txn_group = pool.prepare_remove_liquidity_transactions_from_quote(quote=quote)
 txn_group.sign_with_private_key(account["address"], account["private_key"])
 
 # Submit transactions to the network and wait for confirmation
-txinfo = txn_group.submit(algod, wait=True)
+txn_info = txn_group.submit(algod, wait=True)
 print("Transaction Info")
-pprint(txinfo)
+pprint(txn_info)
 
 print(
     f"Check the transaction group on Algoexplorer: https://testnet.algoexplorer.io/tx/group/{quote_plus(txn_group.id)}"

@@ -52,19 +52,19 @@ You can find a tutorial under the `examples/v2/tutorial` folder.
 To run a step use `python <file_name>` such as `python 01_generate_account.py`.
 
 #### Prerequisites
-1. Generating an account (`01_generate_account.py`)
-2. Creating 2 assets (`02_create_assets.by`)
+1. [Generating an account](examples/v2/01_generate_account.py)
+2. [Creating assets](examples/v2/02_create_assets.by)
 
 #### Steps
 
-3. Bootstrapping a pool (`03_bootstrap_pool.py`)
-4. Adding initial liquidity to the pool (`04_add_initial_liquidity.py`)
-5. Adding flexible (add two asset with a flexible rate) liquidity to the pool (`05_add_flexible_liquidity.py`)
-6. Adding single asset (add only one asset) liquidity to the pool(`06_add_single_asset_liquidity.py`)
-7. Removing liquidity to the pool(`07_remove_liquidity.py`)
-8. Removing single asset (receive single asset) liquidity to the pool(`08_single_asset_remove_liquidity.py`)
-9. Swapping fixed-input (`09_fixed_input_swap.py`)
-10. Swapping fixed-output (`10_fixed_output_swap.py`)
+3. [Bootstrapping a pool](examples/v2/03_bootstrap_pool.py)
+4. [Adding initial liquidity to the pool](examples/v2/04_add_initial_liquidity.py)
+5. [Adding flexible (add two asset with a flexible rate) liquidity to the pool](examples/v2/05_add_flexible_liquidity.py)
+6. [Adding single asset (add only one asset) liquidity to the pool](examples/v2/06_add_single_asset_liquidity.py)
+7. [Removing liquidity to the pool](examples/v2/07_remove_liquidity.py)
+8. [Removing single asset(receive single asset) liquidity to the pool](examples/v2/08_single_asset_remove_liquidity.py)
+9. [Swapping fixed-input](examples/v2/09_fixed_input_swap.py)
+10. [Swapping fixed-output](examples/v2/10_fixed_output_swap.py)
 
 ## Example Operations
 

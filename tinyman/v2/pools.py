@@ -5,7 +5,7 @@ from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset, AssetAmount
 from tinyman.optin import prepare_asset_optin_transactions
-from tinyman.utils import get_state_int, get_state_bytes, bytes_to_int, TransactionGroup
+from tinyman.utils import TransactionGroup
 from .add_liquidity import (
     prepare_initial_add_liquidity_transactions,
     prepare_single_asset_add_liquidity_transactions,
@@ -45,6 +45,16 @@ from .remove_liquidity import (
     prepare_single_asset_remove_liquidity_transactions,
 )
 from .swap import prepare_swap_transactions
+from .utils import get_state_from_account_info
+
+
+def generate_pool_info(address, validator_app_id, round_number, state):
+    return {
+        "address": address,
+        "validator_app_id": validator_app_id,
+        "round": round_number,
+        **state,
+    }
 
 
 def get_pool_info(
@@ -53,72 +63,25 @@ def get_pool_info(
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
     account_info = client.account_info(pool_address)
-    return get_pool_info_from_account_info(account_info)
+    pool_state = get_pool_state_from_account_info(account_info)
+    if pool_state:
+        generate_pool_info(
+            pool_address, validator_app_id, account_info["round"], pool_state
+        )
+    return {}
 
 
-def get_pool_info_from_account_info(account_info: dict) -> dict:
+def get_validator_app_id_from_account_info(account_info: dict) -> Optional[int]:
     try:
-        validator_app_id = account_info["apps-local-state"][0]["id"]
+        return account_info["apps-local-state"][0]["id"]
     except IndexError:
-        return {}
-    validator_app_state = {
-        x["key"]: x["value"] for x in account_info["apps-local-state"][0]["key-value"]
-    }
+        return None
 
-    asset_1_id = get_state_int(validator_app_state, "asset_1_id")
-    asset_2_id = get_state_int(validator_app_state, "asset_2_id")
 
-    pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
-    pool_address = pool_logicsig.address()
-
-    assert account_info["address"] == pool_address
-
-    pool_token_asset_id = get_state_int(validator_app_state, "pool_token_asset_id")
-    issued_pool_tokens = get_state_int(validator_app_state, "issued_pool_tokens")
-
-    # reserves
-    asset_1_reserves = get_state_int(validator_app_state, "asset_1_reserves")
-    asset_2_reserves = get_state_int(validator_app_state, "asset_2_reserves")
-
-    # fees
-    asset_1_protocol_fees = get_state_int(validator_app_state, "asset_1_protocol_fees")
-    asset_2_protocol_fees = get_state_int(validator_app_state, "asset_2_protocol_fees")
-
-    # fee rates
-    total_fee_share = get_state_int(validator_app_state, "total_fee_share")
-    protocol_fee_ratio = get_state_int(validator_app_state, "protocol_fee_ratio")
-
-    # oracle
-    asset_1_cumulative_price = bytes_to_int(
-        get_state_bytes(validator_app_state, "asset_1_cumulative_price")
-    )
-    asset_2_cumulative_price = bytes_to_int(
-        get_state_bytes(validator_app_state, "asset_2_cumulative_price")
-    )
-    cumulative_price_update_timestamp = get_state_int(
-        validator_app_state, "cumulative_price_update_timestamp"
-    )
-
-    pool = {
-        "address": pool_address,
-        "asset_1_id": asset_1_id,
-        "asset_2_id": asset_2_id,
-        "pool_token_asset_id": pool_token_asset_id,
-        "asset_1_reserves": asset_1_reserves,
-        "asset_2_reserves": asset_2_reserves,
-        "issued_pool_tokens": issued_pool_tokens,
-        "asset_1_protocol_fees": asset_1_protocol_fees,
-        "asset_2_protocol_fees": asset_2_protocol_fees,
-        "asset_1_cumulative_price": asset_1_cumulative_price,
-        "asset_2_cumulative_price": asset_2_cumulative_price,
-        "cumulative_price_update_timestamp": cumulative_price_update_timestamp,
-        "total_fee_share": total_fee_share,
-        "protocol_fee_ratio": protocol_fee_ratio,
-        "validator_app_id": validator_app_id,
-        "algo_balance": account_info["amount"],
-        "round": account_info["round"],
-    }
-    return pool
+def get_pool_state_from_account_info(account_info: dict) -> dict:
+    if validator_app_id := get_validator_app_id_from_account_info(account_info):
+        return get_state_from_account_info(account_info, validator_app_id)
+    return {}
 
 
 class Pool:
@@ -160,7 +123,6 @@ class Pool:
         self.total_fee_share = None
         self.protocol_fee_ratio = None
         self.last_refreshed_round = None
-        self.algo_balance = None
 
         if fetch:
             self.refresh()
@@ -172,14 +134,54 @@ class Pool:
 
     @classmethod
     def from_account_info(
-        cls, account_info: dict, client: Optional[TinymanV2Client] = None
+        cls,
+        account_info: dict,
+        client: TinymanV2Client,
+        fetch: bool = False,
     ):
-        info = get_pool_info_from_account_info(account_info)
+        state = get_pool_state_from_account_info(account_info)
+        validator_app_id = get_validator_app_id_from_account_info(account_info)
+        assert validator_app_id == client.validator_app_id
+
+        info = generate_pool_info(
+            address=account_info["address"],
+            validator_app_id=client.validator_app_id,
+            round_number=account_info["round"],
+            state=state,
+        )
+
         pool = Pool(
-            client,
-            info["asset_1_id"],
-            info["asset_2_id"],
-            info,
+            client=client,
+            asset_a=info["asset_1_id"],
+            asset_b=info["asset_2_id"],
+            info=info,
+            fetch=fetch,
+            validator_app_id=info["validator_app_id"],
+        )
+        return pool
+
+    @classmethod
+    def from_state(
+        cls,
+        address: str,
+        state: dict,
+        round_number: int,
+        client: TinymanV2Client,
+        fetch: bool = False,
+    ):
+        info = generate_pool_info(
+            address=address,
+            validator_app_id=client.validator_app_id,
+            round_number=round_number,
+            state=state,
+        )
+
+        pool = Pool(
+            client=client,
+            asset_a=info["asset_1_id"],
+            asset_b=info["asset_2_id"],
+            info=info,
+            fetch=fetch,
             validator_app_id=info["validator_app_id"],
         )
         return pool
@@ -209,7 +211,6 @@ class Pool:
         self.total_fee_share = info["total_fee_share"]
         self.protocol_fee_ratio = info["protocol_fee_ratio"]
         self.last_refreshed_round = info["round"]
-        self.algo_balance = info["algo_balance"]
 
     def get_logicsig(self) -> LogicSigAccount:
         pool_logicsig = get_pool_logicsig(
@@ -306,9 +307,12 @@ class Pool:
     def prepare_bootstrap_transactions(
         self,
         user_address: Optional[str] = None,
+        pool_algo_balance=None,
         refresh: bool = True,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
+
+        user_address = user_address or self.client.user_address
 
         if refresh:
             self.refresh()
@@ -316,7 +320,9 @@ class Pool:
         if self.exists:
             raise AlreadyBootstrapped()
 
-        user_address = user_address or self.client.user_address
+        if pool_algo_balance is None:
+            pool_account_info = self.client.algod.account_info(self.address)
+            pool_algo_balance = pool_account_info["amount"]
 
         if suggested_params is None:
             suggested_params = self.client.algod.suggested_params()
@@ -330,12 +336,8 @@ class Pool:
 
         app_call_fee = (inner_transaction_count + 1) * suggested_params.min_fee
         required_algo = pool_minimum_balance + app_call_fee
-        required_algo += (
-            100_000  # to fund minimum balance increase because of asset creation
-        )
-
-        pool_account_info = self.client.algod.account_info(self.address)
-        pool_algo_balance = pool_account_info["amount"]
+        # to fund minimum balance increase because of asset creation
+        required_algo += 100_000
         required_algo = max(required_algo - pool_algo_balance, 0)
 
         txn_group = prepare_bootstrap_transactions(

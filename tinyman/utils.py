@@ -71,25 +71,6 @@ def get_state_bytes(state, key):
     return state.get(key.decode(), {"bytes": ""})["bytes"]
 
 
-def get_state_from_account_info(account_info, app_id):
-    try:
-        app = [a for a in account_info["apps-local-state"] if a["id"] == app_id][0]
-    except IndexError:
-        return {}
-    try:
-        app_state = {}
-        for x in app["key-value"]:
-            key = b64decode(x["key"])
-            if x["value"]["type"] == 1:
-                value = b64decode(x["value"].get("bytes", ""))
-            else:
-                value = x["value"].get("uint", 0)
-            app_state[key] = value
-    except KeyError:
-        return {}
-    return app_state
-
-
 def apply_delta(state, delta):
     state = dict(state)
     for d in delta:

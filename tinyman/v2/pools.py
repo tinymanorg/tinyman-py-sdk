@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import LogicSigAccount
+from algosdk.future.transaction import LogicSigAccount, Transaction, SuggestedParams
 from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset, AssetAmount
@@ -21,12 +21,14 @@ from .exceptions import (
     PoolHasNoLiquidity,
     PoolAlreadyHasLiquidity,
 )
+from .flash_loan import prepare_flash_loan_transactions
 from .formulas import (
     calculate_subsequent_add_liquidity,
     calculate_initial_add_liquidity,
     calculate_fixed_input_swap,
     calculate_remove_liquidity_output_amounts,
     calculate_fixed_output_swap,
+    calculate_flash_loan_payment_amount,
 )
 from .quotes import (
     FlexibleAddLiquidityQuote,
@@ -36,6 +38,7 @@ from .quotes import (
     InternalSwapQuote,
     SingleAssetRemoveLiquidityQuote,
     SwapQuote,
+    FlashLoanQuote,
 )
 from .remove_liquidity import (
     prepare_remove_liquidity_transactions,
@@ -268,16 +271,55 @@ class Pool:
 
         raise NotImplementedError()
 
-    def prepare_bootstrap_transactions(
-        self, pooler_address: Optional[str] = None
+    def prepare_pool_token_asset_optin_transactions(
+        self,
+        user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-        self.refresh()
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
+        txn_group = prepare_asset_optin_transactions(
+            asset_id=self.pool_token_asset.id,
+            sender=user_address,
+            suggested_params=suggested_params,
+        )
+        return txn_group
+
+    def fetch_pool_position(self, user_address: Optional[str] = None) -> dict:
+        user_address = user_address or self.client.user_address
+        account_info = self.client.algod.account_info(user_address)
+        assets = {a["asset-id"]: a for a in account_info["assets"]}
+        pool_token_asset_amount = assets.get(self.pool_token_asset.id, {}).get(
+            "amount", 0
+        )
+        quote = self.fetch_remove_liquidity_quote(pool_token_asset_amount)
+        return {
+            self.asset_1: quote.amounts_out[self.asset_1],
+            self.asset_2: quote.amounts_out[self.asset_2],
+            self.pool_token_asset: quote.pool_token_asset_amount,
+            "share": (pool_token_asset_amount / self.issued_pool_tokens),
+        }
+
+    def prepare_bootstrap_transactions(
+        self,
+        user_address: Optional[str] = None,
+        refresh: bool = True,
+        suggested_params: SuggestedParams = None,
+    ) -> TransactionGroup:
+
+        if refresh:
+            self.refresh()
 
         if self.exists:
             raise AlreadyBootstrapped()
 
-        pooler_address = pooler_address or self.client.user_address
-        suggested_params = self.client.algod.suggested_params()
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
 
         if self.asset_2.id == 0:
             pool_minimum_balance = MIN_POOL_BALANCE_ASA_ALGO_PAIR
@@ -300,7 +342,7 @@ class Pool:
             validator_app_id=self.validator_app_id,
             asset_1_id=self.asset_1.id,
             asset_2_id=self.asset_2.id,
-            sender=pooler_address,
+            sender=user_address,
             suggested_params=suggested_params,
             app_call_fee=app_call_fee,
             required_algo=required_algo,
@@ -308,7 +350,11 @@ class Pool:
         return txn_group
 
     def fetch_flexible_add_liquidity_quote(
-        self, amount_a: AssetAmount, amount_b: AssetAmount, slippage: float = 0.05
+        self,
+        amount_a: AssetAmount,
+        amount_b: AssetAmount,
+        slippage: float = 0.05,
+        refresh: bool = True,
     ) -> FlexibleAddLiquidityQuote:
         assert {self.asset_1, self.asset_2} == {
             amount_a.asset,
@@ -317,7 +363,9 @@ class Pool:
 
         amount_1 = amount_a if amount_a.asset == self.asset_1 else amount_b
         amount_2 = amount_a if amount_a.asset == self.asset_2 else amount_b
-        self.refresh()
+
+        if refresh:
+            self.refresh()
 
         if not self.exists:
             raise BootstrapIsRequired()
@@ -371,9 +419,11 @@ class Pool:
         return quote
 
     def fetch_single_asset_add_liquidity_quote(
-        self, amount_a: AssetAmount, slippage: float = 0.05
+        self, amount_a: AssetAmount, slippage: float = 0.05, refresh: bool = True
     ) -> SingleAssetAddLiquidityQuote:
-        self.refresh()
+        if refresh:
+            self.refresh()
+
         if not self.exists:
             raise BootstrapIsRequired()
 
@@ -444,6 +494,7 @@ class Pool:
         self,
         amount_a: AssetAmount,
         amount_b: AssetAmount,
+        refresh: bool = True,
     ) -> InitialAddLiquidityQuote:
         assert {self.asset_1, self.asset_2} == {
             amount_a.asset,
@@ -452,7 +503,9 @@ class Pool:
 
         amount_1 = amount_a if amount_a.asset == self.asset_1 else amount_b
         amount_2 = amount_a if amount_a.asset == self.asset_2 else amount_b
-        self.refresh()
+
+        if refresh:
+            self.refresh()
 
         if not self.exists:
             raise BootstrapIsRequired()
@@ -478,12 +531,15 @@ class Pool:
         self,
         amounts_in: dict[Asset, AssetAmount],
         min_pool_token_asset_amount: int,
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-        pooler_address = pooler_address or self.client.user_address
+        user_address = user_address or self.client.user_address
         asset_1_amount = amounts_in[self.asset_1]
         asset_2_amount = amounts_in[self.asset_2]
-        suggested_params = self.client.algod.suggested_params()
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
 
         txn_group = prepare_flexible_add_liquidity_transactions(
             validator_app_id=self.validator_app_id,
@@ -493,7 +549,7 @@ class Pool:
             asset_1_amount=asset_1_amount.amount,
             asset_2_amount=asset_2_amount.amount,
             min_pool_token_asset_amount=min_pool_token_asset_amount,
-            sender=pooler_address,
+            sender=user_address,
             suggested_params=suggested_params,
         )
         return txn_group
@@ -502,10 +558,13 @@ class Pool:
         self,
         amount_in: AssetAmount,
         min_pool_token_asset_amount: Optional[int],
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-        pooler_address = pooler_address or self.client.user_address
-        suggested_params = self.client.algod.suggested_params()
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
 
         txn_group = prepare_single_asset_add_liquidity_transactions(
             validator_app_id=self.validator_app_id,
@@ -519,7 +578,7 @@ class Pool:
             if amount_in.asset == self.asset_2
             else None,
             min_pool_token_asset_amount=min_pool_token_asset_amount,
-            sender=pooler_address,
+            sender=user_address,
             suggested_params=suggested_params,
         )
         return txn_group
@@ -527,12 +586,15 @@ class Pool:
     def prepare_initial_add_liquidity_transactions(
         self,
         amounts_in: dict[Asset, AssetAmount],
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-        pooler_address = pooler_address or self.client.user_address
+        user_address = user_address or self.client.user_address
         asset_1_amount = amounts_in[self.asset_1]
         asset_2_amount = amounts_in[self.asset_2]
-        suggested_params = self.client.algod.suggested_params()
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
 
         txn_group = prepare_initial_add_liquidity_transactions(
             validator_app_id=self.validator_app_id,
@@ -541,7 +603,7 @@ class Pool:
             pool_token_asset_id=self.pool_token_asset.id,
             asset_1_amount=asset_1_amount.amount,
             asset_2_amount=asset_2_amount.amount,
-            sender=pooler_address,
+            sender=user_address,
             suggested_params=suggested_params,
         )
         return txn_group
@@ -553,30 +615,33 @@ class Pool:
             SingleAssetAddLiquidityQuote,
             InitialAddLiquidityQuote,
         ],
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
     ) -> TransactionGroup:
         if isinstance(quote, FlexibleAddLiquidityQuote):
             return self.prepare_flexible_add_liquidity_transactions(
                 amounts_in=quote.amounts_in,
                 min_pool_token_asset_amount=quote.min_pool_token_asset_amount_with_slippage,
-                pooler_address=pooler_address,
+                user_address=user_address,
             )
         elif isinstance(quote, SingleAssetAddLiquidityQuote):
             return self.prepare_single_asset_add_liquidity_transactions(
                 amount_in=quote.amount_in,
                 min_pool_token_asset_amount=quote.min_pool_token_asset_amount_with_slippage,
-                pooler_address=pooler_address,
+                user_address=user_address,
             )
         elif isinstance(quote, InitialAddLiquidityQuote):
             return self.prepare_initial_add_liquidity_transactions(
                 amounts_in=quote.amounts_in,
-                pooler_address=pooler_address,
+                user_address=user_address,
             )
 
         raise Exception(f"Invalid quote type({type(quote)})")
 
     def fetch_remove_liquidity_quote(
-        self, pool_token_asset_in: [AssetAmount, int], slippage: float = 0.05
+        self,
+        pool_token_asset_in: [AssetAmount, int],
+        slippage: float = 0.05,
+        refresh: bool = True,
     ) -> RemoveLiquidityQuote:
         if not self.exists:
             raise BootstrapIsRequired()
@@ -586,7 +651,9 @@ class Pool:
                 self.pool_token_asset, pool_token_asset_in
             )
 
-        self.refresh()
+        if refresh:
+            self.refresh()
+
         (
             asset_1_output_amount,
             asset_2_output_amount,
@@ -611,6 +678,7 @@ class Pool:
         pool_token_asset_in: [AssetAmount, int],
         output_asset: Asset,
         slippage: float = 0.05,
+        refresh: bool = True,
     ) -> SingleAssetRemoveLiquidityQuote:
         if not self.exists:
             raise BootstrapIsRequired()
@@ -620,7 +688,9 @@ class Pool:
                 self.pool_token_asset, pool_token_asset_in
             )
 
-        self.refresh()
+        if refresh:
+            self.refresh()
+
         (
             asset_1_output_amount,
             asset_2_output_amount,
@@ -690,17 +760,21 @@ class Pool:
         self,
         pool_token_asset_amount: [AssetAmount, int],
         amounts_out: dict[Asset, AssetAmount],
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
         if isinstance(pool_token_asset_amount, int):
             pool_token_asset_amount = AssetAmount(
                 self.pool_token_asset, pool_token_asset_amount
             )
 
-        pooler_address = pooler_address or self.client.user_address
+        user_address = user_address or self.client.user_address
         asset_1_amount = amounts_out[self.asset_1]
         asset_2_amount = amounts_out[self.asset_2]
-        suggested_params = self.client.algod.suggested_params()
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
         txn_group = prepare_remove_liquidity_transactions(
             validator_app_id=self.validator_app_id,
             asset_1_id=self.asset_1.id,
@@ -709,7 +783,7 @@ class Pool:
             min_asset_1_amount=asset_1_amount.amount,
             min_asset_2_amount=asset_2_amount.amount,
             pool_token_asset_amount=pool_token_asset_amount.amount,
-            sender=pooler_address,
+            sender=user_address,
             suggested_params=suggested_params,
         )
         return txn_group
@@ -718,15 +792,19 @@ class Pool:
         self,
         pool_token_asset_amount: [AssetAmount, int],
         amount_out: AssetAmount,
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
         if isinstance(pool_token_asset_amount, int):
             pool_token_asset_amount = AssetAmount(
                 self.pool_token_asset, pool_token_asset_amount
             )
 
-        pooler_address = pooler_address or self.client.user_address
-        suggested_params = self.client.algod.suggested_params()
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
         txn_group = prepare_single_asset_remove_liquidity_transactions(
             validator_app_id=self.validator_app_id,
             asset_1_id=self.asset_1.id,
@@ -735,7 +813,7 @@ class Pool:
             output_asset_id=amount_out.asset.id,
             min_output_asset_amount=amount_out.amount,
             pool_token_asset_amount=pool_token_asset_amount.amount,
-            sender=pooler_address,
+            sender=user_address,
             suggested_params=suggested_params,
         )
         return txn_group
@@ -743,15 +821,15 @@ class Pool:
     def prepare_remove_liquidity_transactions_from_quote(
         self,
         quote: [RemoveLiquidityQuote, SingleAssetRemoveLiquidityQuote],
-        pooler_address: Optional[str] = None,
+        user_address: Optional[str] = None,
     ) -> TransactionGroup:
-        pooler_address = pooler_address or self.client.user_address
+        user_address = user_address or self.client.user_address
 
         if isinstance(quote, SingleAssetRemoveLiquidityQuote):
             return self.prepare_single_asset_remove_liquidity_transactions(
                 pool_token_asset_amount=quote.pool_token_asset_amount,
                 amount_out=quote.amount_out_with_slippage,
-                pooler_address=pooler_address,
+                user_address=user_address,
             )
         elif isinstance(quote, RemoveLiquidityQuote):
             return self.prepare_remove_liquidity_transactions(
@@ -760,15 +838,17 @@ class Pool:
                     self.asset_1: quote.amounts_out_with_slippage[self.asset_1],
                     self.asset_2: quote.amounts_out_with_slippage[self.asset_2],
                 },
-                pooler_address=pooler_address,
+                user_address=user_address,
             )
 
         raise NotImplementedError()
 
     def fetch_fixed_input_swap_quote(
-        self, amount_in: AssetAmount, slippage: float = 0.05
+        self, amount_in: AssetAmount, slippage: float = 0.05, refresh: bool = True
     ) -> SwapQuote:
-        self.refresh()
+        if refresh:
+            self.refresh()
+
         if not self.exists:
             raise BootstrapIsRequired()
 
@@ -805,9 +885,11 @@ class Pool:
         return quote
 
     def fetch_fixed_output_swap_quote(
-        self, amount_out: AssetAmount, slippage: float = 0.05
+        self, amount_out: AssetAmount, slippage: float = 0.05, refresh: bool = True
     ) -> SwapQuote:
-        self.refresh()
+        if refresh:
+            self.refresh()
+
         if not self.exists:
             raise BootstrapIsRequired()
 
@@ -848,10 +930,13 @@ class Pool:
         amount_in: AssetAmount,
         amount_out: AssetAmount,
         swap_type: [str, bytes],
-        swapper_address=None,
+        user_address: str = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-        swapper_address = swapper_address or self.client.user_address
-        suggested_params = self.client.algod.suggested_params()
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
 
         txn_group = prepare_swap_transactions(
             validator_app_id=self.validator_app_id,
@@ -861,44 +946,123 @@ class Pool:
             asset_in_amount=amount_in.amount,
             asset_out_amount=amount_out.amount,
             swap_type=swap_type,
-            sender=swapper_address,
-            suggested_params=suggested_params,
-        )
-        return txn_group
-
-    def prepare_swap_transactions_from_quote(
-        self, quote: SwapQuote, swapper_address=None
-    ) -> TransactionGroup:
-        return self.prepare_swap_transactions(
-            amount_in=quote.amount_in_with_slippage,
-            amount_out=quote.amount_out_with_slippage,
-            swap_type=quote.swap_type,
-            swapper_address=swapper_address,
-        )
-
-    def prepare_pool_token_asset_optin_transactions(
-        self, user_address: Optional[str] = None
-    ) -> TransactionGroup:
-        user_address = user_address or self.client.user_address
-        suggested_params = self.client.algod.suggested_params()
-        txn_group = prepare_asset_optin_transactions(
-            asset_id=self.pool_token_asset.id,
             sender=user_address,
             suggested_params=suggested_params,
         )
         return txn_group
 
-    def fetch_pool_position(self, pooler_address: Optional[str] = None) -> dict:
-        pooler_address = pooler_address or self.client.user_address
-        account_info = self.client.algod.account_info(pooler_address)
-        assets = {a["asset-id"]: a for a in account_info["assets"]}
-        pool_token_asset_amount = assets.get(self.pool_token_asset.id, {}).get(
-            "amount", 0
+    def prepare_swap_transactions_from_quote(
+        self, quote: SwapQuote, user_address: str = None
+    ) -> TransactionGroup:
+        return self.prepare_swap_transactions(
+            amount_in=quote.amount_in_with_slippage,
+            amount_out=quote.amount_out_with_slippage,
+            swap_type=quote.swap_type,
+            user_address=user_address,
         )
-        quote = self.fetch_remove_liquidity_quote(pool_token_asset_amount)
-        return {
-            self.asset_1: quote.amounts_out[self.asset_1],
-            self.asset_2: quote.amounts_out[self.asset_2],
-            self.pool_token_asset: quote.pool_token_asset_amount,
-            "share": (pool_token_asset_amount / self.issued_pool_tokens),
-        }
+
+    def fetch_flash_loan_quote(
+        self,
+        loan_amount_a: AssetAmount,
+        loan_amount_b: AssetAmount,
+        refresh: bool = True,
+    ) -> FlashLoanQuote:
+        assert {self.asset_1, self.asset_2} == {
+            loan_amount_a.asset,
+            loan_amount_b.asset,
+        }, "Pool assets and given assets don't match."
+
+        if loan_amount_a.asset == self.asset_1:
+            loan_amount_1 = loan_amount_a
+        else:
+            loan_amount_1 = loan_amount_b
+
+        if loan_amount_a.asset == self.asset_2:
+            loan_amount_2 = loan_amount_a
+        else:
+            loan_amount_2 = loan_amount_b
+
+        if refresh:
+            self.refresh()
+
+        if not self.exists:
+            raise BootstrapIsRequired()
+
+        if not self.issued_pool_tokens:
+            raise PoolHasNoLiquidity()
+
+        if loan_amount_1.amount > self.asset_1_reserves:
+            raise Exception(
+                f"The loan amount({loan_amount_1.amount}) cannot exceed the reserves."
+            )
+
+        if loan_amount_2.amount > self.asset_2_reserves:
+            raise Exception(
+                f"The loan amount({loan_amount_2.amount}) cannot exceed the reserves."
+            )
+
+        quote = FlashLoanQuote(
+            amounts_out={
+                self.asset_1: loan_amount_1,
+                self.asset_2: loan_amount_2,
+            },
+            amounts_in={
+                self.asset_1: AssetAmount(
+                    self.asset_1,
+                    amount=calculate_flash_loan_payment_amount(
+                        loan_amount=loan_amount_1.amount,
+                        total_fee_share=self.total_fee_share,
+                    ),
+                ),
+                self.asset_2: AssetAmount(
+                    self.asset_2,
+                    amount=calculate_flash_loan_payment_amount(
+                        loan_amount=loan_amount_2.amount,
+                        total_fee_share=self.total_fee_share,
+                    ),
+                ),
+            },
+        )
+        return quote
+
+    def prepare_flash_loan_transactions(
+        self,
+        amounts_out: dict[Asset, AssetAmount],
+        amounts_in: dict[Asset, AssetAmount],
+        transactions: list[Transaction],
+        user_address: str = None,
+        suggested_params: SuggestedParams = None,
+    ) -> TransactionGroup:
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
+        txn_group = prepare_flash_loan_transactions(
+            validator_app_id=self.validator_app_id,
+            asset_1_id=self.asset_1.id,
+            asset_2_id=self.asset_2.id,
+            asset_1_loan_amount=amounts_out[self.asset_1].amount,
+            asset_2_loan_amount=amounts_out[self.asset_2].amount,
+            asset_1_payment_amount=amounts_in[self.asset_1].amount,
+            asset_2_payment_amount=amounts_in[self.asset_2].amount,
+            transactions=transactions,
+            sender=user_address,
+            suggested_params=suggested_params,
+        )
+        return txn_group
+
+    def prepare_flash_loan_transactions_from_quote(
+        self,
+        quote: FlashLoanQuote,
+        transactions: list[Transaction],
+        user_address: str = None,
+    ) -> TransactionGroup:
+        user_address = user_address or self.client.user_address
+
+        return self.prepare_flash_loan_transactions(
+            amounts_out=quote.amounts_out,
+            amounts_in=quote.amounts_in,
+            transactions=transactions,
+            user_address=user_address,
+        )

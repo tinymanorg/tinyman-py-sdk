@@ -98,13 +98,13 @@ class RemoveLiquidityQuote:
 
     @property
     def amounts_out_with_slippage(self) -> dict[Asset, AssetAmount]:
-        out = {}
+        amounts_out = {}
         for asset, asset_amount in self.amounts_out.items():
             amount_with_slippage = asset_amount.amount - int(
                 (asset_amount.amount * self.slippage)
             )
-            out[asset] = AssetAmount(asset, amount_with_slippage)
-        return out
+            amounts_out[asset] = AssetAmount(asset, amount_with_slippage)
+        return amounts_out
 
 
 @dataclass
@@ -120,3 +120,9 @@ class SingleAssetRemoveLiquidityQuote:
             self.amount_out.amount * self.slippage
         )
         return AssetAmount(self.amount_out.asset, amount_with_slippage)
+
+
+@dataclass
+class FlashLoanQuote:
+    amounts_out: dict[Asset, AssetAmount]
+    amounts_in: dict[Asset, AssetAmount]

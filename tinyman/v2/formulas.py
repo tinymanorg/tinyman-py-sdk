@@ -20,12 +20,12 @@ def calculate_poolers_fee_amount(total_fee_amount: int, protocol_fee_ratio: int)
 
 
 def calculate_fixed_input_fee_amount(input_amount: int, total_fee_share: int) -> int:
-    total_fee_amount = (input_amount * total_fee_share) // 10000
+    total_fee_amount = (input_amount * total_fee_share) // 10_000
     return total_fee_amount
 
 
 def calculate_fixed_output_fee_amounts(swap_amount: int, total_fee_share: int) -> int:
-    input_amount = (swap_amount * 10000) // (10000 - total_fee_share)
+    input_amount = (swap_amount * 10_000) // (10_000 - total_fee_share)
     total_fee_amount = input_amount - swap_amount
     return total_fee_amount
 
@@ -33,6 +33,95 @@ def calculate_fixed_output_fee_amounts(swap_amount: int, total_fee_share: int) -
 def calculate_internal_swap_fee_amount(swap_amount: int, total_fee_share: int) -> int:
     total_fee_amount = int((swap_amount * total_fee_share) / (10_000 - total_fee_share))
     return total_fee_amount
+
+
+def calculate_flash_loan_payment_amount(loan_amount: int, total_fee_share: int) -> int:
+    total_fee_amount = calculate_fixed_input_fee_amount(loan_amount, total_fee_share)
+    payment_amount = loan_amount + total_fee_amount
+    return payment_amount
+
+
+def calculate_flash_swap_asset_2_payment_amount(
+    asset_1_reserves: int,
+    asset_2_reserves: int,
+    total_fee_share: int,
+    protocol_fee_ratio: int,
+    asset_1_loan_amount: int,
+    asset_2_loan_amount: int,
+    asset_1_payment_amount: int,
+) -> int:
+    k = asset_1_reserves * asset_2_reserves
+    asset_1_total_fee_amount = calculate_fixed_input_fee_amount(
+        asset_1_payment_amount, total_fee_share
+    )
+    asset_1_protocol_fee_amount = calculate_protocol_fee_amount(
+        asset_1_total_fee_amount, protocol_fee_ratio
+    )
+    asset_1_poolers_fee_amount = calculate_poolers_fee_amount(
+        asset_1_total_fee_amount, protocol_fee_ratio
+    )
+
+    final_asset_1_reserves = (asset_1_reserves - asset_1_loan_amount) + (
+        asset_1_payment_amount - asset_1_protocol_fee_amount
+    )
+    final_asset_1_reserves_without_poolers_fee = (
+        final_asset_1_reserves - asset_1_poolers_fee_amount
+    )
+    minimum_final_asset_2_reserves_without_poolers_fee = (
+        k / final_asset_1_reserves_without_poolers_fee
+    )
+    minimum_asset_2_payment_amount_without_poolers_fee = (
+        minimum_final_asset_2_reserves_without_poolers_fee
+        - (asset_2_reserves - asset_2_loan_amount)
+    )
+    minimum_asset_2_payment_amount = math.ceil(
+        minimum_asset_2_payment_amount_without_poolers_fee
+        * 10_000
+        / (10_000 - total_fee_share)
+    )
+    return minimum_asset_2_payment_amount
+
+
+def calculate_flash_swap_asset_1_payment_amount(
+    asset_1_reserves: int,
+    asset_2_reserves: int,
+    total_fee_share: int,
+    protocol_fee_ratio: int,
+    asset_1_loan_amount: int,
+    asset_2_loan_amount: int,
+    asset_2_payment_amount: int,
+) -> int:
+    k = asset_1_reserves * asset_2_reserves
+    asset_2_total_fee_amount = calculate_fixed_input_fee_amount(
+        asset_2_payment_amount, total_fee_share
+    )
+    asset_2_protocol_fee_amount = calculate_protocol_fee_amount(
+        asset_2_total_fee_amount, protocol_fee_ratio
+    )
+    asset_2_poolers_fee_amount = calculate_poolers_fee_amount(
+        asset_2_total_fee_amount, protocol_fee_ratio
+    )
+
+    final_asset_2_reserves = (asset_2_reserves - asset_2_loan_amount) + (
+        asset_2_payment_amount - asset_2_protocol_fee_amount
+    )
+    final_asset_2_reserves_without_poolers_fee = (
+        final_asset_2_reserves - asset_2_poolers_fee_amount
+    )
+    minimum_final_asset_1_reserves_without_poolers_fee = (
+        k / final_asset_2_reserves_without_poolers_fee
+    )
+    minimum_asset_1_payment_amount_without_poolers_fee = (
+        minimum_final_asset_1_reserves_without_poolers_fee
+        - (asset_1_reserves - asset_1_loan_amount)
+    )
+
+    minimum_asset_1_payment_amount = math.ceil(
+        minimum_asset_1_payment_amount_without_poolers_fee
+        * 10_000
+        / (10_000 - total_fee_share)
+    )
+    return minimum_asset_1_payment_amount
 
 
 def calculate_initial_add_liquidity(asset_1_amount: int, asset_2_amount: int) -> int:

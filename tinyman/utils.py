@@ -121,6 +121,8 @@ def calculate_price_impact(
 
 class TransactionGroup:
     def __init__(self, transactions):
+        for txn in transactions:
+            txn.group = None
         transactions = assign_group_id(transactions)
         self.transactions = transactions
         self.signed_transactions = [None for _ in self.transactions]
@@ -159,6 +161,4 @@ class TransactionGroup:
 
     def __add__(self, other):
         transactions = self.transactions + other.transactions
-        for txn in transactions:
-            txn.group = None
         return TransactionGroup(transactions)

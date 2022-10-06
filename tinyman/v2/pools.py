@@ -21,6 +21,11 @@ from .exceptions import (
     PoolHasNoLiquidity,
     PoolAlreadyHasLiquidity,
 )
+from .fees import (
+    prepare_claim_fees_transactions,
+    prepare_claim_extra_transactions,
+    prepare_set_fee_transactions,
+)
 from .flash_loan import prepare_flash_loan_transactions
 from .formulas import (
     calculate_subsequent_add_liquidity,
@@ -1067,4 +1072,67 @@ class Pool:
             amounts_in=quote.amounts_in,
             transactions=transactions,
             user_address=user_address,
+        )
+
+    def prepare_claim_fees_transactions(
+        self,
+        fee_collector: str,
+        user_address: str = None,
+        suggested_params: SuggestedParams = None,
+    ) -> TransactionGroup:
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
+        return prepare_claim_fees_transactions(
+            validator_app_id=self.validator_app_id,
+            asset_1_id=self.asset_1.id,
+            asset_2_id=self.asset_2.id,
+            pool_address=self.address,
+            fee_collector=fee_collector,
+            sender=user_address,
+            suggested_params=suggested_params,
+        )
+
+    def prepare_claim_extra_transactions(
+        self,
+        fee_collector: str,
+        user_address: str = None,
+        suggested_params: SuggestedParams = None,
+    ) -> TransactionGroup:
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
+        return prepare_claim_extra_transactions(
+            validator_app_id=self.validator_app_id,
+            asset_1_id=self.asset_1.id,
+            asset_2_id=self.asset_2.id,
+            pool_address=self.address,
+            fee_collector=fee_collector,
+            sender=user_address,
+            suggested_params=suggested_params,
+        )
+
+    def prepare_set_fee_transactions(
+        self,
+        total_fee_share: int,
+        protocol_fee_ratio: int,
+        user_address: str = None,
+        suggested_params: SuggestedParams = None,
+    ) -> TransactionGroup:
+        user_address = user_address or self.client.user_address
+
+        if suggested_params is None:
+            suggested_params = self.client.algod.suggested_params()
+
+        return prepare_set_fee_transactions(
+            validator_app_id=self.validator_app_id,
+            pool_address=self.address,
+            total_fee_share=total_fee_share,
+            protocol_fee_ratio=protocol_fee_ratio,
+            fee_manager=user_address,
+            suggested_params=suggested_params,
         )

@@ -126,3 +126,4 @@ class SingleAssetRemoveLiquidityQuote:
 class FlashLoanQuote:
     amounts_out: dict[Asset, AssetAmount]
     amounts_in: dict[Asset, AssetAmount]
+    fees: dict[Asset, AssetAmount]

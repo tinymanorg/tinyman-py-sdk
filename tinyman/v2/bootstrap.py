@@ -32,7 +32,7 @@ def prepare_bootstrap_transactions(
                 sender=sender,
                 sp=suggested_params,
                 receiver=pool_address,
-                amt=int(required_algo),
+                amt=required_algo,
             )
         )
 

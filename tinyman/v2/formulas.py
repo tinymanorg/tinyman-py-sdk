@@ -141,13 +141,18 @@ def calculate_remove_liquidity_output_amounts(
     asset_2_reserves: int,
     issued_pool_tokens: int,
 ) -> (int, int):
-    asset_1_output_amount = int(
-        (pool_token_asset_amount * asset_1_reserves) / issued_pool_tokens
-    )
-    asset_2_output_amount = int(
-        (pool_token_asset_amount * asset_2_reserves) / issued_pool_tokens
-    )
-    return asset_1_output_amount, asset_2_output_amount
+    if issued_pool_tokens > (pool_token_asset_amount + LOCKED_POOL_TOKENS):
+        asset_1_output_amount = (
+            pool_token_asset_amount * asset_1_reserves / issued_pool_tokens
+        )
+        asset_2_output_amount = (
+            pool_token_asset_amount * asset_2_reserves / issued_pool_tokens
+        )
+    else:
+        asset_1_output_amount = asset_1_reserves
+        asset_2_output_amount = asset_2_reserves
+
+    return int(asset_1_output_amount), int(asset_2_output_amount)
 
 
 def calculate_subsequent_add_liquidity(

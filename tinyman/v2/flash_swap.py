@@ -1,8 +1,6 @@
 from algosdk.future.transaction import (
     Transaction,
     ApplicationNoOpTxn,
-    PaymentTxn,
-    AssetTransferTxn,
     SuggestedParams,
 )
 
@@ -20,8 +18,6 @@ def prepare_flash_swap_transactions(
     asset_2_id: int,
     asset_1_loan_amount: int,
     asset_2_loan_amount: int,
-    asset_1_payment_amount: int,
-    asset_2_payment_amount: int,
     transactions: list[Transaction],
     sender: str,
     suggested_params: SuggestedParams,
@@ -37,12 +33,7 @@ def prepare_flash_swap_transactions(
     else:
         inner_transaction_count = 1
 
-    if asset_1_payment_amount and asset_2_payment_amount:
-        payment_count = 2
-    else:
-        payment_count = 1
-
-    index_diff = len(transactions) + payment_count + 1
+    index_diff = len(transactions) + 1
     txns = [
         # Flash Swap
         ApplicationNoOpTxn(
@@ -64,38 +55,6 @@ def prepare_flash_swap_transactions(
 
     if transactions:
         txns.extend(transactions)
-
-    if asset_1_payment_amount:
-        txns.append(
-            AssetTransferTxn(
-                sender=sender,
-                sp=suggested_params,
-                receiver=pool_address,
-                index=asset_1_id,
-                amt=asset_1_payment_amount,
-            )
-        )
-
-    if asset_2_payment_amount:
-        if asset_2_id:
-            txns.append(
-                AssetTransferTxn(
-                    sender=sender,
-                    sp=suggested_params,
-                    receiver=pool_address,
-                    index=asset_2_id,
-                    amt=asset_2_payment_amount,
-                )
-            )
-        else:
-            txns.append(
-                PaymentTxn(
-                    sender=sender,
-                    sp=suggested_params,
-                    receiver=pool_address,
-                    amt=asset_2_payment_amount,
-                )
-            )
 
     # Verify Flash Swap
     txns.append(

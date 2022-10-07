@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.v2client.algod import AlgodClient
 from algosdk.future.transaction import wait_for_confirmation
 from tinyman.assets import Asset
@@ -10,7 +12,7 @@ class BaseTinymanClient:
         algod_client: AlgodClient,
         validator_app_id: int,
         user_address=None,
-        staking_app_id: int = None,
+        staking_app_id: Optional[int] = None,
     ):
         self.algod = algod_client
         self.validator_app_id = validator_app_id

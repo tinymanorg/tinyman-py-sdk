@@ -75,5 +75,10 @@ class AssetAmount:
         raise TypeError("Unsupported types for ==")
 
     def __repr__(self) -> str:
-        amount = Decimal(self.amount) / Decimal(10**self.asset.decimals)
-        return f"{self.asset.unit_name}('{amount}')"
+        if self.asset.decimals is not None:
+            amount = (
+                Decimal(self.amount) / Decimal(10**self.asset.decimals)
+            ).quantize(1 / Decimal(10**self.asset.decimals))
+            return f"{self.asset.unit_name}('{amount}' Base Unit)"
+        else:
+            return f"{self.asset.unit_name}('{self.amount}' Micro Unit)"

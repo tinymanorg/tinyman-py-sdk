@@ -34,6 +34,7 @@ from .formulas import (
     calculate_remove_liquidity_output_amounts,
     calculate_fixed_output_swap,
     calculate_flash_loan_payment_amount,
+    calculate_fixed_input_fee_amount,
 )
 from .quotes import (
     FlexibleAddLiquidityQuote,
@@ -69,11 +70,13 @@ def get_pool_info(
     pool_address = pool_logicsig.address()
     account_info = client.account_info(pool_address)
     pool_state = get_pool_state_from_account_info(account_info)
-    if pool_state:
-        generate_pool_info(
-            pool_address, validator_app_id, account_info["round"], pool_state
-        )
-    return {}
+
+    return generate_pool_info(
+        address=pool_address,
+        validator_app_id=validator_app_id,
+        round_number=account_info.get("round"),
+        state=pool_state,
+    )
 
 
 def get_validator_app_id_from_account_info(account_info: dict) -> Optional[int]:
@@ -107,9 +110,15 @@ class Pool:
         )
 
         if isinstance(asset_a, int):
-            asset_a = client.fetch_asset(asset_a)
+            if fetch:
+                asset_a = client.fetch_asset(asset_a)
+            else:
+                asset_a = Asset(id=asset_a)
         if isinstance(asset_b, int):
-            asset_b = client.fetch_asset(asset_b)
+            if fetch:
+                asset_b = client.fetch_asset(asset_b)
+            else:
+                asset_b = Asset(id=asset_b)
 
         if asset_a.id > asset_b.id:
             self.asset_1 = asset_a
@@ -132,7 +141,7 @@ class Pool:
         if fetch:
             self.refresh()
         elif info is not None:
-            self.update_from_info(info)
+            self.update_from_info(info, fetch)
 
     def __repr__(self):
         return f"Pool {self.asset_1.unit_name}({self.asset_1.id})-{self.asset_2.unit_name}({self.asset_2.id}) {self.address}"
@@ -174,6 +183,8 @@ class Pool:
         client: TinymanV2Client,
         fetch: bool = False,
     ):
+        assert state
+
         info = generate_pool_info(
             address=address,
             validator_app_id=client.validator_app_id,
@@ -199,23 +210,28 @@ class Pool:
                 self.asset_1.id,
                 self.asset_2.id,
             )
-            if not info:
-                return
         self.update_from_info(info)
 
-    def update_from_info(self, info: dict) -> None:
-        if info["pool_token_asset_id"] is not None:
+    def update_from_info(self, info: dict, fetch: bool = True) -> None:
+        if info.get("pool_token_asset_id"):
             self.exists = True
+            if fetch:
+                self.pool_token_asset = self.client.fetch_asset(
+                    info["pool_token_asset_id"]
+                )
+            else:
+                self.pool_token_asset = Asset(
+                    id=info["pool_token_asset_id"], unit_name="TMPOOL2", decimals=6
+                )
 
-        self.pool_token_asset = self.client.fetch_asset(info["pool_token_asset_id"])
-        self.asset_1_reserves = info["asset_1_reserves"]
-        self.asset_2_reserves = info["asset_2_reserves"]
-        self.issued_pool_tokens = info["issued_pool_tokens"]
-        self.asset_1_protocol_fees = info["asset_1_protocol_fees"]
-        self.asset_2_protocol_fees = info["asset_2_protocol_fees"]
-        self.total_fee_share = info["total_fee_share"]
-        self.protocol_fee_ratio = info["protocol_fee_ratio"]
-        self.last_refreshed_round = info["round"]
+            self.asset_1_reserves = info["asset_1_reserves"]
+            self.asset_2_reserves = info["asset_2_reserves"]
+            self.issued_pool_tokens = info["issued_pool_tokens"]
+            self.asset_1_protocol_fees = info["asset_1_protocol_fees"]
+            self.asset_2_protocol_fees = info["asset_2_protocol_fees"]
+            self.total_fee_share = info["total_fee_share"]
+            self.protocol_fee_ratio = info["protocol_fee_ratio"]
+            self.last_refreshed_round = info["round"]
 
     def get_logicsig(self) -> LogicSigAccount:
         pool_logicsig = get_pool_logicsig(
@@ -623,23 +639,27 @@ class Pool:
             InitialAddLiquidityQuote,
         ],
         user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
         if isinstance(quote, FlexibleAddLiquidityQuote):
             return self.prepare_flexible_add_liquidity_transactions(
                 amounts_in=quote.amounts_in,
                 min_pool_token_asset_amount=quote.min_pool_token_asset_amount_with_slippage,
                 user_address=user_address,
+                suggested_params=suggested_params,
             )
         elif isinstance(quote, SingleAssetAddLiquidityQuote):
             return self.prepare_single_asset_add_liquidity_transactions(
                 amount_in=quote.amount_in,
                 min_pool_token_asset_amount=quote.min_pool_token_asset_amount_with_slippage,
                 user_address=user_address,
+                suggested_params=suggested_params,
             )
         elif isinstance(quote, InitialAddLiquidityQuote):
             return self.prepare_initial_add_liquidity_transactions(
                 amounts_in=quote.amounts_in,
                 user_address=user_address,
+                suggested_params=suggested_params,
             )
 
         raise Exception(f"Invalid quote type({type(quote)})")
@@ -829,6 +849,7 @@ class Pool:
         self,
         quote: [RemoveLiquidityQuote, SingleAssetRemoveLiquidityQuote],
         user_address: Optional[str] = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
         user_address = user_address or self.client.user_address
 
@@ -837,6 +858,7 @@ class Pool:
                 pool_token_asset_amount=quote.pool_token_asset_amount,
                 amount_out=quote.amount_out_with_slippage,
                 user_address=user_address,
+                suggested_params=suggested_params,
             )
         elif isinstance(quote, RemoveLiquidityQuote):
             return self.prepare_remove_liquidity_transactions(
@@ -846,6 +868,7 @@ class Pool:
                     self.asset_2: quote.amounts_out_with_slippage[self.asset_2],
                 },
                 user_address=user_address,
+                suggested_params=suggested_params,
             )
 
         raise NotImplementedError()
@@ -959,13 +982,17 @@ class Pool:
         return txn_group
 
     def prepare_swap_transactions_from_quote(
-        self, quote: SwapQuote, user_address: str = None
+        self,
+        quote: SwapQuote,
+        user_address: str = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
         return self.prepare_swap_transactions(
             amount_in=quote.amount_in_with_slippage,
             amount_out=quote.amount_out_with_slippage,
             swap_type=quote.swap_type,
             user_address=user_address,
+            suggested_params=suggested_params,
         )
 
     def fetch_flash_loan_quote(
@@ -1029,6 +1056,22 @@ class Pool:
                     ),
                 ),
             },
+            fees={
+                self.asset_1: AssetAmount(
+                    self.asset_1,
+                    amount=calculate_fixed_input_fee_amount(
+                        input_amount=loan_amount_1.amount,
+                        total_fee_share=self.total_fee_share,
+                    ),
+                ),
+                self.asset_2: AssetAmount(
+                    self.asset_2,
+                    amount=calculate_fixed_input_fee_amount(
+                        input_amount=loan_amount_2.amount,
+                        total_fee_share=self.total_fee_share,
+                    ),
+                ),
+            },
         )
         return quote
 
@@ -1064,6 +1107,7 @@ class Pool:
         quote: FlashLoanQuote,
         transactions: list[Transaction],
         user_address: str = None,
+        suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
         user_address = user_address or self.client.user_address
 
@@ -1072,6 +1116,7 @@ class Pool:
             amounts_in=quote.amounts_in,
             transactions=transactions,
             user_address=user_address,
+            suggested_params=suggested_params,
         )
 
     def prepare_claim_fees_transactions(

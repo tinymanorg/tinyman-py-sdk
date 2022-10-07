@@ -4,7 +4,7 @@
 from pprint import pprint
 from urllib.parse import quote_plus
 
-from algosdk.future.transaction import AssetTransferTxn
+from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
 
 from examples.v2.tutorial.common import get_account, get_assets
 from examples.v2.utils import get_algod
@@ -54,14 +54,44 @@ transactions = [
     )
 ]
 
+if asset_1_payment_amount:
+    transactions.append(
+        AssetTransferTxn(
+            sender=account["address"],
+            sp=suggested_params,
+            receiver=pool.address,
+            index=pool.asset_1.id,
+            amt=asset_1_payment_amount,
+        )
+    )
+
+if asset_2_payment_amount:
+    if pool.asset_2.id:
+        transactions.append(
+            AssetTransferTxn(
+                sender=account["address"],
+                sp=suggested_params,
+                receiver=pool.address,
+                index=pool.asset_2.id,
+                amt=asset_2_payment_amount,
+            )
+        )
+    else:
+        transactions.append(
+            PaymentTxn(
+                sender=account["address"],
+                sp=suggested_params,
+                receiver=pool.address,
+                amt=asset_2_payment_amount,
+            )
+        )
+
 txn_group = prepare_flash_swap_transactions(
     validator_app_id=pool.validator_app_id,
     asset_1_id=pool.asset_1.id,
     asset_2_id=pool.asset_2.id,
     asset_1_loan_amount=asset_1_loan_amount,
     asset_2_loan_amount=asset_2_loan_amount,
-    asset_1_payment_amount=asset_1_payment_amount,
-    asset_2_payment_amount=asset_2_payment_amount,
     transactions=transactions,
     suggested_params=suggested_params,
     sender=account["address"],

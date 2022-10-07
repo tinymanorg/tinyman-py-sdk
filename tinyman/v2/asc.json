@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/tinymanorg/tinyman-contracts-v2",
+  "contracts": {
+    "pool_logicsig": {
+      "type": "logicsig",
+      "logic": {
+        "bytecode": "BoAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgQBbNQA0ADEYEkQxGYEBEkSBAUM="
+      },
+      "name": "pool_logicsig"
+    }
+  }
+}

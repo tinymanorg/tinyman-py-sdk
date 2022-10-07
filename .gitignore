@@ -131,8 +131,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# TODO: Remove
-tinyman/v2/asc.json
-tinyman/v2/constants.py
 account*.json
 assets*.json

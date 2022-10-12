@@ -1,0 +1,32 @@
+name: Lint & Tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.9", "3.8"]
+        py-algorand-sdk-version: ["1.18", "1.17", "1.16", "1.15", "1.14", "1.13"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black py-algorand-sdk==${{ matrix.py-algorand-sdk-version }}
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.0
+
+      - name: Run Unit tests
+        run: |
+          python -m unittest

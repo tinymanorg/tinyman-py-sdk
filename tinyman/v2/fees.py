@@ -41,9 +41,8 @@ def prepare_claim_fees_transactions(
 
 def prepare_claim_extra_transactions(
     validator_app_id: int,
-    asset_1_id: int,
-    asset_2_id: int,
-    pool_address: str,
+    asset_id: int,
+    address: str,
     fee_collector: str,
     sender: str,
     suggested_params: SuggestedParams,
@@ -54,13 +53,13 @@ def prepare_claim_extra_transactions(
             sp=suggested_params,
             index=validator_app_id,
             app_args=[CLAIM_EXTRA_APP_ARGUMENT],
-            foreign_assets=[asset_1_id, asset_2_id],
-            accounts=[pool_address, fee_collector],
+            foreign_assets=[asset_id],
+            accounts=[address, fee_collector],
         ),
     ]
 
     min_fee = suggested_params.min_fee
-    app_call_fee = min_fee * 3
+    app_call_fee = min_fee * 2
     txns[-1].fee = app_call_fee
 
     txn_group = TransactionGroup(txns)

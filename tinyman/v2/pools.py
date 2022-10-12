@@ -423,7 +423,7 @@ class Pool:
             ),
             swap_fees=AssetAmount(
                 self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
-                int(swap_total_fee_amount),
+                swap_total_fee_amount,
             ),
             price_impact=swap_price_impact,
         )
@@ -499,7 +499,7 @@ class Pool:
             ),
             swap_fees=AssetAmount(
                 self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
-                int(swap_total_fee_amount),
+                swap_total_fee_amount,
             ),
             price_impact=swap_price_impact,
         )
@@ -742,7 +742,7 @@ class Pool:
             internal_swap_quote = InternalSwapQuote(
                 amount_in=AssetAmount(self.asset_2, asset_2_output_amount),
                 amount_out=AssetAmount(self.asset_1, swap_output_amount),
-                swap_fees=AssetAmount(self.asset_2, int(total_fee_amount)),
+                swap_fees=AssetAmount(self.asset_2, total_fee_amount),
                 price_impact=price_impact,
             )
             quote = SingleAssetRemoveLiquidityQuote(
@@ -767,7 +767,7 @@ class Pool:
             internal_swap_quote = InternalSwapQuote(
                 amount_in=AssetAmount(self.asset_1, asset_1_output_amount),
                 amount_out=AssetAmount(self.asset_2, swap_output_amount),
-                swap_fees=AssetAmount(self.asset_1, int(total_fee_amount)),
+                swap_fees=AssetAmount(self.asset_1, total_fee_amount),
                 price_impact=price_impact,
             )
             quote = SingleAssetRemoveLiquidityQuote(

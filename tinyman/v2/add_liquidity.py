@@ -36,14 +36,14 @@ def prepare_flexible_add_liquidity_transactions(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_1_amount),
+            amt=asset_1_amount,
             index=asset_1_id,
         ),
         AssetTransferTxn(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_2_amount),
+            amt=asset_2_amount,
             index=asset_2_id,
         )
         if asset_2_id != 0
@@ -51,7 +51,7 @@ def prepare_flexible_add_liquidity_transactions(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_2_amount),
+            amt=asset_2_amount,
         ),
         ApplicationNoOpTxn(
             sender=sender,
@@ -60,7 +60,7 @@ def prepare_flexible_add_liquidity_transactions(
             app_args=[
                 ADD_LIQUIDITY_APP_ARGUMENT,
                 ADD_LIQUIDITY_FLEXIBLE_MODE_APP_ARGUMENT,
-                int(min_pool_token_asset_amount),
+                min_pool_token_asset_amount,
             ],
             foreign_assets=[pool_token_asset_id],
             accounts=[pool_address],
@@ -109,7 +109,7 @@ def prepare_single_asset_add_liquidity_transactions(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_in_amount),
+            amt=asset_in_amount,
             index=asset_in_id,
         )
         if asset_in_id != 0
@@ -117,7 +117,7 @@ def prepare_single_asset_add_liquidity_transactions(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_in_amount),
+            amt=asset_in_amount,
         ),
         ApplicationNoOpTxn(
             sender=sender,
@@ -126,7 +126,7 @@ def prepare_single_asset_add_liquidity_transactions(
             app_args=[
                 ADD_LIQUIDITY_APP_ARGUMENT,
                 ADD_LIQUIDITY_SINGLE_MODE_APP_ARGUMENT,
-                int(min_pool_token_asset_amount),
+                min_pool_token_asset_amount,
             ],
             foreign_assets=[pool_token_asset_id],
             accounts=[pool_address],
@@ -159,14 +159,14 @@ def prepare_initial_add_liquidity_transactions(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_1_amount),
+            amt=asset_1_amount,
             index=asset_1_id,
         ),
         AssetTransferTxn(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_2_amount),
+            amt=asset_2_amount,
             index=asset_2_id,
         )
         if asset_2_id != 0
@@ -174,7 +174,7 @@ def prepare_initial_add_liquidity_transactions(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_2_amount),
+            amt=asset_2_amount,
         ),
         ApplicationNoOpTxn(
             sender=sender,

@@ -34,20 +34,20 @@ def prepare_swap_transactions(
             sp=suggested_params,
             receiver=pool_address,
             index=asset_in_id,
-            amt=int(asset_in_amount),
+            amt=asset_in_amount,
         )
         if asset_in_id != 0
         else PaymentTxn(
             sender=sender,
             sp=suggested_params,
             receiver=pool_address,
-            amt=int(asset_in_amount),
+            amt=asset_in_amount,
         ),
         ApplicationNoOpTxn(
             sender=sender,
             sp=suggested_params,
             index=validator_app_id,
-            app_args=[SWAP_APP_ARGUMENT, swap_type, int(asset_out_amount)],
+            app_args=[SWAP_APP_ARGUMENT, swap_type, asset_out_amount],
             foreign_assets=[asset_1_id, asset_2_id],
             accounts=[pool_address],
         ),
@@ -65,7 +65,7 @@ def prepare_swap_transactions(
         # App call contains 1 inner transaction
         app_call_fee = min_fee * 2
     elif swap_type == FIXED_OUTPUT_APP_ARGUMENT:
-        # App call contains 2 inner transaction2
+        # App call contains 2 inner transactions
         app_call_fee = min_fee * 3
     else:
         raise NotImplementedError()

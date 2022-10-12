@@ -18,7 +18,7 @@ def prepare_flash_swap_transactions(
     asset_2_id: int,
     asset_1_loan_amount: int,
     asset_2_loan_amount: int,
-    transactions: list[Transaction],
+    transactions: "list[Transaction]",
     sender: str,
     suggested_params: SuggestedParams,
 ) -> TransactionGroup:

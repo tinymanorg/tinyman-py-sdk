@@ -22,7 +22,7 @@ def prepare_flash_loan_transactions(
     asset_2_loan_amount: int,
     asset_1_payment_amount: int,
     asset_2_payment_amount: int,
-    transactions: list[Transaction],
+    transactions: "list[Transaction]",
     sender: str,
     suggested_params: SuggestedParams,
 ) -> TransactionGroup:

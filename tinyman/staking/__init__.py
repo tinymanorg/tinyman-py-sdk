@@ -3,7 +3,7 @@ import re
 from base64 import b64decode, b64encode
 from datetime import datetime
 from hashlib import sha256
-from typing import List, Optional
+from typing import Optional
 
 from algosdk.constants import PAYMENT_TXN, ASSETTRANSFER_TXN
 from algosdk.encoding import is_valid_address
@@ -221,8 +221,8 @@ def prepare_setup_transaction(
     reward_period: int,
     start_time: int,
     end_time: int,
-    asset_ids: List[int],
-    min_amounts: List[int],
+    asset_ids: "list[int]",
+    min_amounts: "list[int]",
     sender,
     suggested_params,
 ):

@@ -552,7 +552,7 @@ class Pool:
 
     def prepare_flexible_add_liquidity_transactions(
         self,
-        amounts_in: dict[Asset, AssetAmount],
+        amounts_in: "dict[Asset, AssetAmount]",
         min_pool_token_asset_amount: int,
         user_address: Optional[str] = None,
         suggested_params: SuggestedParams = None,
@@ -608,7 +608,7 @@ class Pool:
 
     def prepare_initial_add_liquidity_transactions(
         self,
-        amounts_in: dict[Asset, AssetAmount],
+        amounts_in: "dict[Asset, AssetAmount]",
         user_address: Optional[str] = None,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
@@ -786,7 +786,7 @@ class Pool:
     def prepare_remove_liquidity_transactions(
         self,
         pool_token_asset_amount: [AssetAmount, int],
-        amounts_out: dict[Asset, AssetAmount],
+        amounts_out: "dict[Asset, AssetAmount]",
         user_address: Optional[str] = None,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
@@ -1077,9 +1077,9 @@ class Pool:
 
     def prepare_flash_loan_transactions(
         self,
-        amounts_out: dict[Asset, AssetAmount],
-        amounts_in: dict[Asset, AssetAmount],
-        transactions: list[Transaction],
+        amounts_out: "dict[Asset, AssetAmount]",
+        amounts_in: "dict[Asset, AssetAmount]",
+        transactions: "list[Transaction]",
         user_address: str = None,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
@@ -1105,7 +1105,7 @@ class Pool:
     def prepare_flash_loan_transactions_from_quote(
         self,
         quote: FlashLoanQuote,
-        transactions: list[Transaction],
+        transactions: "list[Transaction]",
         user_address: str = None,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:

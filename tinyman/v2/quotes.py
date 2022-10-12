@@ -58,7 +58,7 @@ class InternalSwapQuote:
 
 @dataclass
 class FlexibleAddLiquidityQuote:
-    amounts_in: dict[Asset, AssetAmount]
+    amounts_in: "dict[Asset, AssetAmount]"
     pool_token_asset_amount: AssetAmount
     slippage: float
     internal_swap_quote: InternalSwapQuote = None
@@ -86,18 +86,18 @@ class SingleAssetAddLiquidityQuote:
 
 @dataclass
 class InitialAddLiquidityQuote:
-    amounts_in: dict[Asset, AssetAmount]
+    amounts_in: "dict[Asset, AssetAmount]"
     pool_token_asset_amount: AssetAmount
 
 
 @dataclass
 class RemoveLiquidityQuote:
-    amounts_out: dict[Asset, AssetAmount]
+    amounts_out: "dict[Asset, AssetAmount]"
     pool_token_asset_amount: AssetAmount
     slippage: float
 
     @property
-    def amounts_out_with_slippage(self) -> dict[Asset, AssetAmount]:
+    def amounts_out_with_slippage(self) -> "dict[Asset, AssetAmount]":
         amounts_out = {}
         for asset, asset_amount in self.amounts_out.items():
             amount_with_slippage = asset_amount.amount - int(
@@ -124,6 +124,6 @@ class SingleAssetRemoveLiquidityQuote:
 
 @dataclass
 class FlashLoanQuote:
-    amounts_out: dict[Asset, AssetAmount]
-    amounts_in: dict[Asset, AssetAmount]
-    fees: dict[Asset, AssetAmount]
+    amounts_out: "dict[Asset, AssetAmount]"
+    amounts_in: "dict[Asset, AssetAmount]"
+    fees: "dict[Asset, AssetAmount]"

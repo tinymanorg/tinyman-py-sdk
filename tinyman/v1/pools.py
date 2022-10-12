@@ -4,7 +4,7 @@ from base64 import b64encode
 from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import decode_address
 from .contracts import get_pool_logicsig
-from tinyman.utils import get_state_int
+from tinyman.utils import get_state_int, calculate_price_impact
 from tinyman.assets import Asset, AssetAmount
 from .swap import prepare_swap_transactions
 from .bootstrap import prepare_bootstrap_transactions
@@ -372,9 +372,12 @@ class Pool:
 
         amount_out = AssetAmount(asset_out, int(asset_out_amount))
 
-        swap_price = amount_out.amount / amount_in.amount
-        pool_price = output_supply / input_supply
-        price_impact = abs(round((swap_price / pool_price) - 1, 5))
+        price_impact = calculate_price_impact(
+            input_supply=input_supply,
+            output_supply=output_supply,
+            swap_input_amount=amount_in.amount,
+            swap_output_amount=amount_out.amount,
+        )
 
         quote = SwapQuote(
             swap_type="fixed-input",
@@ -413,9 +416,12 @@ class Pool:
 
         amount_in = AssetAmount(asset_in, int(asset_in_amount))
 
-        swap_price = amount_out.amount / amount_in.amount
-        pool_price = output_supply / input_supply
-        price_impact = abs(round((swap_price / pool_price) - 1, 5))
+        price_impact = calculate_price_impact(
+            input_supply=input_supply,
+            output_supply=output_supply,
+            swap_input_amount=amount_in.amount,
+            swap_output_amount=amount_out.amount,
+        )
 
         quote = SwapQuote(
             swap_type="fixed-output",

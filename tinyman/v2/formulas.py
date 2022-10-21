@@ -24,7 +24,7 @@ def calculate_fixed_input_fee_amount(input_amount: int, total_fee_share: int) ->
     return total_fee_amount
 
 
-def calculate_fixed_output_fee_amounts(swap_amount: int, total_fee_share: int) -> int:
+def calculate_fixed_output_fee_amount(swap_amount: int, total_fee_share: int) -> int:
     input_amount = (swap_amount * 10_000) // (10_000 - total_fee_share)
     total_fee_amount = input_amount - swap_amount
     return total_fee_amount
@@ -277,7 +277,7 @@ def calculate_fixed_output_swap(
     swap_amount = calculate_swap_amount_of_fixed_output_swap(
         input_supply, output_supply, swap_output_amount
     )
-    total_fee_amount = calculate_fixed_output_fee_amounts(
+    total_fee_amount = calculate_fixed_output_fee_amount(
         swap_amount=swap_amount, total_fee_share=total_fee_share
     )
     swap_input_amount = swap_amount + total_fee_amount

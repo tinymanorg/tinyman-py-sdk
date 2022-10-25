@@ -75,5 +75,5 @@ def prepare_swap_transactions(
     ]
 
     txn_group = TransactionGroup(txns)
-    txn_group.sign_with_logicisg(pool_logicsig)
+    txn_group.sign_with_logicsig(pool_logicsig)
     return txn_group

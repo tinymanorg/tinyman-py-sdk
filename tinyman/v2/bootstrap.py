@@ -49,5 +49,5 @@ def prepare_bootstrap_transactions(
     txns.append(bootstrap_app_call)
 
     txn_group = TransactionGroup(txns)
-    txn_group.sign_with_logicisg(pool_logicsig)
+    txn_group.sign_with_logicsig(pool_logicsig)
     return txn_group

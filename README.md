@@ -259,9 +259,9 @@ for i, txn in enumerate(transaction_group.transactions):
         transaction_group.signed_transactions[i] = kmd.sign_transaction(handle, KMD_WALLET_PASSWORD, txn)
 ```
 
-A User account LogicSig can also be used in a similar way or using the `sign_with_logicisg` convenience method:
+A User account LogicSig can also be used in a similar way or using the `sign_with_logicsig` convenience method:
 ```python
-transaction_group.sign_with_logicisg(logicsig)
+transaction_group.sign_with_logicsig(logicsig)
 ```
 
 ### Submission

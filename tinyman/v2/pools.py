@@ -888,12 +888,12 @@ class Pool:
             asset_out = self.asset_2
             input_supply = self.asset_1_reserves
             output_supply = self.asset_2_reserves
-        elif amount_in.asset == self.asset_1:
+        elif amount_in.asset == self.asset_2:
             asset_out = self.asset_1
             input_supply = self.asset_2_reserves
             output_supply = self.asset_1_reserves
         else:
-            raise False
+            assert False
 
         swap_output_amount, total_fee_amount, price_impact = calculate_fixed_input_swap(
             input_supply=input_supply,

@@ -15,6 +15,12 @@ class Asset:
     def __hash__(self) -> int:
         return self.id
 
+    def __repr__(self) -> str:
+        return f"Asset({self.unit_name} - {self.id})"
+
+    def __eq__(self, other) -> bool:
+        return self.id == other.id
+
     def fetch(self, algod):
         if self.id > 0:
             params = algod.asset_info(self.id)["params"]
@@ -28,9 +34,6 @@ class Asset:
         self.unit_name = params["unit-name"]
         self.decimals = params["decimals"]
         return self
-
-    def __repr__(self) -> str:
-        return f"Asset({self.unit_name} - {self.id})"
 
 
 @dataclass

@@ -6,6 +6,10 @@ class AlreadyBootstrapped(Exception):
     pass
 
 
+class InsufficientReserve(Exception):
+    pass
+
+
 class PoolHasNoLiquidity(Exception):
     pass
 

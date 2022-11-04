@@ -2,6 +2,7 @@ import math
 
 from tinyman.utils import calculate_price_impact
 from tinyman.v2.constants import LOCKED_POOL_TOKENS
+from tinyman.v2.exceptions import InsufficientReserve
 
 
 def calculate_protocol_fee_amount(
@@ -245,6 +246,8 @@ def calculate_output_amount_of_fixed_input_swap(
 def calculate_swap_amount_of_fixed_output_swap(
     input_supply: int, output_supply: int, output_amount: int
 ) -> int:
+    assert output_supply > output_amount
+
     k = input_supply * output_supply
     swap_amount = int(k / (output_supply - output_amount)) - input_supply
     swap_amount += 1
@@ -262,6 +265,9 @@ def calculate_fixed_input_swap(
         input_supply, output_supply, swap_amount
     )
 
+    if swap_output_amount <= 0:
+        raise InsufficientReserve()
+
     price_impact = calculate_price_impact(
         input_supply=input_supply,
         output_supply=output_supply,
@@ -274,6 +280,9 @@ def calculate_fixed_input_swap(
 def calculate_fixed_output_swap(
     input_supply: int, output_supply: int, swap_output_amount: int, total_fee_share: int
 ) -> (int, int, float):
+    if output_supply <= swap_output_amount:
+        raise InsufficientReserve()
+
     swap_amount = calculate_swap_amount_of_fixed_output_swap(
         input_supply, output_supply, swap_output_amount
     )

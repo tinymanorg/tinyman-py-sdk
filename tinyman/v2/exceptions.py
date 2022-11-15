@@ -1,12 +1,8 @@
-class BootstrapIsRequired(Exception):
+class PoolIsNotBootstrapped(Exception):
     pass
 
 
-class AlreadyBootstrapped(Exception):
-    pass
-
-
-class InsufficientReserve(Exception):
+class PoolAlreadyBootstrapped(Exception):
     pass
 
 
@@ -14,5 +10,9 @@ class PoolHasNoLiquidity(Exception):
     pass
 
 
-class PoolAlreadyHasLiquidity(Exception):
+class PoolAlreadyInitialized(Exception):
+    pass
+
+
+class InsufficientReserve(Exception):
     pass

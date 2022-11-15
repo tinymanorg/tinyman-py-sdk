@@ -16,10 +16,10 @@ from .client import TinymanV2Client
 from .constants import MIN_POOL_BALANCE_ASA_ALGO_PAIR, MIN_POOL_BALANCE_ASA_ASA_PAIR
 from .contracts import get_pool_logicsig
 from .exceptions import (
-    AlreadyBootstrapped,
-    BootstrapIsRequired,
+    PoolAlreadyBootstrapped,
+    PoolIsNotBootstrapped,
     PoolHasNoLiquidity,
-    PoolAlreadyHasLiquidity,
+    PoolAlreadyInitialized,
 )
 from .fees import (
     prepare_claim_fees_transactions,
@@ -260,7 +260,7 @@ class Pool:
 
     def info(self) -> dict:
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         pool = {
             "address": self.address,
@@ -338,7 +338,7 @@ class Pool:
             self.refresh()
 
         if self.exists:
-            raise AlreadyBootstrapped()
+            raise PoolAlreadyBootstrapped()
 
         if pool_algo_balance is None:
             pool_account_info = self.client.algod.account_info(self.address)
@@ -390,7 +390,7 @@ class Pool:
             self.refresh()
 
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if not self.issued_pool_tokens:
             raise PoolHasNoLiquidity()
@@ -447,7 +447,7 @@ class Pool:
             self.refresh()
 
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if not self.issued_pool_tokens:
             raise PoolHasNoLiquidity()
@@ -530,10 +530,10 @@ class Pool:
             self.refresh()
 
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if self.issued_pool_tokens:
-            raise PoolAlreadyHasLiquidity()
+            raise PoolAlreadyInitialized()
 
         pool_token_asset_amount = calculate_initial_add_liquidity(
             asset_1_amount=amount_1.amount, asset_2_amount=amount_2.amount
@@ -670,7 +670,7 @@ class Pool:
         refresh: bool = True,
     ) -> RemoveLiquidityQuote:
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if isinstance(pool_token_asset_in, int):
             pool_token_asset_in = AssetAmount(
@@ -707,7 +707,7 @@ class Pool:
         refresh: bool = True,
     ) -> SingleAssetRemoveLiquidityQuote:
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if isinstance(pool_token_asset_in, int):
             pool_token_asset_in = AssetAmount(
@@ -879,7 +879,7 @@ class Pool:
             self.refresh()
 
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if not self.issued_pool_tokens:
             raise PoolHasNoLiquidity()
@@ -920,7 +920,7 @@ class Pool:
             self.refresh()
 
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if not self.issued_pool_tokens:
             raise PoolHasNoLiquidity()
@@ -1019,7 +1019,7 @@ class Pool:
             self.refresh()
 
         if not self.exists:
-            raise BootstrapIsRequired()
+            raise PoolIsNotBootstrapped()
 
         if not self.issued_pool_tokens:
             raise PoolHasNoLiquidity()

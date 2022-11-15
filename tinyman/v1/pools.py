@@ -82,7 +82,7 @@ class SwapQuote:
     swap_type: str
     amount_in: AssetAmount
     amount_out: AssetAmount
-    swap_fees: int
+    swap_fees: AssetAmount
     slippage: float
     price_impact: float
 

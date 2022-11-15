@@ -11,6 +11,7 @@ _contracts = json.loads(importlib.resources.read_text(tinyman.v2, "asc.json"))
 
 pool_logicsig_def = _contracts["contracts"]["pool_logicsig"]["logic"]
 
+# TODO: Update "asc.json"
 # validator_app_def = _contracts["contracts"]["validator_app"]
 
 

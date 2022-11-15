@@ -127,7 +127,7 @@ class Pool:
             self.asset_2 = asset_a
 
         self.exists = None
-        self.pool_token_asset: Asset = None
+        self.pool_token_asset: Optional[Asset] = None
         self.asset_1_reserves = None
         self.asset_2_reserves = None
         self.issued_pool_tokens = None

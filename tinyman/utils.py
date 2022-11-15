@@ -8,7 +8,7 @@ from algosdk.future.transaction import (
 )
 from algosdk.error import AlgodHTTPError
 
-warnings.simplefilter('always', DeprecationWarning)
+warnings.simplefilter("always", DeprecationWarning)
 
 
 def encode_value(value, type):
@@ -127,7 +127,11 @@ class TransactionGroup:
         """
         Deprecated because of the typo. Use sign_with_logicsig instead.
         """
-        warnings.warn('tinyman.utils.TransactionGroup.sign_with_logicisg is deprecated. Use tinyman.utils.TransactionGroup.sign_with_logicsig instead.', DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "tinyman.utils.TransactionGroup.sign_with_logicisg is deprecated. Use tinyman.utils.TransactionGroup.sign_with_logicsig instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.sign_with_logicsig(logicsig)
 
     def sign_with_logicsig(self, logicsig):

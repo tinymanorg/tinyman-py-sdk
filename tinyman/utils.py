@@ -1,3 +1,4 @@
+import warnings
 from base64 import b64decode, b64encode
 from datetime import datetime
 from algosdk.future.transaction import (
@@ -6,6 +7,8 @@ from algosdk.future.transaction import (
     wait_for_confirmation,
 )
 from algosdk.error import AlgodHTTPError
+
+warnings.simplefilter('always', DeprecationWarning)
 
 
 def encode_value(value, type):
@@ -102,8 +105,10 @@ def calculate_price_impact(
 
 class TransactionGroup:
     def __init__(self, transactions):
+        # Clear previously assigned group ids
         for txn in transactions:
             txn.group = None
+
         transactions = assign_group_id(transactions)
         self.transactions = transactions
         self.signed_transactions = [None for _ in self.transactions]
@@ -119,6 +124,10 @@ class TransactionGroup:
         return group_id
 
     def sign_with_logicisg(self, logicsig):
+        """
+        Deprecated because of the typo. Use sign_with_logicsig instead.
+        """
+        warnings.warn('tinyman.utils.TransactionGroup.sign_with_logicisg is deprecated. Use tinyman.utils.TransactionGroup.sign_with_logicsig instead.', DeprecationWarning, stacklevel=2)
         return self.sign_with_logicsig(logicsig)
 
     def sign_with_logicsig(self, logicsig):

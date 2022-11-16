@@ -46,6 +46,7 @@ class TinymanClient:
         return txn_group
 
     def prepare_asset_optin_transactions(self, asset_id, user_address=None):
+        assert asset_id != 0, "Cannot opt into ALGO"
         user_address = user_address or self.user_address
         suggested_params = self.algod.suggested_params()
         txn_group = prepare_asset_optin_transactions(

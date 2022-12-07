@@ -23,6 +23,7 @@ class TinymanV2TestnetClient(TinymanV2Client):
         super().__init__(
             algod_client,
             validator_app_id=TESTNET_VALIDATOR_APP_ID,
+            api_base_url="https://testnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=TESTNET_STAKING_APP_ID,
         )
@@ -33,6 +34,7 @@ class TinymanV2MainnetClient(TinymanV2Client):
         super().__init__(
             algod_client,
             validator_app_id=MAINNET_VALIDATOR_APP_ID,
+            api_base_url="https://mainnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=MAINNET_STAKING_APP_ID,
         )

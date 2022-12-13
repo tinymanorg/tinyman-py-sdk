@@ -15,7 +15,7 @@ class TinymanV2Client(BaseTinymanClient):
     def fetch_pool(self, asset_a, asset_b, fetch=True):
         from .pools import Pool
 
-        return Pool(self, asset_a, asset_a, fetch=fetch)
+        return Pool(self, asset_a, asset_b, fetch=fetch)
 
 
 class TinymanV2TestnetClient(TinymanV2Client):

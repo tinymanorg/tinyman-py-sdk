@@ -9,12 +9,8 @@ from algosdk.constants import PAYMENT_TXN, ASSETTRANSFER_TXN
 from algosdk.encoding import is_valid_address
 from algosdk.future.transaction import (
     ApplicationClearStateTxn,
-    ApplicationCreateTxn,
     ApplicationOptInTxn,
-    OnComplete,
     PaymentTxn,
-    StateSchema,
-    ApplicationUpdateTxn,
     ApplicationNoOpTxn,
     AssetTransferTxn,
 )
@@ -30,33 +26,33 @@ from tinyman.utils import (
 from tinyman.staking.constants import DATE_FORMAT
 
 
-def prepare_create_transaction(args, sender, suggested_params):
-    from .contracts import staking_app_def
-
-    txn = ApplicationCreateTxn(
-        sender=sender,
-        sp=suggested_params,
-        on_complete=OnComplete.NoOpOC.real,
-        approval_program=b64decode(staking_app_def["approval_program"]["bytecode"]),
-        clear_program=b64decode(staking_app_def["clear_program"]["bytecode"]),
-        global_schema=StateSchema(**staking_app_def["global_state_schema"]),
-        local_schema=StateSchema(**staking_app_def["local_state_schema"]),
-        app_args=args,
-    )
-    return TransactionGroup([txn])
-
-
-def prepare_update_transaction(app_id: int, sender, suggested_params):
-    from .contracts import staking_app_def
-
-    txn = ApplicationUpdateTxn(
-        index=app_id,
-        sender=sender,
-        sp=suggested_params,
-        approval_program=b64decode(staking_app_def["approval_program"]["bytecode"]),
-        clear_program=b64decode(staking_app_def["clear_program"]["bytecode"]),
-    )
-    return TransactionGroup([txn])
+# def prepare_create_transaction(args, sender, suggested_params):
+#     from .contracts import staking_app_def
+#
+#     txn = ApplicationCreateTxn(
+#         sender=sender,
+#         sp=suggested_params,
+#         on_complete=OnComplete.NoOpOC.real,
+#         approval_program=b64decode(staking_app_def["approval_program"]["bytecode"]),
+#         clear_program=b64decode(staking_app_def["clear_program"]["bytecode"]),
+#         global_schema=StateSchema(**staking_app_def["global_state_schema"]),
+#         local_schema=StateSchema(**staking_app_def["local_state_schema"]),
+#         app_args=args,
+#     )
+#     return TransactionGroup([txn])
+#
+#
+# def prepare_update_transaction(app_id: int, sender, suggested_params):
+#     from .contracts import staking_app_def
+#
+#     txn = ApplicationUpdateTxn(
+#         index=app_id,
+#         sender=sender,
+#         sp=suggested_params,
+#         approval_program=b64decode(staking_app_def["approval_program"]["bytecode"]),
+#         clear_program=b64decode(staking_app_def["clear_program"]["bytecode"]),
+#     )
+#     return TransactionGroup([txn])
 
 
 def prepare_commit_transaction(

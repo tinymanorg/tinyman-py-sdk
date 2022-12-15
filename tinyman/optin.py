@@ -14,6 +14,8 @@ def prepare_app_optin_transactions(validator_app_id, sender, suggested_params):
 
 
 def prepare_asset_optin_transactions(asset_id, sender, suggested_params):
+    assert asset_id != 0, "Cannot opt into ALGO"
+
     txn = AssetOptInTxn(
         sender=sender,
         sp=suggested_params,

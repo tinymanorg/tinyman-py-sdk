@@ -312,7 +312,7 @@ def prepare_payment_transaction(
 ):
     note = generate_note_from_metadata(metadata)
     # Compose a lease key from the distribution key (date, pool_address) and staker_address
-    # This is to prevent accidently submitting multiple payments for the same staker for the same cycles
+    # This is to prevent accidentally submitting multiple payments for the same staker for the same cycles
     # Note: the lease is only ensured unique between first_valid & last_valid
     lease_data = json.dumps(
         [metadata["rewards"]["distribution"], staker_address]

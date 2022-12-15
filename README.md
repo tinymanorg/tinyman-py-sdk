@@ -13,7 +13,7 @@ The SDK has been updated for Tinyman V1.1.
 
 
 ## Installation
-tinyman-py-sdk is not yet released on PYPI. It can be installed directly from this repository with pip:
+tinyman-py-sdk is not released on PYPI. It can be installed directly from this repository with pip:
 
 `pip install git+https://github.com/tinymanorg/tinyman-py-sdk.git`
 

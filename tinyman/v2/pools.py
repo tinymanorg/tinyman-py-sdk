@@ -411,21 +411,25 @@ class Pool:
             asset_2_amount=amount_2.amount,
         )
 
-        internal_swap_quote = InternalSwapQuote(
-            amount_in=AssetAmount(
-                self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
-                swap_in_amount,
-            ),
-            amount_out=AssetAmount(
-                self.asset_2 if swap_from_asset_1_to_asset_2 else self.asset_1,
-                swap_out_amount,
-            ),
-            swap_fees=AssetAmount(
-                self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
-                swap_total_fee_amount,
-            ),
-            price_impact=swap_price_impact,
-        )
+        if not swap_out_amount:
+            # There is no output amount, ignore the integer roundings looks like a swap.
+            internal_swap_quote = None
+        else:
+            internal_swap_quote = InternalSwapQuote(
+                amount_in=AssetAmount(
+                    self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
+                    swap_in_amount,
+                ),
+                amount_out=AssetAmount(
+                    self.asset_2 if swap_from_asset_1_to_asset_2 else self.asset_1,
+                    swap_out_amount,
+                ),
+                swap_fees=AssetAmount(
+                    self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
+                    swap_total_fee_amount,
+                ),
+                price_impact=swap_price_impact,
+            )
 
         quote = FlexibleAddLiquidityQuote(
             amounts_in={

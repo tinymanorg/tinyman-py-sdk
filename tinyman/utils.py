@@ -1,3 +1,4 @@
+import re
 import warnings
 from base64 import b64decode, b64encode
 from datetime import datetime
@@ -149,7 +150,7 @@ class TransactionGroup:
         try:
             txid = algod.send_transactions(self.signed_transactions)
         except AlgodHTTPError as e:
-            raise Exception(str(e))
+            raise Exception(e) from None
         if wait:
             txn_info = wait_for_confirmation(algod, txid)
             txn_info["txid"] = txid
@@ -159,3 +160,24 @@ class TransactionGroup:
     def __add__(self, other):
         transactions = self.transactions + other.transactions
         return TransactionGroup(transactions)
+
+
+def parse_error(exception):
+    error_message = str(exception)
+    pattern = r"Remember: transaction ([A-Z0-9]+):"
+    txn_id = re.findall(pattern, error_message)[0]
+    pc = None
+    error = error_message
+    if "logic eval error" in error_message:
+        pattern = r"error: (.+?) pc=\d+\.? Details: pc=(\d+)"
+        error, pc = re.findall(pattern, error_message)[0]
+    return (txn_id, error, pc)
+
+
+def find_app_id_from_txn_id(transaction_group, txn_id):
+    app_id = None
+    for txn in transaction_group.transactions:
+        if txn.get_txid() == txn_id:
+            app_id = txn.index
+            break
+    return app_id

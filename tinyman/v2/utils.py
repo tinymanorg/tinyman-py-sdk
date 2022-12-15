@@ -1,6 +1,15 @@
+import json
 from base64 import b64decode
-
+import importlib.resources
+import re
+import tinyman.v2
 from tinyman.utils import bytes_to_int
+from tinyman.tealishmap import TealishMap
+
+
+tealishmap = TealishMap(
+    json.loads(importlib.resources.read_text(tinyman.v2, "amm_approval.map.json"))
+)
 
 
 def decode_logs(logs: "list[[bytes, str]]") -> dict:
@@ -35,3 +44,13 @@ def get_state_from_account_info(account_info, app_id):
     except KeyError:
         return {}
     return app_state
+
+
+def lookup_error(pc, error_message):
+    print(error_message)
+    tealish_line_no = tealishmap.get_tealish_line_for_pc(int(pc))
+    if "assert failed" in error_message:
+        error_message = tealishmap.get_error_for_pc(int(pc))
+    # error_message = f"{error} @ line {tealish_line_no}: {source[tealish_line_no - 1].strip()}"
+    error_message = f"{error_message} @ line {tealish_line_no}"
+    return error_message

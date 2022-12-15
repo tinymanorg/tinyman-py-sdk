@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from algosdk.v2client.algod import AlgodClient
@@ -31,12 +32,19 @@ class BaseTinymanClient:
         return self.assets_cache[asset_id]
 
     def submit(self, transaction_group, wait=False):
-        txid = self.algod.send_transactions(transaction_group.signed_transactions)
+        try:
+            txid = self.algod.send_transactions(transaction_group.signed_transactions)
+        except Exception as e:
+            self.handle_error(e, transaction_group)
         if wait:
             txn_info = wait_for_confirmation(self.algod, txid)
             txn_info["txid"] = txid
             return txn_info
         return {"txid": txid}
+
+    def handle_error(self, exception, transaction_group):
+        error_message = str(exception)
+        raise Exception(error_message) from None
 
     def prepare_asset_optin_transactions(
         self, asset_id, user_address=None, suggested_params=None

@@ -150,6 +150,7 @@ class TransactionGroup:
             txid = algod.send_transactions(self.signed_transactions)
         except AlgodHTTPError as e:
             raise Exception(str(e))
+
         if wait:
             txn_info = wait_for_confirmation(algod, txid)
             txn_info["txid"] = txid

@@ -40,7 +40,7 @@ txn_group = txn_group_1 + txn_group_2
 txn_group.sign_with_private_key(account["address"], account["private_key"])
 
 # Submit transactions to the network and wait for confirmation
-txn_info = txn_group.submit(algod, wait=True)
+txn_info = client.submit(txn_group, wait=True)
 print("Transaction Info")
 pprint(txn_info)
 

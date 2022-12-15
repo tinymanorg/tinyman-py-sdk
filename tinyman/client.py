@@ -1,7 +1,9 @@
 from typing import Optional
 
-from algosdk.v2client.algod import AlgodClient
+from algosdk.error import AlgodHTTPError
 from algosdk.future.transaction import wait_for_confirmation
+from algosdk.v2client.algod import AlgodClient
+
 from tinyman.assets import Asset
 from tinyman.optin import prepare_asset_optin_transactions
 
@@ -31,7 +33,11 @@ class BaseTinymanClient:
         return self.assets_cache[asset_id]
 
     def submit(self, transaction_group, wait=False):
-        txid = self.algod.send_transactions(transaction_group.signed_transactions)
+        try:
+            txid = self.algod.send_transactions(transaction_group.signed_transactions)
+        except AlgodHTTPError as e:
+            raise Exception(str(e))
+
         if wait:
             txn_info = wait_for_confirmation(self.algod, txid)
             txn_info["txid"] = txid

@@ -11,19 +11,21 @@ from algosdk.v2client.algod import AlgodClient
 # Hardcoding account keys is not a great practice. This is for demonstration purposes only.
 # See the README & Docs for alternative signing methods.
 account = {
-    'address': 'ALGORAND_ADDRESS_HERE',
-    'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
+    "address": "ALGORAND_ADDRESS_HERE",
+    "private_key": "base64_private_key_here",  # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
 }
 
-algod = AlgodClient('<TOKEN>', 'http://localhost:8080', headers={'User-Agent': 'algosdk'})
-client = TinymanTestnetClient(algod_client=algod, user_address=account['address'])
+algod = AlgodClient(
+    "<TOKEN>", "http://localhost:8080", headers={"User-Agent": "algosdk"}
+)
+client = TinymanTestnetClient(algod_client=algod, user_address=account["address"])
 # By default all subsequent operations are on behalf of user_address
 
 # Check if the account is opted into Tinyman and optin if necessary
-if(not client.is_opted_in()):
-    print('Account not opted into app, opting in now..')
+if not client.is_opted_in():
+    print("Account not opted into app, opting in now..")
     transaction_group = client.prepare_app_optin_transactions()
-    transaction_group.sign_with_private_key(account['address'], account['private_key'])
+    transaction_group.sign_with_private_key(account["address"], account["private_key"])
     result = client.submit(transaction_group, wait=True)
 
 
@@ -38,16 +40,16 @@ pool = client.fetch_pool(TINYUSDC, ALGO)
 # Get a quote for a swap of 1 ALGO to TINYUSDC with 1% slippage tolerance
 quote = pool.fetch_fixed_input_swap_quote(ALGO(1_000_000), slippage=0.01)
 print(quote)
-print(f'TINYUSDC per ALGO: {quote.price}')
-print(f'TINYUSDC per ALGO (worst case): {quote.price_with_slippage}')
+print(f"TINYUSDC per ALGO: {quote.price}")
+print(f"TINYUSDC per ALGO (worst case): {quote.price_with_slippage}")
 
 # We only want to sell if ALGO is > 180 TINYUSDC (It's testnet!)
 if quote.price_with_slippage > 180:
-    print(f'Swapping {quote.amount_in} to {quote.amount_out_with_slippage}')
+    print(f"Swapping {quote.amount_in} to {quote.amount_out_with_slippage}")
     # Prepare a transaction group
     transaction_group = pool.prepare_swap_transactions_from_quote(quote)
     # Sign the group with our key
-    transaction_group.sign_with_private_key(account['address'], account['private_key'])
+    transaction_group.sign_with_private_key(account["address"], account["private_key"])
     # Submit transactions to the network and wait for confirmation
     result = client.submit(transaction_group, wait=True)
 
@@ -55,9 +57,11 @@ if quote.price_with_slippage > 180:
     excess = pool.fetch_excess_amounts()
     if TINYUSDC in excess:
         amount = excess[TINYUSDC]
-        print(f'Excess: {amount}')
+        print(f"Excess: {amount}")
         # We might just let the excess accumulate rather than redeeming if its < 1 TinyUSDC
         if amount > 1_000_000:
             transaction_group = pool.prepare_redeem_transactions(amount)
-            transaction_group.sign_with_private_key(account['address'], account['private_key'])
+            transaction_group.sign_with_private_key(
+                account["address"], account["private_key"]
+            )
             result = client.submit(transaction_group, wait=True)

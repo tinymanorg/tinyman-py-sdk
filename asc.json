@@ -1,0 +1,32 @@
+{
+  "repo": "https://github.com/tinymanorg/tinyman-staking",
+  "ref": "main",
+  "contracts": {
+    "staking_app": {
+      "type": "app",
+      "approval_program": {
+        "bytecode": "BSADAAEIJgcIZW5kX3RpbWUGYXNzZXRzBG1pbnMMdmVyaWZpY2F0aW9uCGJhbGFuY2UgAmlkD3Byb2dyYW1fY291bnRlcjEZIhJAAC8xGSMSQAAZMRmBAhJAAicxGYEEEkACITEZgQUSQAIfADYaAIAFc2V0dXASQAGZADYaAIAGY3JlYXRlEkAAijYaAIAGY29tbWl0EkAAfTYaAIAFY2xhaW0SQAEDNhoAgAZ1cGRhdGUSQAE8NhoAgA51cGRhdGVfcmV3YXJkcxJAAN82GgCADXVwZGF0ZV9hc3NldHMSQAD4NhoAgAtlbmRfcHJvZ3JhbRJAAPI2GgArEkAA9TYaAIALbG9nX2JhbGFuY2USQADvACNDIyhiMgcNRCMpYiJKJAtbNjAAEkAACiMISYEODERC/+tMSDUBIypiNAEkC1s1AjYaARdBAAg2GgEXNAIPRCI2MABwAERJFicETFCwNhoBFw9EgBN0aW55bWFuU3Rha2luZy92MTpiMQVRABMSRDEFVxMANQE0ASJbIycFYhJENAEkWzYwABJENAGBEFs2GgEXEkQjQyNDIoACcjE2GgFmIoACcjI2GgJmIoACcjM2GgNmIoACcjQ2GgRmIoACcjU2GgVmI0MiKTYaAWYiKjYaAmYjQyIoNhoBF2YjQyNDMgkxABJEIis2GgFmI0MiNjAAcABESUQWJwRMULAjQycGZCMINQEnBjQBZyInBTQBZiKAA3VybDYaAWYigA9yZXdhcmRfYXNzZXRfaWQ2GgIXZiKADXJld2FyZF9wZXJpb2Q2GgMXZiKACnN0YXJ0X3RpbWU2GgQXZiIoNhoFF2YiKTYaBmYiKjYaB2YjQyNDMgkxABJDMgkxABJDAA==",
+        "address": "KJ3W4IB66Q4ZITCNVABJXAV4I4HKWSZIJMD6BTFATQAWO5AKOV5VMZ6OFI",
+        "size": 658,
+        "variables": [],
+        "source": "https://github.com/tinymanorg/tinyman-staking/tree/main/contracts/staking.teal"
+      },
+      "clear_program": {
+        "bytecode": "BIEB",
+        "address": "P7GEWDXXW5IONRW6XRIRVPJCT2XXEQGOBGG65VJPBUOYZEJCBZWTPHS3VQ",
+        "size": 3,
+        "variables": [],
+        "source": "https://github.com/tinymanorg/tinyman-staking/tree/main/contracts/clear_state.teal"
+      },
+      "global_state_schema": {
+        "num_uints": 2,
+        "num_byte_slices": 2
+      },
+      "local_state_schema": {
+        "num_uints": 5,
+        "num_byte_slices": 11
+      },
+      "name": "staking_app"
+    }
+  }
+}

@@ -1,4 +1,5 @@
 .DS_Store
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -129,3 +130,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Tutorials
+account*.json
+assets*.json

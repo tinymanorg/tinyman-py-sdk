@@ -9,12 +9,14 @@ from algosdk.v2client.algod import AlgodClient
 # Hardcoding account keys is not a great practice. This is for demonstration purposes only.
 # See the README & Docs for alternative signing methods.
 account = {
-    'address': 'ALGORAND_ADDRESS_HERE',
-    'private_key': 'base64_private_key_here', # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
+    "address": "ALGORAND_ADDRESS_HERE",
+    "private_key": "base64_private_key_here",  # Use algosdk.mnemonic.to_private_key(mnemonic) if necessary
 }
 
-algod = AlgodClient('<TOKEN>', 'http://localhost:8080', headers={'User-Agent': 'algosdk'})
-client = TinymanTestnetClient(algod_client=algod, user_address=account['address'])
+algod = AlgodClient(
+    "<TOKEN>", "http://localhost:8080", headers={"User-Agent": "algosdk"}
+)
+client = TinymanTestnetClient(algod_client=algod, user_address=account["address"])
 # By default all subsequent operations are on behalf of user_address
 
 # Fetch our two assets of interest
@@ -33,21 +35,23 @@ print(quote)
 if quote.amounts_in[ALGO] < 5_000_000:
     # Prepare the mint transactions from the quote and sign them
     transaction_group = pool.prepare_mint_transactions_from_quote(quote)
-    transaction_group.sign_with_private_key(account['address'], account['private_key'])
+    transaction_group.sign_with_private_key(account["address"], account["private_key"])
     result = client.submit(transaction_group, wait=True)
 
     # Check if any excess liquidity asset remaining after the mint
     excess = pool.fetch_excess_amounts()
     if pool.liquidity_asset in excess:
         amount = excess[pool.liquidity_asset]
-        print(f'Excess: {amount}')
+        print(f"Excess: {amount}")
         if amount > 1_000_000:
             transaction_group = pool.prepare_redeem_transactions(amount)
-            transaction_group.sign_with_private_key(account['address'], account['private_key'])
+            transaction_group.sign_with_private_key(
+                account["address"], account["private_key"]
+            )
             result = client.submit(transaction_group, wait=True)
 
 info = pool.fetch_pool_position()
-share = info['share'] * 100
-print(f'Pool Tokens: {info[pool.liquidity_asset]}')
-print(f'Assets: {info[TINYUSDC]}, {info[ALGO]}')
-print(f'Share of pool: {share:.3f}%')
+share = info["share"] * 100
+print(f"Pool Tokens: {info[pool.liquidity_asset]}")
+print(f"Assets: {info[TINYUSDC]}, {info[ALGO]}")
+print(f"Share of pool: {share:.3f}%")

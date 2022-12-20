@@ -1,7 +1,4 @@
-import base64
-import algosdk
 from algosdk.future.transaction import ApplicationOptInTxn, AssetOptInTxn
-from algosdk.v2client.algod import AlgodClient
 
 from tinyman.utils import TransactionGroup
 
@@ -17,6 +14,8 @@ def prepare_app_optin_transactions(validator_app_id, sender, suggested_params):
 
 
 def prepare_asset_optin_transactions(asset_id, sender, suggested_params):
+    assert asset_id != 0, "Cannot opt into ALGO"
+
     txn = AssetOptInTxn(
         sender=sender,
         sp=suggested_params,

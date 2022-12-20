@@ -21,6 +21,7 @@ setuptools.setup(
     python_requires=">=3.8",
     package_data={
         "tinyman.v1": ["asc.json"],
+        "tinyman.v2": ["amm_approval.map.json"]
     },
     include_package_data=True,
 )

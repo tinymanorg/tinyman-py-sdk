@@ -12,7 +12,7 @@ tealishmap = TealishMap(
 )
 
 
-def decode_logs(logs: "list[[bytes, str]]") -> dict:
+def decode_logs(logs: "list") -> dict:
     decoded_logs = dict()
     for log in logs:
         if type(log) == str:
@@ -47,10 +47,11 @@ def get_state_from_account_info(account_info, app_id):
 
 
 def lookup_error(pc, error_message):
-    print(error_message)
     tealish_line_no = tealishmap.get_tealish_line_for_pc(int(pc))
-    if "assert failed" in error_message:
-        error_message = tealishmap.get_error_for_pc(int(pc))
+    if "assert failed" in error_message or "err opcode executed" in error_message:
+        custom_error_message = tealishmap.get_error_for_pc(int(pc))
+        if custom_error_message:
+            error_message = custom_error_message
     # error_message = f"{error} @ line {tealish_line_no}: {source[tealish_line_no - 1].strip()}"
     error_message = f"{error_message} @ line {tealish_line_no}"
     return error_message

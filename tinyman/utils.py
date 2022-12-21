@@ -8,6 +8,7 @@ from algosdk.future.transaction import (
     wait_for_confirmation,
 )
 from algosdk.error import AlgodHTTPError
+from .errors import AlgodError, LogicError, OverspendError
 
 warnings.simplefilter("always", DeprecationWarning)
 
@@ -165,13 +166,21 @@ class TransactionGroup:
 def parse_error(exception):
     error_message = str(exception)
     pattern = r"Remember: transaction ([A-Z0-9]+):"
-    txn_id = re.findall(pattern, error_message)[0]
+    try:
+        txn_id = re.findall(pattern, error_message)[0]
+    except IndexError:
+        return AlgodError(error_message)
     pc = None
     error = error_message
     if "logic eval error" in error_message:
-        pattern = r"error: (.+?) pc=\d+\.? Details: pc=(\d+)"
+        pattern = r"error: (.+?). Details: pc=(\d+)"
         error, pc = re.findall(pattern, error_message)[0]
-    return (txn_id, error, pc)
+        return LogicError(error, txn_id=txn_id, pc=pc)
+    if "overspend" in error_message:
+        pattern = r"overspend \(account (.+?),.+tried to spend {(\d+)}\)"
+        address, amount = re.findall(pattern, error_message)[0]
+        return OverspendError(txn_id=txn_id, address=address, amount=amount)
+    return AlgodError(error_message)
 
 
 def find_app_id_from_txn_id(transaction_group, txn_id):

@@ -22,7 +22,7 @@ class TealishMap:
     def get_tealish_line_for_pc(self, pc: int) -> Optional[int]:
         teal_line = self.get_teal_line_for_pc(pc)
         if teal_line is not None:
-            return self.teal_tealish[teal_line]
+            return self.get_tealish_line_for_teal(teal_line)
         return None
 
     def get_teal_line_for_pc(self, pc: int) -> Optional[int]:

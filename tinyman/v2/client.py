@@ -28,10 +28,6 @@ class TinymanV2Client(BaseTinymanClient):
             error = lookup_error(pc, error)
         raise Exception(error) from None
 
-    def __add__(self, other):
-        transactions = self.transactions + other.transactions
-        return TransactionGroup(transactions)
-
 
 class TinymanV2TestnetClient(TinymanV2Client):
     def __init__(self, algod_client: AlgodClient, user_address=None):

@@ -170,16 +170,17 @@ def parse_error(exception):
         txn_id = re.findall(pattern, error_message)[0]
     except IndexError:
         return AlgodError(error_message)
-    pc = None
-    error = error_message
+
     if "logic eval error" in error_message:
         pattern = r"error: (.+?). Details: pc=(\d+)"
         error, pc = re.findall(pattern, error_message)[0]
         return LogicError(error, txn_id=txn_id, pc=pc)
+
     if "overspend" in error_message:
         pattern = r"overspend \(account (.+?),.+tried to spend {(\d+)}\)"
         address, amount = re.findall(pattern, error_message)[0]
         return OverspendError(txn_id=txn_id, address=address, amount=amount)
+
     return AlgodError(error_message)
 
 

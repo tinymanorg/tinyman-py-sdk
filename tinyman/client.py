@@ -1,4 +1,3 @@
-import re
 from typing import Optional
 
 from algosdk.v2client.algod import AlgodClient

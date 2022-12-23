@@ -1,4 +1,3 @@
-import re
 from algosdk.v2client.algod import AlgodClient
 from tinyman.client import BaseTinymanClient
 from tinyman.staking.constants import (
@@ -11,7 +10,7 @@ from tinyman.v2.constants import (
     MAINNET_VALIDATOR_APP_ID,
 )
 
-from tinyman.utils import TransactionGroup, find_app_id_from_txn_id, parse_error
+from tinyman.utils import find_app_id_from_txn_id, parse_error
 from .utils import lookup_error
 from tinyman.errors import LogicError
 

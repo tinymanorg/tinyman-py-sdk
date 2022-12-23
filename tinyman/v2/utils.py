@@ -1,11 +1,10 @@
+import importlib.resources
 import json
 from base64 import b64decode
-import importlib.resources
-import re
-import tinyman.v2
-from tinyman.utils import bytes_to_int
-from tinyman.tealishmap import TealishMap
 
+import tinyman.v2
+from tinyman.tealishmap import TealishMap
+from tinyman.utils import bytes_to_int
 
 tealishmap = TealishMap(
     json.loads(importlib.resources.read_text(tinyman.v2, "amm_approval.map.json"))
@@ -52,6 +51,6 @@ def lookup_error(pc, error_message):
         custom_error_message = tealishmap.get_error_for_pc(int(pc))
         if custom_error_message:
             error_message = custom_error_message
-    # error_message = f"{error} @ line {tealish_line_no}: {source[tealish_line_no - 1].strip()}"
+
     error_message = f"{error_message} @ line {tealish_line_no}"
     return error_message

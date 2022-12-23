@@ -1,4 +1,3 @@
-
 class AlgodError(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)
@@ -14,6 +13,7 @@ class LogicError(AlgodError):
         self.txn_id = txn_id
         self.pc = pc
         self.app_id = app_id
+
 
 class OverspendError(AlgodError):
     def __init__(self, txn_id, address, amount) -> None:

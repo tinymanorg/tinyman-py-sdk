@@ -15,21 +15,17 @@ account = get_account()
 algod = get_algod()
 client = TinymanV2TestnetClient(algod_client=algod, user_address=account["address"])
 
-# ASSET_A_ID, ASSET_B_ID = get_assets()["ids"]
-ASSET_A_ID = 10458941
-ASSET_B_ID = 0
+ASSET_A_ID, ASSET_B_ID = get_assets()["ids"]
 ASSET_A = client.fetch_asset(ASSET_A_ID)
 ASSET_B = client.fetch_asset(ASSET_B_ID)
 pool = client.fetch_pool(ASSET_A_ID, ASSET_B_ID)
 
 position = pool.fetch_pool_position()
-amount_in = AssetAmount(pool.asset_2, 1)
+amount_in = AssetAmount(pool.asset_1, 1_000_000)
 
 quote = pool.fetch_fixed_input_swap_quote(
     amount_in=amount_in,
 )
-
-amount_out = 100000000
 
 print("\nSwap Quote:")
 print(quote)

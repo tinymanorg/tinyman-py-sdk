@@ -1,6 +1,5 @@
 from typing import Optional
 
-from algosdk.error import AlgodHTTPError
 from algosdk.future.transaction import wait_for_confirmation
 from algosdk.v2client.algod import AlgodClient
 

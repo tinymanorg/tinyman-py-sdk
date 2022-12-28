@@ -27,6 +27,7 @@ def prepare_flexible_add_liquidity_transactions(
     min_pool_token_asset_amount: int,
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -64,6 +65,7 @@ def prepare_flexible_add_liquidity_transactions(
             ],
             foreign_assets=[pool_token_asset_id],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
 
@@ -85,6 +87,7 @@ def prepare_single_asset_add_liquidity_transactions(
     suggested_params: SuggestedParams,
     asset_1_amount: Optional[int] = None,
     asset_2_amount: Optional[int] = None,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -130,6 +133,7 @@ def prepare_single_asset_add_liquidity_transactions(
             ],
             foreign_assets=[pool_token_asset_id],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
 
@@ -150,6 +154,7 @@ def prepare_initial_add_liquidity_transactions(
     asset_2_amount: int,
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -183,6 +188,7 @@ def prepare_initial_add_liquidity_transactions(
             app_args=[ADD_INITIAL_LIQUIDITY_APP_ARGUMENT],
             foreign_assets=[pool_token_asset_id],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
 

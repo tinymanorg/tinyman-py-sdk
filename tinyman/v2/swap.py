@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import (
     ApplicationNoOpTxn,
     PaymentTxn,
@@ -24,6 +26,7 @@ def prepare_swap_transactions(
     swap_type: [str, bytes],
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -50,6 +53,7 @@ def prepare_swap_transactions(
             app_args=[SWAP_APP_ARGUMENT, swap_type, asset_out_amount],
             foreign_assets=[asset_1_id, asset_2_id],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
 

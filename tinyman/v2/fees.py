@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import (
     ApplicationNoOpTxn,
     SuggestedParams,
@@ -19,6 +21,7 @@ def prepare_claim_fees_transactions(
     fee_collector: str,
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     txns = [
         ApplicationNoOpTxn(
@@ -28,6 +31,7 @@ def prepare_claim_fees_transactions(
             app_args=[CLAIM_FEES_APP_ARGUMENT],
             foreign_assets=[asset_1_id, asset_2_id],
             accounts=[pool_address, fee_collector],
+            note=app_call_note,
         ),
     ]
 
@@ -46,6 +50,7 @@ def prepare_claim_extra_transactions(
     fee_collector: str,
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     txns = [
         ApplicationNoOpTxn(
@@ -55,6 +60,7 @@ def prepare_claim_extra_transactions(
             app_args=[CLAIM_EXTRA_APP_ARGUMENT],
             foreign_assets=[asset_id],
             accounts=[address, fee_collector],
+            note=app_call_note,
         ),
     ]
 
@@ -73,6 +79,7 @@ def prepare_set_fee_transactions(
     protocol_fee_ratio: int,
     fee_manager: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     txns = [
         ApplicationNoOpTxn(
@@ -81,6 +88,7 @@ def prepare_set_fee_transactions(
             index=validator_app_id,
             app_args=[SET_FEE_APP_ARGUMENT, total_fee_share, protocol_fee_ratio],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
     txn_group = TransactionGroup(txns)

@@ -7,7 +7,7 @@ from algosdk.future.transaction import OnComplete
 from algosdk.logic import get_application_address
 
 from tests.v2 import BaseTestCase
-from tinyman.v2.constants import BOOTSTRAP_APP_ARGUMENT
+from tinyman.v2.constants import BOOTSTRAP_APP_ARGUMENT, TESTNET_VALIDATOR_APP_ID_V2
 from tinyman.v2.contracts import get_pool_logicsig
 from tinyman.v2.pools import Pool
 
@@ -15,7 +15,7 @@ from tinyman.v2.pools import Pool
 class BootstrapTestCase(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.VALIDATOR_APP_ID = 12345
+        cls.VALIDATOR_APP_ID = TESTNET_VALIDATOR_APP_ID_V2
         cls.application_address = get_application_address(cls.VALIDATOR_APP_ID)
 
         cls.sender_private_key, cls.user_address = generate_account()
@@ -74,6 +74,7 @@ class BootstrapTestCase(BaseTestCase):
                 "rekey": decode_address(self.application_address),
                 "snd": decode_address(self.pool_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )
 
@@ -101,6 +102,7 @@ class BootstrapTestCase(BaseTestCase):
                 "rekey": decode_address(self.application_address),
                 "snd": decode_address(self.pool_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )
 
@@ -108,7 +110,7 @@ class BootstrapTestCase(BaseTestCase):
 class BootstrapAlgoPoolTestCase(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.VALIDATOR_APP_ID = 12345
+        cls.VALIDATOR_APP_ID = TESTNET_VALIDATOR_APP_ID_V2
         cls.application_address = get_application_address(cls.VALIDATOR_APP_ID)
 
         cls.sender_private_key, cls.user_address = generate_account()
@@ -167,6 +169,7 @@ class BootstrapAlgoPoolTestCase(BaseTestCase):
                 "rekey": decode_address(self.application_address),
                 "snd": decode_address(self.pool_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )
 
@@ -194,5 +197,6 @@ class BootstrapAlgoPoolTestCase(BaseTestCase):
                 "rekey": decode_address(self.application_address),
                 "snd": decode_address(self.pool_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )

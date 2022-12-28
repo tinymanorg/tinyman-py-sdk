@@ -6,6 +6,7 @@ from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset
 from tinyman.optin import prepare_asset_optin_transactions
+from tinyman.utils import get_version, generate_app_call_note
 
 
 class BaseTinymanClient:
@@ -15,12 +16,14 @@ class BaseTinymanClient:
         validator_app_id: int,
         user_address=None,
         staking_app_id: Optional[int] = None,
+        client_name: Optional[str] = None,
     ):
         self.algod = algod_client
         self.validator_app_id = validator_app_id
         self.staking_app_id = staking_app_id
         self.assets_cache = {}
         self.user_address = user_address
+        self.client_name = client_name
 
     def fetch_pool(self, *args, **kwargs):
         raise NotImplementedError()
@@ -57,6 +60,10 @@ class BaseTinymanClient:
         )
         return txn_group
 
+    @property
+    def version(self) -> str:
+        return get_version(self.validator_app_id)
+
     def is_opted_in(self, user_address=None):
         user_address = user_address or self.user_address
         account_info = self.algod.account_info(user_address)
@@ -72,3 +79,10 @@ class BaseTinymanClient:
             if a["asset-id"] == asset_id:
                 return True
         return False
+
+    def generate_app_call_note(self, client_name: Optional[str] = None):
+        note = generate_app_call_note(
+            version=self.version,
+            client_name=client_name or self.client_name,
+        )
+        return note

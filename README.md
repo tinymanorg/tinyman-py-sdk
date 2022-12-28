@@ -17,6 +17,16 @@ tinyman-py-sdk is not released on PYPI. It can be installed directly from this r
 
 `pip install git+https://github.com/tinymanorg/tinyman-py-sdk.git`
 
+
+## Integration
+
+If you are integrating your project into Tinyman, you can provide `client_name` while setting up Tinyman Client classes.
+The client name will be added to the application call transaction's note field. It is recommended and completely optional.
+
+```python
+client = TinymanV2MainnetClient(..., client_name="project name", ...)
+```
+
 ## V2
 
 ## Sneak Preview

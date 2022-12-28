@@ -9,7 +9,7 @@ It is designed to be reasonably low level so that pieces can be used in isolatio
 ## Status
 This SDK is currently under active early development and should not be considered stable.
 
-The SDK has been updated for Tinyman V1.1.
+The SDK supports Tinyman V2 and V1.1.
 
 
 ## Installation

@@ -1,5 +1,14 @@
 # Change Log
 
+## Unreleased
+
+### Added
+
+* Improved error handling [#49](https://github.com/tinymanorg/tinyman-py-sdk/pull/49/files).
+  - Added `TealishMap`.
+  - Added `AlgodError`, `LogicError`, `OverspendError` exception classes.
+  - Added `amm_approval.map.json` for V2.
+
 ## 2.0.0
 
 ### Added

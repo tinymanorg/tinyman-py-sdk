@@ -41,5 +41,13 @@ class BaseTestCase(TestCase):
 
         result = parse_app_call_note("invalid format")
         self.assertEqual(result, None)
+        result = parse_app_call_note(
+            "INVALID+dGlueW1hbi92MjpqeyJvcmlnaW4iOiJ0aW55bWFuLXB5dGhvbi1zZGsifQ=="
+        )
+        self.assertEqual(result, None)
         result = parse_app_call_note(b"invalid format")
+        self.assertEqual(result, None)
+        result = parse_app_call_note(
+            b'INVALID+tinyman/v2:j{"origin":"tinyman-python-sdk"}'
+        )
         self.assertEqual(result, None)

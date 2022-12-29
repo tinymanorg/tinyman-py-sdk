@@ -163,10 +163,14 @@ def parse_app_call_note(
             note = b64decode(note)
         except Exception:
             pass
-        else:
+
+    if isinstance(note, bytes):
+        try:
             note = note.decode()
-    elif isinstance(note, bytes):
-        note = note.decode()
+        except Exception as e:
+            if raise_exception:
+                raise e
+            return None
 
     pattern = r"tinyman/(?P<version>v[1-2]):j(?P<raw_data>.*)$"
     match = re.match(pattern, note)

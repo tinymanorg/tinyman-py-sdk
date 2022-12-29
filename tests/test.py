@@ -38,3 +38,8 @@ class BaseTestCase(TestCase):
             result,
             expected_result,
         )
+
+        result = parse_app_call_note("invalid format")
+        self.assertEqual(result, None)
+        result = parse_app_call_note(b"invalid format")
+        self.assertEqual(result, None)

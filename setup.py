@@ -16,7 +16,7 @@ setuptools.setup(
     project_urls={
         "Source": "https://github.com/tinyman/tinyman-py-sdk",
     },
-    install_requires=["py-algorand-sdk >= 1.6.0"],
+    install_requires=["py-algorand-sdk >= 1.10.0"],
     packages=setuptools.find_packages(),
     python_requires=">=3.8",
     package_data={

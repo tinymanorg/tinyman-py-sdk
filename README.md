@@ -18,6 +18,10 @@ This SDK is currently under active early development and should not be considere
 The SDK supports Tinyman V2 and V1.1.
 
 
+## Requirements
+- Python 3.8+
+- py-algorand-sdk 1.10.0+
+
 ## Installation
 tinyman-py-sdk is not released on PYPI. It can be installed directly from this repository with pip:
 

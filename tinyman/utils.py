@@ -1,12 +1,26 @@
+import json
+import re
 import warnings
 from base64 import b64decode, b64encode
 from datetime import datetime
+from json import JSONDecodeError
+from typing import Optional
+
+from algosdk.error import AlgodHTTPError
 from algosdk.future.transaction import (
     LogicSigTransaction,
     assign_group_id,
     wait_for_confirmation,
 )
-from algosdk.error import AlgodHTTPError
+
+from tinyman.v1.constants import (
+    MAINNET_VALIDATOR_APP_ID_V1_1,
+    TESTNET_VALIDATOR_APP_ID_V1_1,
+)
+from tinyman.v2.constants import (
+    MAINNET_VALIDATOR_APP_ID_V2,
+    TESTNET_VALIDATOR_APP_ID_V2,
+)
 
 warnings.simplefilter("always", DeprecationWarning)
 
@@ -101,6 +115,79 @@ def calculate_price_impact(
     pool_price = output_supply / input_supply
     price_impact = abs(round((swap_price / pool_price) - 1, 5))
     return price_impact
+
+
+def get_version(tinyman_app_id: int) -> str:
+    if tinyman_app_id in [MAINNET_VALIDATOR_APP_ID_V2, TESTNET_VALIDATOR_APP_ID_V2]:
+        return "v2"
+    elif tinyman_app_id in [
+        MAINNET_VALIDATOR_APP_ID_V1_1,
+        TESTNET_VALIDATOR_APP_ID_V1_1,
+    ]:
+        return "v1"
+
+    raise NotImplementedError()
+
+
+def generate_app_call_note(
+    version: str, client_name: Optional[str] = None, extra_data: Optional[dict] = None
+) -> str:
+    # https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0002.md
+    # <dapp-name>:<data-format><data>
+    note_template = "{dapp_name}/{dapp_version}:{data_format}{data}"
+
+    client_name = client_name or "tinyman-py-sdk"
+    assert version in ["v1", "v2"]
+
+    data = extra_data or dict()
+    data.update(
+        {
+            "origin": client_name,
+        }
+    )
+
+    # spaces are removed from separators, default is (', ', ': ')
+    serialized_data = json.dumps(data, separators=(",", ":"), sort_keys=True)
+
+    note = note_template.format(
+        dapp_name="tinyman", dapp_version=version, data_format="j", data=serialized_data
+    )
+    return note
+
+
+def parse_app_call_note(
+    note: [str, bytes], raise_exception: bool = False
+) -> Optional[dict]:
+    if isinstance(note, str):
+        try:
+            note = b64decode(note)
+        except Exception:
+            pass
+
+    if isinstance(note, bytes):
+        try:
+            note = note.decode()
+        except Exception as e:
+            if raise_exception:
+                raise e
+            return None
+
+    pattern = r"tinyman/(?P<version>v[1-2]):j(?P<raw_data>.*)$"
+    match = re.match(pattern, note)
+
+    if not match:
+        return None
+
+    try:
+        data = json.loads(match.group("raw_data"))
+    except JSONDecodeError as e:
+        if raise_exception:
+            raise e
+        return None
+
+    # Result
+    result = {"version": match.group("version"), "data": data}
+    return result
 
 
 class TransactionGroup:

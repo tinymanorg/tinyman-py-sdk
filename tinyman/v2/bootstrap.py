@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import (
     ApplicationOptInTxn,
     PaymentTxn,
@@ -18,6 +20,7 @@ def prepare_bootstrap_transactions(
     app_call_fee: int,
     required_algo: int,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -44,6 +47,7 @@ def prepare_bootstrap_transactions(
         app_args=[BOOTSTRAP_APP_ARGUMENT],
         foreign_assets=[asset_1_id, asset_2_id],
         rekey_to=get_application_address(validator_app_id),
+        note=app_call_note,
     )
     bootstrap_app_call.fee = app_call_fee
     txns.append(bootstrap_app_call)

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import (
     ApplicationNoOpTxn,
     SuggestedParams,
@@ -16,6 +18,7 @@ def prepare_set_fee_collector_transactions(
     fee_manager: str,
     new_fee_collector: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     txns = [
         ApplicationNoOpTxn(
@@ -24,6 +27,7 @@ def prepare_set_fee_collector_transactions(
             index=validator_app_id,
             app_args=[SET_FEE_COLLECTOR_APP_ARGUMENT],
             accounts=[new_fee_collector],
+            note=app_call_note,
         ),
     ]
     txn_group = TransactionGroup(txns)
@@ -35,6 +39,7 @@ def prepare_set_fee_setter_transactions(
     fee_manager: str,
     new_fee_setter: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     txns = [
         ApplicationNoOpTxn(
@@ -43,6 +48,7 @@ def prepare_set_fee_setter_transactions(
             index=validator_app_id,
             app_args=[SET_FEE_SETTER_APP_ARGUMENT],
             accounts=[new_fee_setter],
+            note=app_call_note,
         ),
     ]
     txn_group = TransactionGroup(txns)
@@ -54,6 +60,7 @@ def prepare_set_fee_manager_transactions(
     fee_manager: str,
     new_fee_manager: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     txns = [
         ApplicationNoOpTxn(
@@ -62,6 +69,7 @@ def prepare_set_fee_manager_transactions(
             index=validator_app_id,
             app_args=[SET_FEE_MANAGER_APP_ARGUMENT],
             accounts=[new_fee_manager],
+            note=app_call_note,
         ),
     ]
     txn_group = TransactionGroup(txns)

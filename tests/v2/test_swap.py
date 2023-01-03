@@ -13,6 +13,7 @@ from tinyman.v2.constants import (
     SWAP_APP_ARGUMENT,
     FIXED_INPUT_APP_ARGUMENT,
     FIXED_OUTPUT_APP_ARGUMENT,
+    TESTNET_VALIDATOR_APP_ID_V2,
 )
 from tinyman.v2.contracts import get_pool_logicsig
 from tinyman.v2.pools import Pool
@@ -22,7 +23,7 @@ from tinyman.v2.quotes import SwapQuote
 class SwapTestCase(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.VALIDATOR_APP_ID = 12345
+        cls.VALIDATOR_APP_ID = TESTNET_VALIDATOR_APP_ID_V2
         cls.sender_private_key, cls.user_address = generate_account()
         cls.asset_1_id = 10
         cls.asset_2_id = 8
@@ -103,6 +104,7 @@ class SwapTestCase(BaseTestCase):
                 "lv": ANY,
                 "snd": decode_address(self.user_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )
 
@@ -166,5 +168,6 @@ class SwapTestCase(BaseTestCase):
                 "lv": ANY,
                 "snd": decode_address(self.user_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )

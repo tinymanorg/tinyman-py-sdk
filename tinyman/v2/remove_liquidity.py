@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import (
     ApplicationNoOpTxn,
     AssetTransferTxn,
@@ -19,6 +21,7 @@ def prepare_remove_liquidity_transactions(
     pool_token_asset_amount: int,
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -42,6 +45,7 @@ def prepare_remove_liquidity_transactions(
             ],
             foreign_assets=[asset_1_id, asset_2_id],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
 
@@ -64,6 +68,7 @@ def prepare_single_asset_remove_liquidity_transactions(
     pool_token_asset_amount: int,
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_logicsig = get_pool_logicsig(validator_app_id, asset_1_id, asset_2_id)
     pool_address = pool_logicsig.address()
@@ -96,6 +101,7 @@ def prepare_single_asset_remove_liquidity_transactions(
             ],
             foreign_assets=[output_asset_id],
             accounts=[pool_address],
+            note=app_call_note,
         ),
     ]
 

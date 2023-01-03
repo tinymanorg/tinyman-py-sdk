@@ -28,6 +28,7 @@ class TinymanClient(BaseTinymanClient):
             validator_app_id=self.validator_app_id,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.generate_app_call_note(),
         )
         return txn_group
 

@@ -1,6 +1,12 @@
 # tinyman-py-sdk
 Tinyman Python SDK
 
+<p align="left">
+<img src="https://visitor-badge.glitch.me/badge?page_id=tinymanorg.tinyman-py-sdk" />
+<a href="https://github.com/tinymanorg/tinyman-py-sdk/actions/workflows/tests.yml"><img src="https://github.com/tinymanorg/tinyman-py-sdk/actions/workflows/tests.yml/badge.svg?branch=main" /></a>
+</p>
+
+---
 
 ## Design Goal
 This SDK is designed for automated interaction with the Tinyman AMM. It will be most useful for developers who wish to create automated trading programs/bots. It may also be useful to create an alternative UI but that is not a design goal of this library.
@@ -68,15 +74,18 @@ To run a step use `python <file_name>` such as `python 01_generate_account.py`.
 
 ## Example Operations
 
-### Bootstrap
+<details>
+<summary><strong>Bootstrap</strong></summary>
 
 ```python
 txn_group = pool.prepare_bootstrap_transactions()
 txn_group.sign_with_private_key(<ADDRESS>, <PRIVATE_KEY>)
 txn_info = txn_group.submit(algod, wait=True)
 ```
+</details>
 
-### Add Liquidity
+<details>
+<summary><strong>Add Liquidity</strong></summary>
 
 #### Initial Add Liquidity
 
@@ -110,8 +119,10 @@ txn_group = pool.prepare_add_liquidity_transactions_from_quote(quote=quote)
 txn_group.sign_with_private_key(<ADDRESS>, <PRIVATE_KEY>)
 txn_info = txn_group.submit(algod, wait=True)
 ```
+</details>
 
-### Remove Liquidity
+<details>
+<summary><strong>Remove Liquidity</strong></summary>
 
 #### Remove Liquidity
 
@@ -136,7 +147,10 @@ txn_group.sign_with_private_key(<ADDRESS>, <PRIVATE_KEY>)
 txn_info = txn_group.submit(algod, wait=True)
 ```
 
-### Swap
+</details>
+
+<details>
+<summary><strong>Swap</strong></summary>
 
 #### Fixed Input Swap
 
@@ -155,6 +169,24 @@ txn_group = pool.prepare_swap_transactions_from_quote(quote=quote)
 txn_group.sign_with_private_key(<ADDRESS>, <PRIVATE_KEY>)
 txn_info = txn_group.submit(algod, wait=True)
 ```
+</details>
+
+<details>
+<summary><strong>Flash Loan</strong></summary>
+
+1. [Flash Loan: Single Asset](examples/v2/11_flash_loan_1_single_asset.py)
+2. [Flash Loan: Multiple Assets](examples/v2/12_flash_loan_2_multiple_assets.py)
+
+</details>
+
+<details>
+<summary><strong>Flash Swap</strong></summary>
+
+1. [Flash Swap: Pay in other currency](examples/v2/13_flash_swap_1_pay_in_other_currency.py)
+2. [Flash Swap: Pay in same currency](examples/v2/14_flash_swap_2_pay_in_same_currency.py)
+3. [Flash Swap: Pay in multiple currencies](examples/v2/15_flash_swap_3_pay_in_multiple_currencies.py)
+
+</details>
 
 ## V1.1
 
@@ -185,7 +217,8 @@ print(f'TINYUSDC per ALGO (worst case): {quote.price_with_slippage}')
 
 ```
 
-## Examples
+<details>
+<summary><strong>Examples</strong></summary>
 
 ### Basic Swapping
 [swapping1.py](examples/v1/swapping1.py)
@@ -213,6 +246,7 @@ This example demonstrates add liquidity to an existing pool.
 ### Basic Burning
 TODO
 
+</details>
 
 ## Conventions
 

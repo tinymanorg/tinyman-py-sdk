@@ -44,3 +44,7 @@ class BaseTestCase(TestCase):
         }
         state.update(**kwargs)
         return state
+
+    @classmethod
+    def app_call_note(cls):
+        return b'tinyman/v2:j{"origin":"tinyman-py-sdk"}'

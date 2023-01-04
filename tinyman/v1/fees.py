@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn
 
 from tinyman.utils import TransactionGroup
@@ -13,6 +15,7 @@ def prepare_redeem_fees_transactions(
     creator,
     sender,
     suggested_params,
+    app_call_note: Optional[str] = None,
 ):
     pool_logicsig = get_pool_logicsig(validator_app_id, asset1_id, asset2_id)
     pool_address = pool_logicsig.address()
@@ -33,6 +36,7 @@ def prepare_redeem_fees_transactions(
             foreign_assets=[asset1_id, liquidity_asset_id]
             if asset2_id == 0
             else [asset1_id, asset2_id, liquidity_asset_id],
+            note=app_call_note,
         ),
         AssetTransferTxn(
             sender=pool_address,

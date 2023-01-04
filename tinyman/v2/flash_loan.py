@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.future.transaction import (
     Transaction,
     ApplicationNoOpTxn,
@@ -25,6 +27,7 @@ def prepare_flash_loan_transactions(
     transactions: "list[Transaction]",
     sender: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     assert asset_1_loan_amount or asset_2_loan_amount
 
@@ -52,6 +55,7 @@ def prepare_flash_loan_transactions(
             ],
             foreign_assets=[asset_1_id, asset_2_id],
             accounts=[pool_address],
+            note=app_call_note,
         )
     ]
     # This app call contains inner transactions
@@ -101,6 +105,7 @@ def prepare_flash_loan_transactions(
             app_args=[VERIFY_FLASH_LOAN_APP_ARGUMENT, index_diff],
             foreign_assets=[],
             accounts=[pool_address],
+            note=app_call_note,
         )
     )
 

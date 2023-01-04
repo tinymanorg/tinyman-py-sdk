@@ -8,14 +8,10 @@
 * Added note to application call transactions. The note (`tinyman/<v1|v2>:j{"origin":"<client-name>"}`) follows [Algorand Transaction Note Field Conventions ARC-2](https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0002.md). [#51](https://github.com/tinymanorg/tinyman-py-sdk/pull/51)
 * Added `version` property and `generate_app_call_note` method to `TinymanClient` classes. [#51](https://github.com/tinymanorg/tinyman-py-sdk/pull/51)
 * Added `get_version` and `generate_app_call_note` to `tinyman.utils`. [#51](https://github.com/tinymanorg/tinyman-py-sdk/pull/51)
-
-### Changed
-
-* ...
-
-### Removed
-* ...
-
+* Improved error handling [#49](https://github.com/tinymanorg/tinyman-py-sdk/pull/49/files).
+  - Added `TealishMap`.
+  - Added `AlgodError`, `LogicError`, `OverspendError` exception classes.
+  - Added `amm_approval.map.json` for V2.
 
 ## 2.0.0
 

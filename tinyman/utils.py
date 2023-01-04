@@ -12,6 +12,7 @@ from algosdk.future.transaction import (
     assign_group_id,
     wait_for_confirmation,
 )
+from .errors import AlgodError, LogicError, OverspendError
 
 from tinyman.v1.constants import (
     MAINNET_VALIDATOR_APP_ID_V1_1,
@@ -236,8 +237,7 @@ class TransactionGroup:
         try:
             txid = algod.send_transactions(self.signed_transactions)
         except AlgodHTTPError as e:
-            raise Exception(str(e))
-
+            raise Exception(e) from None
         if wait:
             txn_info = wait_for_confirmation(algod, txid)
             txn_info["txid"] = txid
@@ -247,3 +247,33 @@ class TransactionGroup:
     def __add__(self, other):
         transactions = self.transactions + other.transactions
         return TransactionGroup(transactions)
+
+
+def parse_error(exception):
+    error_message = str(exception)
+    pattern = r"Remember: transaction ([A-Z0-9]+):"
+    try:
+        txn_id = re.findall(pattern, error_message)[0]
+    except IndexError:
+        return AlgodError(error_message)
+
+    if "logic eval error" in error_message:
+        pattern = r"error: (.+?). Details: pc=(\d+)"
+        error, pc = re.findall(pattern, error_message)[0]
+        return LogicError(error, txn_id=txn_id, pc=pc)
+
+    if "overspend" in error_message:
+        pattern = r"overspend \(account (.+?),.+tried to spend {(\d+)}\)"
+        address, amount = re.findall(pattern, error_message)[0]
+        return OverspendError(txn_id=txn_id, address=address, amount=amount)
+
+    return AlgodError(error_message)
+
+
+def find_app_id_from_txn_id(transaction_group, txn_id):
+    app_id = None
+    for txn in transaction_group.transactions:
+        if txn.get_txid() == txn_id:
+            app_id = txn.index
+            break
+    return app_id

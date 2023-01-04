@@ -14,7 +14,7 @@ class BaseTinymanClient:
         self,
         algod_client: AlgodClient,
         validator_app_id: int,
-        user_address=None,
+        user_address: Optional[str] = None,
         staking_app_id: Optional[int] = None,
         client_name: Optional[str] = None,
     ):

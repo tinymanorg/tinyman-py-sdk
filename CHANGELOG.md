@@ -1,9 +1,10 @@
 # Change Log
 
-## Unreleased
+## 2.1.0
 
 ### Added
 
+* Added Tinyman V2 (Mainnet) support.
 * Added `client_name` attribute to `TinymanClient` classes. [#51](https://github.com/tinymanorg/tinyman-py-sdk/pull/51)
 * Added note to application call transactions. The note (`tinyman/<v1|v2>:j{"origin":"<client-name>"}`) follows [Algorand Transaction Note Field Conventions ARC-2](https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0002.md). [#51](https://github.com/tinymanorg/tinyman-py-sdk/pull/51)
 * Added `version` property and `generate_app_call_note` method to `TinymanClient` classes. [#51](https://github.com/tinymanorg/tinyman-py-sdk/pull/51)
@@ -17,7 +18,7 @@
 
 ### Added
 
-* Added Tinyman V2 support (`tinyman.v2`).
+* Added Tinyman V2 (Testnet) support (`tinyman.v2`).
 * Added Staking support (`tinyman.staking`).
   - It allows creating commitment transaction by `prepare_commit_transaction` and tracking commitments by `parse_commit_transaction`.
 * Added `calculate_price_impact` function to `tinyman.utils`.

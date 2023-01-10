@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import ApplicationOptInTxn, AssetOptInTxn
+from tinyman.compat import ApplicationOptInTxn, AssetOptInTxn
 
 from tinyman.utils import TransactionGroup
 

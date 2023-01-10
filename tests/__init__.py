@@ -1,4 +1,4 @@
-from algosdk.future.transaction import SuggestedParams
+from tinyman.compat import SuggestedParams
 
 
 def get_suggested_params():

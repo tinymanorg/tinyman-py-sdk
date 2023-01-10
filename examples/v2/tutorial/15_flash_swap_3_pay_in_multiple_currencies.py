@@ -4,7 +4,7 @@
 from pprint import pprint
 from urllib.parse import quote_plus
 
-from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
+from tinyman.compat import AssetTransferTxn, PaymentTxn
 
 from examples.v2.tutorial.common import get_account, get_assets
 from examples.v2.utils import get_algod

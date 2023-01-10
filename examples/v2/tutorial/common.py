@@ -4,7 +4,7 @@ import string
 import random
 from pprint import pprint
 
-from algosdk.future.transaction import AssetCreateTxn, wait_for_confirmation
+from tinyman.compat import AssetCreateTxn, wait_for_confirmation
 
 
 def get_account_file_path(filename="account.json"):

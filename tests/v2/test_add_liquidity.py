@@ -3,7 +3,7 @@ from unittest.mock import ANY
 from algosdk.account import generate_account
 from algosdk.constants import ASSETTRANSFER_TXN, APPCALL_TXN
 from algosdk.encoding import decode_address
-from algosdk.future.transaction import OnComplete
+from tinyman.compat import OnComplete
 from algosdk.logic import get_application_address
 
 from tests.v2 import BaseTestCase

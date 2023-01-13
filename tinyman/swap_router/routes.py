@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Union
 
 from tinyman.assets import Asset, AssetAmount
-from tinyman.v2.exceptions import InsufficientReserve
 from tinyman.v1.pools import Pool as TinymanV1Pool
+from tinyman.v2.exceptions import InsufficientReserves
 from tinyman.v2.pools import Pool as TinymanV2Pool
 
 
@@ -11,7 +11,7 @@ from tinyman.v2.pools import Pool as TinymanV2Pool
 class Route:
     asset_in: Asset
     asset_out: Asset
-    pools: list[Union[TinymanV1Pool, TinymanV2Pool]]  # TODO: Naming? pools or path
+    pools: list[Union[TinymanV1Pool, TinymanV2Pool]]
 
     def __str__(self):
         return "Route: " + "-> ".join(f"{pool}" for pool in self.pools)
@@ -40,7 +40,7 @@ class Route:
     def get_fixed_input_last_quote(self, amount_in: int, slippage: float = 0.05):
         try:
             quotes = self.get_fixed_input_quotes(amount_in=amount_in, slippage=slippage)
-        except InsufficientReserve:
+        except InsufficientReserves:
             return None
 
         last_quote = quotes[-1]
@@ -73,7 +73,7 @@ class Route:
             quotes = self.get_fixed_output_quotes(
                 amount_out=amount_out, slippage=slippage
             )
-        except InsufficientReserve:
+        except InsufficientReserves:
             return None
 
         first_quote = quotes[0]

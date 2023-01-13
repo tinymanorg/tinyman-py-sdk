@@ -89,7 +89,7 @@ class SwapQuote:
     swap_type: str
     amount_in: AssetAmount
     amount_out: AssetAmount
-    swap_fees: int
+    swap_fees: AssetAmount
     slippage: float
     price_impact: float
 
@@ -473,6 +473,7 @@ class Pool:
             swap_type=swap_type,
             sender=swapper_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -497,6 +498,7 @@ class Pool:
             asset2_unit_name=self.asset2.unit_name,
             sender=pooler_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -520,6 +522,7 @@ class Pool:
             liquidity_asset_amount=liquidity_asset_amount.amount,
             sender=pooler_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -553,6 +556,7 @@ class Pool:
             liquidity_asset_amount=liquidity_asset_amount.amount,
             sender=pooler_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -577,6 +581,7 @@ class Pool:
             asset_amount=amount_out.amount,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -602,6 +607,7 @@ class Pool:
             creator=creator,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 

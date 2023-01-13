@@ -9,20 +9,16 @@ setuptools.setup(
     description="Tinyman Python SDK",
     author="Tinyman",
     author_email="hello@tinyman.org",
-    version="1.0.0",
+    version="2.1.0",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",
     project_urls={
         "Source": "https://github.com/tinyman/tinyman-py-sdk",
     },
-    install_requires=["py-algorand-sdk >= 1.6.0"],
+    install_requires=["py-algorand-sdk >= 1.10.0, <2.0.0"],
     packages=setuptools.find_packages(),
     python_requires=">=3.8",
-    package_data={
-        "tinyman.v1": ["asc.json"],
-        "tinyman.v2": ["asc.json"],
-        "tinyman.staking": ["asc.json"],
-    },
+    package_data={"tinyman.v1": ["asc.json"], "tinyman.v2": ["amm_approval.map.json"]},
     include_package_data=True,
 )

@@ -368,6 +368,7 @@ class Pool:
             suggested_params=suggested_params,
             app_call_fee=app_call_fee,
             required_algo=required_algo,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -411,21 +412,25 @@ class Pool:
             asset_2_amount=amount_2.amount,
         )
 
-        internal_swap_quote = InternalSwapQuote(
-            amount_in=AssetAmount(
-                self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
-                swap_in_amount,
-            ),
-            amount_out=AssetAmount(
-                self.asset_2 if swap_from_asset_1_to_asset_2 else self.asset_1,
-                swap_out_amount,
-            ),
-            swap_fees=AssetAmount(
-                self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
-                swap_total_fee_amount,
-            ),
-            price_impact=swap_price_impact,
-        )
+        if not swap_out_amount:
+            # There is no output amount, ignore the integer roundings looks like a swap.
+            internal_swap_quote = None
+        else:
+            internal_swap_quote = InternalSwapQuote(
+                amount_in=AssetAmount(
+                    self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
+                    swap_in_amount,
+                ),
+                amount_out=AssetAmount(
+                    self.asset_2 if swap_from_asset_1_to_asset_2 else self.asset_1,
+                    swap_out_amount,
+                ),
+                swap_fees=AssetAmount(
+                    self.asset_1 if swap_from_asset_1_to_asset_2 else self.asset_2,
+                    swap_total_fee_amount,
+                ),
+                price_impact=swap_price_impact,
+            )
 
         quote = FlexibleAddLiquidityQuote(
             amounts_in={
@@ -573,6 +578,7 @@ class Pool:
             min_pool_token_asset_amount=min_pool_token_asset_amount,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -602,6 +608,7 @@ class Pool:
             min_pool_token_asset_amount=min_pool_token_asset_amount,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -627,6 +634,7 @@ class Pool:
             asset_2_amount=asset_2_amount.amount,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -811,6 +819,7 @@ class Pool:
             pool_token_asset_amount=pool_token_asset_amount.amount,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -841,6 +850,7 @@ class Pool:
             pool_token_asset_amount=pool_token_asset_amount.amount,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -977,6 +987,7 @@ class Pool:
             swap_type=swap_type,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 
@@ -1098,6 +1109,7 @@ class Pool:
             transactions=transactions,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.client.generate_app_call_note(),
         )
         return txn_group
 

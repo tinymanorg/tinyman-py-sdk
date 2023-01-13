@@ -9,7 +9,11 @@ from algosdk.logic import get_application_address
 from tests.v2 import BaseTestCase
 from tinyman.assets import AssetAmount
 from tinyman.utils import int_to_bytes
-from tinyman.v2.constants import FLASH_LOAN_APP_ARGUMENT, VERIFY_FLASH_LOAN_APP_ARGUMENT
+from tinyman.v2.constants import (
+    FLASH_LOAN_APP_ARGUMENT,
+    VERIFY_FLASH_LOAN_APP_ARGUMENT,
+    TESTNET_VALIDATOR_APP_ID_V2,
+)
 from tinyman.v2.contracts import get_pool_logicsig
 from tinyman.v2.pools import Pool
 from tinyman.v2.quotes import FlashLoanQuote
@@ -18,7 +22,7 @@ from tinyman.v2.quotes import FlashLoanQuote
 class FlashLoanTestCase(BaseTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.VALIDATOR_APP_ID = 12345
+        cls.VALIDATOR_APP_ID = TESTNET_VALIDATOR_APP_ID_V2
         cls.sender_private_key, cls.user_address = generate_account()
         cls.asset_1_id = 10
         cls.asset_2_id = 8
@@ -98,6 +102,7 @@ class FlashLoanTestCase(BaseTestCase):
                 "lv": ANY,
                 "snd": decode_address(self.user_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )
 
@@ -134,5 +139,6 @@ class FlashLoanTestCase(BaseTestCase):
                 "lv": ANY,
                 "snd": decode_address(self.user_address),
                 "type": APPCALL_TXN,
+                "note": self.app_call_note(),
             },
         )

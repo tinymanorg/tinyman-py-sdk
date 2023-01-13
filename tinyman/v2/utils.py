@@ -1,9 +1,17 @@
+import importlib.resources
+import json
 from base64 import b64decode
 
+import tinyman.v2
+from tinyman.tealishmap import TealishMap
 from tinyman.utils import bytes_to_int
 
+tealishmap = TealishMap(
+    json.loads(importlib.resources.read_text(tinyman.v2, "amm_approval.map.json"))
+)
 
-def decode_logs(logs: "list[[bytes, str]]") -> dict:
+
+def decode_logs(logs: "list") -> dict:
     decoded_logs = dict()
     for log in logs:
         if type(log) == str:
@@ -35,3 +43,14 @@ def get_state_from_account_info(account_info, app_id):
     except KeyError:
         return {}
     return app_state
+
+
+def lookup_error(pc, error_message):
+    tealish_line_no = tealishmap.get_tealish_line_for_pc(int(pc))
+    if "assert failed" in error_message or "err opcode executed" in error_message:
+        custom_error_message = tealishmap.get_error_for_pc(int(pc))
+        if custom_error_message:
+            error_message = custom_error_message
+
+    error_message = f"{error_message} @ line {tealish_line_no}"
+    return error_message

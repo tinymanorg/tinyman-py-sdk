@@ -9,7 +9,7 @@ from tinyman.assets import AssetAmount
 from examples.v2.tutorial.common import get_account, get_assets
 from examples.v2.utils import get_algod
 from tinyman.v2.client import TinymanV2TestnetClient
-from algosdk.future.transaction import AssetTransferTxn
+from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
 
 account = get_account()
 algod = get_algod()
@@ -35,7 +35,13 @@ account_info = algod.account_info(account["address"])
 for asset in account_info["assets"]:
     if asset["asset-id"] == pool.asset_1.id:
         asset_1_balance = asset["amount"]
-    if asset["asset-id"] == pool.asset_1.id:
+
+    if pool.asset_2.id == 0:
+        # Algo
+        asset_2_balance = (
+            account_info["amount"] - account_info["min-balance"] - 4000
+        )  # 4 tnx fee
+    elif asset["asset-id"] == pool.asset_2.id:
         asset_2_balance = asset["amount"]
 
 # Transfer amounts are equal to sum of initial account balance and loan amount
@@ -54,6 +60,13 @@ transactions = [
         receiver=account["address"],
         amt=asset_2_balance + quote.amounts_out[pool.asset_2].amount,
         index=pool.asset_2.id,
+    )
+    if pool.asset_2.id
+    else PaymentTxn(
+        sender=account["address"],
+        sp=algod.suggested_params(),
+        receiver=account["address"],
+        amt=asset_2_balance + quote.amounts_out[pool.asset_2].amount,
     ),
 ]
 
@@ -65,7 +78,7 @@ txn_group = pool.prepare_flash_loan_transactions_from_quote(
 txn_group.sign_with_private_key(account["address"], account["private_key"])
 
 # Submit transactions to the network and wait for confirmation
-txn_info = txn_group.submit(algod, wait=True)
+txn_info = client.submit(txn_group, wait=True)
 print("Transaction Info")
 pprint(txn_info)
 

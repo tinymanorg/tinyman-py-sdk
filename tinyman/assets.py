@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Optional
 
 
 @dataclass
 class Asset:
     id: int
-    name: str = None
-    unit_name: str = None
+    name: Optional[str] = None
+    unit_name: Optional[str] = None
     decimals: int = None
 
     def __call__(self, amount: int) -> "AssetAmount":
@@ -30,8 +31,8 @@ class Asset:
                 "unit-name": "ALGO",
                 "decimals": 6,
             }
-        self.name = params["name"]
-        self.unit_name = params["unit-name"]
+        self.name = params.get("name")
+        self.unit_name = params.get("unit-name")
         self.decimals = params["decimals"]
         return self
 

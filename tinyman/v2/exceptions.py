@@ -14,5 +14,5 @@ class PoolAlreadyInitialized(Exception):
     pass
 
 
-class InsufficientReserve(Exception):
+class InsufficientReserves(Exception):
     pass

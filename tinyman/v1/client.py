@@ -1,4 +1,5 @@
 from base64 import b64decode
+from typing import Optional
 
 from algosdk.encoding import encode_address
 from algosdk.v2client.algod import AlgodClient
@@ -29,6 +30,7 @@ class TinymanClient(BaseTinymanClient):
             validator_app_id=self.validator_app_id,
             sender=user_address,
             suggested_params=suggested_params,
+            app_call_note=self.generate_app_call_note(),
         )
         return txn_group
 
@@ -65,22 +67,34 @@ class TinymanClient(BaseTinymanClient):
 
 
 class TinymanTestnetClient(TinymanClient):
-    def __init__(self, algod_client: AlgodClient, user_address=None):
+    def __init__(
+        self,
+        algod_client: AlgodClient,
+        user_address: Optional[str] = None,
+        client_name: Optional[str] = None,
+    ):
         super().__init__(
             algod_client,
             validator_app_id=TESTNET_VALIDATOR_APP_ID,
             api_base_url="https://testnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=TESTNET_STAKING_APP_ID,
+            client_name=client_name,
         )
 
 
 class TinymanMainnetClient(TinymanClient):
-    def __init__(self, algod_client: AlgodClient, user_address=None):
+    def __init__(
+        self,
+        algod_client: AlgodClient,
+        user_address: Optional[str] = None,
+        client_name: Optional[str] = None,
+    ):
         super().__init__(
             algod_client,
             validator_app_id=MAINNET_VALIDATOR_APP_ID,
             api_base_url="https://mainnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=MAINNET_STAKING_APP_ID,
+            client_name=client_name,
         )

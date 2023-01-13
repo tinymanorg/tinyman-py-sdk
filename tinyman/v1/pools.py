@@ -284,7 +284,11 @@ class Pool:
             return AssetAmount(self.asset1, int(amount.amount * self.asset2_price))
 
     def fetch_mint_quote(
-        self, amount_a: AssetAmount, amount_b: AssetAmount = None, slippage=0.05, refresh=True
+        self,
+        amount_a: AssetAmount,
+        amount_b: AssetAmount = None,
+        slippage=0.05,
+        refresh=True,
     ):
         amount1 = amount_a if amount_a.asset == self.asset1 else amount_b
         amount2 = amount_a if amount_a.asset == self.asset2 else amount_b

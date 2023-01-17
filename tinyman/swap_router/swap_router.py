@@ -1,3 +1,5 @@
+from typing import Union
+
 from algosdk.future.transaction import (
     AssetTransferTxn,
     ApplicationNoOpTxn,
@@ -7,23 +9,19 @@ from algosdk.future.transaction import (
 from algosdk.logic import get_application_address
 from requests import request, HTTPError
 
+from tinyman.assets import AssetAmount
 from tinyman.swap_router.constants import (
     FIXED_INPUT_SWAP_TYPE,
     FIXED_OUTPUT_SWAP_TYPE,
-    TESTNET_SWAP_ROUTER_APP_ID_V1,
-)
-from tinyman.swap_router.routes import Route
-from tinyman.swap_router.utils import (
-    get_best_fixed_input_route,
-    get_best_fixed_output_route,
 )
 from tinyman.utils import TransactionGroup
 from tinyman.v1.client import TinymanClient
-from tinyman.v1.pools import Pool as TinymanV1Pool
+from tinyman.v1.pools import Pool as TinymanV1Pool, SwapQuote as TinymanV1SwapQuote
 from tinyman.v2.client import TinymanV2Client
 from tinyman.v2.constants import FIXED_INPUT_APP_ARGUMENT, FIXED_OUTPUT_APP_ARGUMENT
 from tinyman.v2.contracts import get_pool_logicsig
 from tinyman.v2.pools import Pool as TinymanV2Pool
+from tinyman.v2.quotes import SwapQuote as TinymanV2SwapQuote
 
 
 def prepare_swap_router_transactions(
@@ -95,30 +93,27 @@ def prepare_swap_router_transactions(
     return txn_group
 
 
-def prepare_transactions(
-    route: Route,
+def prepare_swap_router_transactions_from_quotes(
+    route_pools_and_quotes: list[Union[tuple[TinymanV1Pool, TinymanV1SwapQuote], tuple[TinymanV2Pool, TinymanV2SwapQuote]]],
     swap_type: str,
-    amount: int,
     slippage: float = 0.05,
     user_address: str = None,
     suggested_params: SuggestedParams = None,
-):
-    if swap_type == FIXED_INPUT_SWAP_TYPE:
-        quotes = route.get_fixed_input_quotes(amount_in=amount, slippage=slippage)
-    elif swap_type == FIXED_OUTPUT_SWAP_TYPE:
-        quotes = route.get_fixed_output_quotes(amount_out=amount, slippage=slippage)
-    else:
-        raise NotImplementedError()
+) -> TransactionGroup:
+    # override slippage
+    for i in range(len(route_pools_and_quotes)):
+        route_pools_and_quotes[i][1].slippage = slippage
 
-    swap_count = len(route.pools)
+    swap_count = len(route_pools_and_quotes)
     if swap_count == 1:
-        pool = route.pools[0]
-        quote = quotes[0]
+        pool, quote = route_pools_and_quotes[0]
+        quote.slippage = slippage
 
         if isinstance(pool, TinymanV1Pool):
             return pool.prepare_swap_transactions_from_quote(
                 quote=quote,
                 swapper_address=user_address,
+                # suggested_params=suggested_params,
             )
         elif isinstance(pool, TinymanV2Pool):
             return pool.prepare_swap_transactions_from_quote(
@@ -130,20 +125,18 @@ def prepare_transactions(
             raise NotImplementedError()
 
     elif swap_count == 2:
-        if quotes[0].amount_in.asset.id == route.asset_in.id:
-            intermediary_asset_id = quotes[0].amount_out.asset.id
-        else:
-            intermediary_asset_id = quotes[0].amount_in.asset.id
+        pools, quotes = zip(*route_pools_and_quotes)
+        router_app_id = pools[0].client.router_app_id
+        validator_app_id = pools[0].client.validator_app_id
 
-        prepare_swap_router_transactions(
-            # TODO: Add router_app_id to client.
-            router_app_id=TESTNET_SWAP_ROUTER_APP_ID_V1,
-            validator_app_id=TinymanV2Client.validator_app_id,
-            input_asset_id=route.asset_in.id,
-            intermediary_asset_id=intermediary_asset_id,
-            output_asset_id=route.asset_out.id,
-            asset_in_amount=quotes[0].amount_in_with_slippage,
-            asset_out_amount=quotes[-1].amount_out_with_slippage,
+        return prepare_swap_router_transactions(
+            router_app_id=router_app_id,
+            validator_app_id=validator_app_id,
+            input_asset_id=quotes[0].amount_in.asset.id,
+            intermediary_asset_id=quotes[0].amount_out.asset.id,
+            output_asset_id=quotes[-1].amount_out.asset.id,
+            asset_in_amount=quotes[0].amount_in_with_slippage.amount,
+            asset_out_amount=quotes[-1].amount_out_with_slippage.amount,
             swap_type=swap_type,
             user_address=user_address,
             suggested_params=suggested_params,
@@ -153,14 +146,14 @@ def prepare_transactions(
         raise NotImplementedError()
 
 
-def fetch_smart_swap_route(
+def fetch_swap_route_quotes(
     tinyman_v1_client: TinymanClient,
     tinyman_v2_client: TinymanV2Client,
     asset_in_id: int,
     asset_out_id: int,
     swap_type: str,
     amount: int,
-):
+) -> list[Union[tuple[TinymanV1Pool, TinymanV1SwapQuote], tuple[TinymanV2Pool, TinymanV2SwapQuote]]]:
     assert swap_type in (FIXED_INPUT_SWAP_TYPE, FIXED_OUTPUT_SWAP_TYPE)
     assert amount > 0
     assert asset_in_id >= 0
@@ -178,7 +171,7 @@ def fetch_smart_swap_route(
     raw_response = request(
         method="POST",
         url="http://dev.analytics.tinyman.org/api/v1/swap-router/",
-        # url=client.api_base_url + "v1/swap-router/",
+        # TODO: url=client.api_base_url + "v1/swap-router/", "v1/swap-router/quotes/",
         json=payload,
     )
 
@@ -189,86 +182,109 @@ def fetch_smart_swap_route(
     response = raw_response.json()
     print(response)
 
-    pools = []
+    route_pools_and_quotes = []
     for swap in response["route"]:
         if swap["pool"]["version"] == "1.1":
+            client = tinyman_v1_client
             pool = TinymanV1Pool(
-                client=tinyman_v1_client,
-                asset_a=swap["pool"]["asset_1_id"],
-                asset_b=swap["pool"]["asset_2_id"],
+                client=client,
+                asset_a=client.fetch_asset(int(swap["pool"]["asset_1_id"])),
+                asset_b=client.fetch_asset(int(swap["pool"]["asset_2_id"])),
                 fetch=True,
             )
+
+            asset_in = client.fetch_asset(int(swap["quote"]["amount_in"]["asset_id"]))
+            amount_out = client.fetch_asset(int(swap["quote"]["amount_out"]["asset_id"]))
+
+            quote = TinymanV1SwapQuote(
+                swap_type=swap_type,
+                amount_in=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
+                amount_out=AssetAmount(amount_out, int(swap["quote"]["amount_out"]["amount"])),
+                swap_fees=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
+                slippage=0,
+                price_impact=swap["quote"]["price_impact"],
+            )
+
         elif swap["pool"]["version"] == "2.0":
+            client = tinyman_v2_client
+
             pool = TinymanV2Pool(
-                client=tinyman_v2_client,
-                asset_a=swap["pool"]["asset_1_id"],
-                asset_b=swap["pool"]["asset_2_id"],
+                client=client,
+                asset_a=client.fetch_asset(int(swap["pool"]["asset_1_id"])),
+                asset_b=client.fetch_asset(int(swap["pool"]["asset_2_id"])),
                 fetch=True,
+            )
+
+            asset_in = client.fetch_asset(int(swap["quote"]["amount_in"]["asset_id"]))
+            amount_out = client.fetch_asset(int(swap["quote"]["amount_out"]["asset_id"]))
+
+            quote = TinymanV2SwapQuote(
+                swap_type=swap_type,
+                amount_in=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
+                amount_out=AssetAmount(amount_out, int(swap["quote"]["amount_out"]["amount"])),
+                swap_fees=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
+                slippage=0,
+                price_impact=swap["quote"]["price_impact"],
             )
         else:
             raise NotImplementedError()
-        pools.append(pool)
+        route_pools_and_quotes.append((pool, quote))
 
-    route = Route(
-        asset_in=tinyman_v2_client.fetch_asset(asset_in_id),
-        asset_out=tinyman_v2_client.fetch_asset(asset_out_id),
-        pools=pools,
-    )
-    return route
+    return route_pools_and_quotes
 
 
-def fetch_best_route(
-    tinyman_v1_client: TinymanClient,
-    tinyman_v2_client: TinymanV2Client,
-    asset_in_id: int,
-    asset_out_id: int,
-    swap_type: str,
-    amount: int,
-):
-    asset_in = tinyman_v2_client.fetch_asset(asset_in_id)
-    asset_out = tinyman_v2_client.fetch_asset(asset_out_id)
-    routes = []
-
-    v1_pool = TinymanV1Pool(
-        client=tinyman_v1_client,
-        asset_a=asset_in,
-        asset_b=asset_out,
-        fetch=True,
-    )
-    if v1_pool.exists:
-        direct_v1_route = Route(asset_in=asset_in, asset_out=asset_out, pools=[v1_pool])
-        routes.append(direct_v1_route)
-
-    v2_pool = TinymanV2Pool(
-        client=tinyman_v2_client,
-        asset_a=asset_in,
-        asset_b=asset_out,
-        fetch=True,
-    )
-    if v2_pool.exists:
-        direct_v2_route = Route(asset_in=asset_in, asset_out=asset_out, pools=[v2_pool])
-        routes.append(direct_v2_route)
-
-    try:
-        smart_swap_route = fetch_smart_swap_route(
-            tinyman_v1_client=tinyman_v1_client,
-            tinyman_v2_client=tinyman_v2_client,
-            asset_in_id=asset_in_id,
-            asset_out_id=asset_out_id,
-            swap_type=swap_type,
-            amount=amount,
-        )
-    except Exception:  # TODO: Handle the exception properly.
-        smart_swap_route = None
-
-    if smart_swap_route is not None:
-        routes.append(smart_swap_route)
-
-    if swap_type == FIXED_INPUT_SWAP_TYPE:
-        best_route = get_best_fixed_input_route(routes=routes, amount_in=amount)
-    elif swap_type == FIXED_OUTPUT_SWAP_TYPE:
-        best_route = get_best_fixed_output_route(routes=routes, amount_out=amount)
-    else:
-        raise NotImplementedError()
-
-    return best_route
+# def fetch_best_route(
+#     tinyman_v1_client: TinymanClient,
+#     tinyman_v2_client: TinymanV2Client,
+#     asset_in_id: int,
+#     asset_out_id: int,
+#     swap_type: str,
+#     amount: int,
+# ):
+#     asset_in = tinyman_v2_client.fetch_asset(asset_in_id)
+#     asset_out = tinyman_v2_client.fetch_asset(asset_out_id)
+#     routes = []
+#
+#     v1_pool = TinymanV1Pool(
+#         client=tinyman_v1_client,
+#         asset_a=asset_in,
+#         asset_b=asset_out,
+#         fetch=True,
+#     )
+#     if v1_pool.exists:
+#         direct_v1_route = Route(asset_in=asset_in, asset_out=asset_out, pools=[v1_pool])
+#         routes.append(direct_v1_route)
+#
+#     v2_pool = TinymanV2Pool(
+#         client=tinyman_v2_client,
+#         asset_a=asset_in,
+#         asset_b=asset_out,
+#         fetch=True,
+#     )
+#     if v2_pool.exists:
+#         direct_v2_route = Route(asset_in=asset_in, asset_out=asset_out, pools=[v2_pool])
+#         routes.append(direct_v2_route)
+#
+#     try:
+#         smart_route = fetch_swap_route(
+#             tinyman_v1_client=tinyman_v1_client,
+#             tinyman_v2_client=tinyman_v2_client,
+#             asset_in_id=asset_in_id,
+#             asset_out_id=asset_out_id,
+#             swap_type=swap_type,
+#             amount=amount,
+#         )
+#     except Exception:  # TODO: Handle the exception properly.
+#         smart_swap_route = None
+#
+#     if smart_swap_route is not None:
+#         routes.append(smart_swap_route)
+#
+#     if swap_type == FIXED_INPUT_SWAP_TYPE:
+#         best_route = get_best_fixed_input_route(routes=routes, amount_in=amount)
+#     elif swap_type == FIXED_OUTPUT_SWAP_TYPE:
+#         best_route = get_best_fixed_output_route(routes=routes, amount_out=amount)
+#     else:
+#         raise NotImplementedError()
+#
+#     return best_route

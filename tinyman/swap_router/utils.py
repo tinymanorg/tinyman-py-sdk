@@ -9,7 +9,7 @@ def get_best_fixed_input_route(routes, amount_in):
     for route in routes:
         try:
             quotes = route.get_fixed_input_quotes(amount_in=amount_in)
-        except InsufficientReserves:
+        except (InsufficientReserves, AssertionError):
             continue
 
         last_quote = quotes[-1]
@@ -34,7 +34,7 @@ def get_best_fixed_output_route(routes, amount_out):
     for route in routes:
         try:
             quotes = route.get_fixed_output_quotes(amount_out=amount_out)
-        except InsufficientReserves:
+        except (InsufficientReserves, AssertionError):
             continue
 
         first_quote = quotes[0]

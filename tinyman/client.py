@@ -29,7 +29,9 @@ class BaseTinymanClient:
     def fetch_pool(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def fetch_asset(self, asset_id):
+    def fetch_asset(self, asset_id: int):
+        asset_id = int(asset_id)
+
         if asset_id not in self.assets_cache:
             asset = Asset(asset_id)
             asset.fetch(self.algod)

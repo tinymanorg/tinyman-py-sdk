@@ -422,6 +422,8 @@ class Pool:
             input_supply = self.asset1_reserves
             output_supply = self.asset2_reserves
 
+        assert output_supply > amount_out.amount, "InsufficientReserves"
+
         # k = input_supply * output_supply
         # ignoring fees, k must remain constant
         # (input_supply + asset_in) * (output_supply - amount_out) = k

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import wait_for_confirmation
+from tinyman.compat import wait_for_confirmation
 from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset

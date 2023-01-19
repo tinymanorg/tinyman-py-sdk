@@ -1,6 +1,6 @@
 from base64 import b64decode
 
-from algosdk.future.transaction import LogicSigAccount
+from tinyman.compat import LogicSigAccount
 
 from tinyman.v2.constants import POOL_LOGICSIG_TEMPLATE
 

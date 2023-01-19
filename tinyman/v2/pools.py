@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import LogicSigAccount, Transaction, SuggestedParams
+from tinyman.compat import LogicSigAccount, Transaction, SuggestedParams
 from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset, AssetAmount

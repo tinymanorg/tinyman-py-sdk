@@ -1,11 +1,17 @@
+import sys
 import json
 import importlib.resources
-from algosdk.future.transaction import LogicSigAccount
+from tinyman.compat import LogicSigAccount
 import tinyman.v1
 from base64 import b64decode
 from tinyman.utils import encode_value
 
-_contracts = json.loads(importlib.resources.read_text(tinyman.v1, "asc.json"))
+if sys.version_info >= (3, 9):
+    _contracts = json.loads(
+        importlib.resources.files(tinyman.v1).joinpath("asc.json").read_text()
+    )
+else:
+    _contracts = json.loads(importlib.resources.read_text(tinyman.v1, "asc.json"))
 
 pool_logicsig_def = _contracts["contracts"]["pool_logicsig"]["logic"]
 

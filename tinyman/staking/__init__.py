@@ -7,7 +7,7 @@ from typing import Optional
 
 from algosdk.constants import PAYMENT_TXN, ASSETTRANSFER_TXN
 from algosdk.encoding import is_valid_address
-from algosdk.future.transaction import (
+from tinyman.compat import (
     ApplicationClearStateTxn,
     ApplicationOptInTxn,
     PaymentTxn,

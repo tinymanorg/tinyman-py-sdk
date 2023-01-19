@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn
+from tinyman.compat import ApplicationNoOpTxn, PaymentTxn, AssetTransferTxn
 
 from tinyman.utils import TransactionGroup
 from .contracts import get_pool_logicsig

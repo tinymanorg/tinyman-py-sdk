@@ -284,11 +284,16 @@ class Pool:
             return AssetAmount(self.asset1, int(amount.amount * self.asset2_price))
 
     def fetch_mint_quote(
-        self, amount_a: AssetAmount, amount_b: AssetAmount = None, slippage=0.05
+        self,
+        amount_a: AssetAmount,
+        amount_b: AssetAmount = None,
+        slippage=0.05,
+        refresh=True,
     ):
         amount1 = amount_a if amount_a.asset == self.asset1 else amount_b
         amount2 = amount_a if amount_a.asset == self.asset2 else amount_b
-        self.refresh()
+        if refresh:
+            self.refresh()
         if not self.exists:
             raise Exception("Pool has not been bootstrapped yet!")
         if self.issued_liquidity:
@@ -322,10 +327,11 @@ class Pool:
         )
         return quote
 
-    def fetch_burn_quote(self, liquidity_asset_in, slippage=0.05):
+    def fetch_burn_quote(self, liquidity_asset_in, slippage=0.05, refresh=True):
         if isinstance(liquidity_asset_in, int):
             liquidity_asset_in = AssetAmount(self.liquidity_asset, liquidity_asset_in)
-        self.refresh()
+        if refresh:
+            self.refresh()
         asset1_amount = (
             liquidity_asset_in.amount * self.asset1_reserves
         ) / self.issued_liquidity
@@ -344,10 +350,11 @@ class Pool:
         return quote
 
     def fetch_fixed_input_swap_quote(
-        self, amount_in: AssetAmount, slippage=0.05
+        self, amount_in: AssetAmount, slippage=0.05, refresh=True
     ) -> SwapQuote:
         asset_in, asset_in_amount = amount_in.asset, amount_in.amount
-        self.refresh()
+        if refresh:
+            self.refresh()
         if asset_in == self.asset1:
             asset_out = self.asset2
             input_supply = self.asset1_reserves
@@ -390,10 +397,11 @@ class Pool:
         return quote
 
     def fetch_fixed_output_swap_quote(
-        self, amount_out: AssetAmount, slippage=0.05
+        self, amount_out: AssetAmount, slippage=0.05, refresh=True
     ) -> SwapQuote:
         asset_out, asset_out_amount = amount_out.asset, amount_out.amount
-        self.refresh()
+        if refresh:
+            self.refresh()
         if asset_out == self.asset1:
             asset_in = self.asset2
             input_supply = self.asset2_reserves

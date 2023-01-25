@@ -72,19 +72,19 @@ You can find a tutorial under the `examples/v2/tutorial` folder.
 To run a step use `python <file_name>` such as `python 01_generate_account.py`.
 
 #### Prerequisites
-1. [Generating an account](examples/v2/01_generate_account.py)
-2. [Creating assets](examples/v2/02_create_assets.by)
+1. [Generating an account](examples/v2/tutorial/01_generate_account.py)
+2. [Creating assets](examples/v2/tutorial/02_create_assets.py)
 
 #### Steps
 
-3. [Bootstrapping a pool](examples/v2/03_bootstrap_pool.py)
-4. [Adding initial liquidity to the pool](examples/v2/04_add_initial_liquidity.py)
-5. [Adding flexible (add two asset with a flexible rate) liquidity to the pool](examples/v2/05_add_flexible_liquidity.py)
-6. [Adding single asset (add only one asset) liquidity to the pool](examples/v2/06_add_single_asset_liquidity.py)
-7. [Removing liquidity to the pool](examples/v2/07_remove_liquidity.py)
-8. [Removing single asset(receive single asset) liquidity to the pool](examples/v2/08_single_asset_remove_liquidity.py)
-9. [Swapping fixed-input](examples/v2/09_fixed_input_swap.py)
-10. [Swapping fixed-output](examples/v2/10_fixed_output_swap.py)
+3. [Bootstrapping a pool](examples/v2/tutorial/03_bootstrap_pool.py)
+4. [Adding initial liquidity to the pool](examples/v2/tutorial/04_add_initial_liquidity.py)
+5. [Adding flexible (add two asset with a flexible rate) liquidity to the pool](examples/v2/tutorial/05_add_flexible_liquidity.py)
+6. [Adding single asset (add only one asset) liquidity to the pool](examples/v2/tutorial/06_add_single_asset_liquidity.py)
+7. [Removing liquidity to the pool](examples/v2/tutorial/07_remove_liquidity.py)
+8. [Removing single asset(receive single asset) liquidity to the pool](examples/v2/tutorial/08_single_asset_remove_liquidity.py)
+9. [Swapping fixed-input](examples/v2/tutorial/09_fixed_input_swap.py)
+10. [Swapping fixed-output](examples/v2/tutorial/10_fixed_output_swap.py)
 
 ## Example Operations
 
@@ -188,17 +188,17 @@ txn_info = txn_group.submit(algod, wait=True)
 <details>
 <summary><strong>Flash Loan</strong></summary>
 
-1. [Flash Loan: Single Asset](examples/v2/11_flash_loan_1_single_asset.py)
-2. [Flash Loan: Multiple Assets](examples/v2/12_flash_loan_2_multiple_assets.py)
+1. [Flash Loan: Single Asset](examples/v2/tutorial/11_flash_loan_1_single_asset.py)
+2. [Flash Loan: Multiple Assets](examples/v2/tutorial/12_flash_loan_2_multiple_assets.py)
 
 </details>
 
 <details>
 <summary><strong>Flash Swap</strong></summary>
 
-1. [Flash Swap: Pay in other currency](examples/v2/13_flash_swap_1_pay_in_other_currency.py)
-2. [Flash Swap: Pay in same currency](examples/v2/14_flash_swap_2_pay_in_same_currency.py)
-3. [Flash Swap: Pay in multiple currencies](examples/v2/15_flash_swap_3_pay_in_multiple_currencies.py)
+1. [Flash Swap: Pay in other currency](examples/v2/tutorial/13_flash_swap_1_pay_in_other_currency.py)
+2. [Flash Swap: Pay in same currency](examples/v2/tutorial/14_flash_swap_2_pay_in_same_currency.py)
+3. [Flash Swap: Pay in multiple currencies](examples/v2/tutorial/15_flash_swap_3_pay_in_multiple_currencies.py)
 
 </details>
 

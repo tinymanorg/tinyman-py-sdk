@@ -24,6 +24,28 @@ from tinyman.v2.pools import Pool as TinymanV2Pool
 from tinyman.v2.quotes import SwapQuote as TinymanV2SwapQuote
 
 
+def prepare_swap_router_asset_opt_in_transaction(
+    router_app_id: int,
+    asset_ids: [int],
+    user_address: str,
+    suggested_params: SuggestedParams,
+) -> TransactionGroup:
+
+    asset_opt_in_app_call = ApplicationNoOpTxn(
+        sender=user_address,
+        sp=suggested_params,
+        index=router_app_id,
+        app_args=["asset_opt_in"],
+        foreign_assets=asset_ids,
+    )
+    min_fee = suggested_params.min_fee
+    inner_transaction_count = len(asset_ids)
+    asset_opt_in_app_call.fee = min_fee * (1 + inner_transaction_count)
+
+    txn_group = TransactionGroup([asset_opt_in_app_call])
+    return txn_group
+
+
 def prepare_swap_router_transactions(
     router_app_id: int,
     validator_app_id: int,
@@ -36,7 +58,6 @@ def prepare_swap_router_transactions(
     user_address: str,
     suggested_params: SuggestedParams,
 ) -> TransactionGroup:
-    # TODO: MVP
     pool_1_logicsig = get_pool_logicsig(
         validator_app_id, input_asset_id, intermediary_asset_id
     )
@@ -82,9 +103,11 @@ def prepare_swap_router_transactions(
 
     min_fee = suggested_params.min_fee
     if swap_type == FIXED_INPUT_APP_ARGUMENT:
-        app_call_fee = min_fee * 8
+        inner_transaction_count = 7
+        app_call_fee = min_fee * (1 + inner_transaction_count)
     elif swap_type == FIXED_OUTPUT_APP_ARGUMENT:
-        app_call_fee = min_fee * 9
+        inner_transaction_count = 8
+        app_call_fee = min_fee * (1 + inner_transaction_count)
     else:
         raise NotImplementedError()
 
@@ -129,18 +152,39 @@ def prepare_swap_router_transactions_from_quotes(
         router_app_id = pools[0].client.router_app_id
         validator_app_id = pools[0].client.validator_app_id
 
-        return prepare_swap_router_transactions(
+        input_asset_id = quotes[0].amount_in.asset.id
+        intermediary_asset_id = quotes[0].amount_out.asset.id
+        output_asset_id = quotes[-1].amount_out.asset.id
+
+        txn_group = prepare_swap_router_transactions(
             router_app_id=router_app_id,
             validator_app_id=validator_app_id,
-            input_asset_id=quotes[0].amount_in.asset.id,
-            intermediary_asset_id=quotes[0].amount_out.asset.id,
-            output_asset_id=quotes[-1].amount_out.asset.id,
+            input_asset_id=input_asset_id,
+            intermediary_asset_id=intermediary_asset_id,
+            output_asset_id=output_asset_id,
             asset_in_amount=quotes[0].amount_in_with_slippage.amount,
             asset_out_amount=quotes[-1].amount_out_with_slippage.amount,
             swap_type=swap_type,
             user_address=user_address,
             suggested_params=suggested_params,
         )
+
+        algod_client = pools[0].client.algod_client
+        swap_router_app_address = get_application_address(router_app_id)
+        account_info = algod_client.account_info(swap_router_app_address)
+        opted_in_asset_ids = {int(asset['asset-id']) for asset in account_info['assets']}
+        asset_ids = {input_asset_id, intermediary_asset_id, output_asset_id} - {0} - opted_in_asset_ids
+
+        if asset_ids:
+            opt_in_txn_group = prepare_swap_router_asset_opt_in_transaction(
+                router_app_id=router_app_id,
+                asset_ids=list(asset_ids),
+                user_address=user_address,
+                suggested_params=suggested_params,
+            )
+            txn_group = opt_in_txn_group + txn_group
+
+        return txn_group
 
     else:
         raise NotImplementedError()

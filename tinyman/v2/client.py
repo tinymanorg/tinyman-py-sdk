@@ -8,7 +8,10 @@ from tinyman.staking.constants import (
     TESTNET_STAKING_APP_ID,
     MAINNET_STAKING_APP_ID,
 )
-from tinyman.swap_router.constants import TESTNET_SWAP_ROUTER_APP_ID_V1, MAINNET_SWAP_ROUTER_APP_ID_V1
+from tinyman.swap_router.constants import (
+    TESTNET_SWAP_ROUTER_APP_ID_V1,
+    MAINNET_SWAP_ROUTER_APP_ID_V1,
+)
 from tinyman.utils import find_app_id_from_txn_id, parse_error
 from tinyman.v2.constants import (
     TESTNET_VALIDATOR_APP_ID,
@@ -18,12 +21,7 @@ from tinyman.v2.utils import lookup_error
 
 
 class TinymanV2Client(BaseTinymanClient):
-
-    def __init__(
-        self,
-        *args,
-        **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         self.router_app_id = kwargs.pop("router_app_id", None)
         super().__init__(*args, **kwargs)
 

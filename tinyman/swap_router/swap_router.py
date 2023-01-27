@@ -117,7 +117,12 @@ def prepare_swap_router_transactions(
 
 
 def prepare_swap_router_transactions_from_quotes(
-    route_pools_and_quotes: list[Union[tuple[TinymanV1Pool, TinymanV1SwapQuote], tuple[TinymanV2Pool, TinymanV2SwapQuote]]],
+    route_pools_and_quotes: list[
+        Union[
+            tuple[TinymanV1Pool, TinymanV1SwapQuote],
+            tuple[TinymanV2Pool, TinymanV2SwapQuote],
+        ]
+    ],
     swap_type: str,
     slippage: float = 0.05,
     user_address: str = None,
@@ -172,8 +177,14 @@ def prepare_swap_router_transactions_from_quotes(
         algod_client = pools[0].client.algod_client
         swap_router_app_address = get_application_address(router_app_id)
         account_info = algod_client.account_info(swap_router_app_address)
-        opted_in_asset_ids = {int(asset['asset-id']) for asset in account_info['assets']}
-        asset_ids = {input_asset_id, intermediary_asset_id, output_asset_id} - {0} - opted_in_asset_ids
+        opted_in_asset_ids = {
+            int(asset["asset-id"]) for asset in account_info["assets"]
+        }
+        asset_ids = (
+            {input_asset_id, intermediary_asset_id, output_asset_id}
+            - {0}
+            - opted_in_asset_ids
+        )
 
         if asset_ids:
             opt_in_txn_group = prepare_swap_router_asset_opt_in_transaction(
@@ -197,7 +208,12 @@ def fetch_swap_route_quotes(
     asset_out_id: int,
     swap_type: str,
     amount: int,
-) -> list[Union[tuple[TinymanV1Pool, TinymanV1SwapQuote], tuple[TinymanV2Pool, TinymanV2SwapQuote]]]:
+) -> list[
+    Union[
+        tuple[TinymanV1Pool, TinymanV1SwapQuote],
+        tuple[TinymanV2Pool, TinymanV2SwapQuote],
+    ]
+]:
     assert swap_type in (FIXED_INPUT_SWAP_TYPE, FIXED_OUTPUT_SWAP_TYPE)
     assert amount > 0
     assert asset_in_id >= 0
@@ -238,13 +254,21 @@ def fetch_swap_route_quotes(
             )
 
             asset_in = client.fetch_asset(int(swap["quote"]["amount_in"]["asset_id"]))
-            amount_out = client.fetch_asset(int(swap["quote"]["amount_out"]["asset_id"]))
+            amount_out = client.fetch_asset(
+                int(swap["quote"]["amount_out"]["asset_id"])
+            )
 
             quote = TinymanV1SwapQuote(
                 swap_type=swap_type,
-                amount_in=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
-                amount_out=AssetAmount(amount_out, int(swap["quote"]["amount_out"]["amount"])),
-                swap_fees=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
+                amount_in=AssetAmount(
+                    asset_in, int(swap["quote"]["amount_in"]["amount"])
+                ),
+                amount_out=AssetAmount(
+                    amount_out, int(swap["quote"]["amount_out"]["amount"])
+                ),
+                swap_fees=AssetAmount(
+                    asset_in, int(swap["quote"]["amount_in"]["amount"])
+                ),
                 slippage=0,
                 price_impact=swap["quote"]["price_impact"],
             )
@@ -260,13 +284,21 @@ def fetch_swap_route_quotes(
             )
 
             asset_in = client.fetch_asset(int(swap["quote"]["amount_in"]["asset_id"]))
-            amount_out = client.fetch_asset(int(swap["quote"]["amount_out"]["asset_id"]))
+            amount_out = client.fetch_asset(
+                int(swap["quote"]["amount_out"]["asset_id"])
+            )
 
             quote = TinymanV2SwapQuote(
                 swap_type=swap_type,
-                amount_in=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
-                amount_out=AssetAmount(amount_out, int(swap["quote"]["amount_out"]["amount"])),
-                swap_fees=AssetAmount(asset_in, int(swap["quote"]["amount_in"]["amount"])),
+                amount_in=AssetAmount(
+                    asset_in, int(swap["quote"]["amount_in"]["amount"])
+                ),
+                amount_out=AssetAmount(
+                    amount_out, int(swap["quote"]["amount_out"]["amount"])
+                ),
+                swap_fees=AssetAmount(
+                    asset_in, int(swap["quote"]["amount_in"]["amount"])
+                ),
                 slippage=0,
                 price_impact=swap["quote"]["price_impact"],
             )

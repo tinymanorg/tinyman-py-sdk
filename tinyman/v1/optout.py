@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import ApplicationClearStateTxn
+from tinyman.compat import ApplicationClearStateTxn
 from algosdk.v2client.algod import AlgodClient
 
 

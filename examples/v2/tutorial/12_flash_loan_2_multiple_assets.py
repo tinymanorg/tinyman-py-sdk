@@ -9,7 +9,7 @@ from tinyman.assets import AssetAmount
 from examples.v2.tutorial.common import get_account, get_assets
 from examples.v2.utils import get_algod
 from tinyman.v2.client import TinymanV2TestnetClient
-from algosdk.future.transaction import AssetTransferTxn, PaymentTxn
+from tinyman.compat import AssetTransferTxn, PaymentTxn
 
 account = get_account()
 algod = get_algod()

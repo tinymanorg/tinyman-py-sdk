@@ -1,3 +1,4 @@
+import sys
 import importlib.resources
 import json
 from base64 import b64decode
@@ -6,9 +7,18 @@ import tinyman.v2
 from tinyman.tealishmap import TealishMap
 from tinyman.utils import bytes_to_int
 
-tealishmap = TealishMap(
-    json.loads(importlib.resources.read_text(tinyman.v2, "amm_approval.map.json"))
-)
+if sys.version_info >= (3, 9):
+    tealishmap = TealishMap(
+        json.loads(
+            importlib.resources.files(tinyman.v2)
+            .joinpath("amm_approval.map.json")
+            .read_text()
+        )
+    )
+else:
+    tealishmap = TealishMap(
+        json.loads(importlib.resources.read_text(tinyman.v2, "amm_approval.map.json"))
+    )
 
 
 def decode_logs(logs: "list") -> dict:

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from algosdk.future.transaction import (
+from tinyman.compat import (
     Transaction,
     ApplicationNoOpTxn,
     PaymentTxn,

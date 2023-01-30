@@ -8,7 +8,7 @@
 
 from tinyman.v1.pools import Pool
 from tinyman.assets import Asset
-from algosdk.future.transaction import wait_for_confirmation
+from tinyman.compat import wait_for_confirmation
 from algosdk.v2client.algod import AlgodClient
 from tinyman.v1.client import TinymanClient
 

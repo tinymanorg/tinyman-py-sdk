@@ -1,5 +1,13 @@
 # Change Log
 
+## 2.1.1
+
+### Changed
+
+* Added `py-algorand-sdk==2.0.0` support. [#58](https://github.com/tinymanorg/tinyman-py-sdk/pull/58)
+* Added `refresh` parameter to Tinyman V1 fetch functions (`fetch_mint_quote`, `fetch_burn_quote`, `fetch_fixed_input_swap_quote`, `fetch_fixed_output_swap_quote`). [#59](https://github.com/tinymanorg/tinyman-py-sdk/pull/59)
+
+
 ## 2.1.0
 
 ### Added

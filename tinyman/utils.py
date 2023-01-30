@@ -7,7 +7,7 @@ from json import JSONDecodeError
 from typing import Optional
 
 from algosdk.error import AlgodHTTPError
-from algosdk.future.transaction import (
+from tinyman.compat import (
     LogicSigTransaction,
     assign_group_id,
     wait_for_confirmation,

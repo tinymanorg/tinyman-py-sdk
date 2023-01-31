@@ -1,18 +1,9 @@
-class PoolIsNotBootstrapped(Exception):
-    pass
+# flake8: noqa, for backward compatibility.
 
-
-class PoolAlreadyBootstrapped(Exception):
-    pass
-
-
-class PoolHasNoLiquidity(Exception):
-    pass
-
-
-class PoolAlreadyInitialized(Exception):
-    pass
-
-
-class InsufficientReserves(Exception):
-    pass
+from tinyman.exceptions import (
+    PoolIsNotBootstrapped,
+    PoolAlreadyBootstrapped,
+    PoolHasNoLiquidity,
+    PoolAlreadyInitialized,
+    InsufficientReserves,
+)

@@ -1,6 +1,6 @@
 from typing import Union
 
-from algosdk.future.transaction import (
+from tinyman.compat import (
     AssetTransferTxn,
     ApplicationNoOpTxn,
     SuggestedParams,
@@ -174,9 +174,9 @@ def prepare_swap_router_transactions_from_quotes(
             suggested_params=suggested_params,
         )
 
-        algod_client = pools[0].client.algod_client
+        algod = pools[0].client.algod
         swap_router_app_address = get_application_address(router_app_id)
-        account_info = algod_client.account_info(swap_router_app_address)
+        account_info = algod.account_info(swap_router_app_address)
         opted_in_asset_ids = {
             int(asset["asset-id"]) for asset in account_info["assets"]
         }

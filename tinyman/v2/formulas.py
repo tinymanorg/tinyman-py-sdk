@@ -2,7 +2,7 @@ import math
 
 from tinyman.utils import calculate_price_impact
 from tinyman.v2.constants import LOCKED_POOL_TOKENS
-from tinyman.v2.exceptions import InsufficientReserves
+from tinyman.exceptions import InsufficientReserves
 
 
 def calculate_protocol_fee_amount(

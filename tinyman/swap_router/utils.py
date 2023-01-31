@@ -1,7 +1,8 @@
-from tinyman.v2.exceptions import InsufficientReserves
+from tinyman.swap_router.routes import Route
+from tinyman.exceptions import InsufficientReserves, PoolHasNoLiquidity
 
 
-def get_best_fixed_input_route(routes, amount_in):
+def get_best_fixed_input_route(routes: list[Route], amount_in: int):
     best_route = None
     best_route_max_price_impact = None
     best_route_amount_out = None
@@ -9,7 +10,7 @@ def get_best_fixed_input_route(routes, amount_in):
     for route in routes:
         try:
             quotes = route.get_fixed_input_quotes(amount_in=amount_in)
-        except (InsufficientReserves, AssertionError):
+        except (InsufficientReserves, PoolHasNoLiquidity):
             continue
 
         last_quote = quotes[-1]
@@ -26,7 +27,7 @@ def get_best_fixed_input_route(routes, amount_in):
     return best_route
 
 
-def get_best_fixed_output_route(routes, amount_out):
+def get_best_fixed_output_route(routes: list[Route], amount_out: int):
     best_route = None
     best_route_max_price_impact = None
     best_route_amount_in = None
@@ -34,7 +35,7 @@ def get_best_fixed_output_route(routes, amount_out):
     for route in routes:
         try:
             quotes = route.get_fixed_output_quotes(amount_out=amount_out)
-        except (InsufficientReserves, AssertionError):
+        except (InsufficientReserves, PoolHasNoLiquidity):
             continue
 
         first_quote = quotes[0]

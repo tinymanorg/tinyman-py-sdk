@@ -10,15 +10,14 @@ from algosdk.v2client.algod import AlgodClient
 from tests import get_suggested_params
 from tinyman.assets import Asset, AssetAmount
 from tinyman.compat import OnComplete
-from tinyman.swap_router.routes import Route
-from tinyman.swap_router.swap_router import (
-    prepare_swap_router_asset_opt_in_transaction,
-    prepare_swap_router_transactions,
-    prepare_swap_router_transactions_from_quotes,
-)
-from tinyman.swap_router.utils import (
+from tinyman.swap_router.routes import (
+    Route,
     get_best_fixed_input_route,
     get_best_fixed_output_route,
+)
+from tinyman.swap_router.swap_router import (
+    prepare_swap_router_asset_opt_in_transaction,
+    prepare_swap_router_transactions, get_swap_router_app_opt_in_required_asset_ids,
 )
 from tinyman.v1.client import TinymanClient
 from tinyman.v1.constants import TESTNET_VALIDATOR_APP_ID
@@ -508,7 +507,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         )
         self.assertEqual(txn_group.transactions[1].dictify()["type"], "appl")
 
-    def test_indirect_route_prepare_swap_router_transactions_from_quotes(self):
+    def test_indirect_route_prepare_swap_transactions_from_quotes(self):
         sp = self.get_suggested_params()
         user_private_key, user_address = generate_account()
         router_app_address = get_application_address(self.ROUTER_APP_ID)
@@ -517,12 +516,18 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         asset_intermediary = AssetAmount(self.intermediary_asset, 9_999_999)
         swap_type = "fixed-input"
 
+        route = Route(
+            asset_in=self.asset_in,
+            asset_out=self.asset_out,
+            pools=[self.pool_1, self.pool_2]
+        )
+
         quote_1 = V2SwapQuote(
             swap_type=swap_type,
             amount_in=asset_in,
             amount_out=asset_intermediary,
             swap_fees=None,
-            slippage=None,
+            slippage=0,
             price_impact=None,
         )
         quote_2 = V2SwapQuote(
@@ -530,11 +535,10 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
             amount_in=asset_intermediary,
             amount_out=asset_out,
             swap_fees=None,
-            slippage=None,
+            slippage=0,
             price_impact=None,
         )
-
-        route_pools_and_quotes = [(self.pool_1, quote_1), (self.pool_2, quote_2)]
+        quotes = [quote_1, quote_2]
 
         opt_in_app_call_txn = {
             "apaa": [b"asset_opt_in"],
@@ -580,114 +584,31 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
             "type": "appl",
         }
 
-        # 3 Opt-in
-        account_info = self.get_mock_account_info(
-            address=router_app_address,
-            assets=[],
+        txn_group = route.prepare_swap_transactions_from_quotes(
+            quotes=quotes,
+            user_address=user_address,
+            suggested_params=sp,
         )
-        with patch(
-            "algosdk.v2client.algod.AlgodClient.account_info", return_value=account_info
-        ):
-            txn_group = prepare_swap_router_transactions_from_quotes(
-                route_pools_and_quotes=route_pools_and_quotes,
-                swap_type=swap_type,
-                user_address=user_address,
-                suggested_params=sp,
-                slippage=0,
-            )
-            self.assertEqual(len(txn_group.transactions), 3)
-            opt_in_app_call_txn["apas"] = [
-                self.asset_in.id,
-                self.asset_out.id,
-                self.intermediary_asset.id,
-            ]
-            opt_in_app_call_txn["fee"] = 4 * 1000
-            self.assertDictEqual(
-                dict(txn_group.transactions[0].dictify()), opt_in_app_call_txn
-            )
-            self.assertDictEqual(
-                dict(txn_group.transactions[1].dictify()), transfer_input_txn
-            )
-            self.assertDictEqual(
-                dict(txn_group.transactions[2].dictify()), swap_app_call_txn
-            )
-
-        # 2 Opt-in
-        account_info = self.get_mock_account_info(
-            address=router_app_address,
-            assets=[
-                {"amount": 0, "asset-id": self.asset_in.id, "is-frozen": False},
-            ],
+        self.assertEqual(len(txn_group.transactions), 2)
+        self.assertDictEqual(
+            dict(txn_group.transactions[0].dictify()), transfer_input_txn
         )
-        with patch(
-            "algosdk.v2client.algod.AlgodClient.account_info", return_value=account_info
-        ):
-            txn_group = prepare_swap_router_transactions_from_quotes(
-                route_pools_and_quotes=route_pools_and_quotes,
-                swap_type=swap_type,
-                user_address=user_address,
-                suggested_params=sp,
-                slippage=0,
-            )
-            self.assertEqual(len(txn_group.transactions), 3)
-            opt_in_app_call_txn["apas"] = [
-                self.asset_out.id,
-                self.intermediary_asset.id,
-            ]
-            opt_in_app_call_txn["fee"] = 3 * 1000
-            self.assertDictEqual(
-                dict(txn_group.transactions[0].dictify()), opt_in_app_call_txn
-            )
-            self.assertDictEqual(
-                dict(txn_group.transactions[1].dictify()), transfer_input_txn
-            )
-            self.assertDictEqual(
-                dict(txn_group.transactions[2].dictify()), swap_app_call_txn
-            )
-
-        # No opt-in + Slippage
-        account_info = self.get_mock_account_info(
-            address=router_app_address,
-            assets=[
-                {"amount": 0, "asset-id": self.asset_in.id, "is-frozen": False},
-                {
-                    "amount": 0,
-                    "asset-id": self.intermediary_asset.id,
-                    "is-frozen": False,
-                },
-                {"amount": 0, "asset-id": self.asset_out.id, "is-frozen": False},
-            ],
+        self.assertDictEqual(
+            dict(txn_group.transactions[1].dictify()), swap_app_call_txn
         )
-        with patch(
-            "algosdk.v2client.algod.AlgodClient.account_info", return_value=account_info
-        ):
-            txn_group = prepare_swap_router_transactions_from_quotes(
-                route_pools_and_quotes=route_pools_and_quotes,
-                swap_type=swap_type,
-                user_address=user_address,
-                suggested_params=sp,
-                slippage=0.05,
-            )
-            self.assertEqual(len(txn_group.transactions), 2)
-            self.assertDictEqual(
-                dict(txn_group.transactions[0].dictify()), transfer_input_txn
-            )
-            quote_2.slippage = 0.05
-            swap_app_call_txn["apaa"] = [
-                b"swap",
-                b"fixed-input",
-                quote_2.amount_out_with_slippage.amount.to_bytes(8, "big"),
-            ]
-            self.assertDictEqual(
-                dict(txn_group.transactions[1].dictify()), swap_app_call_txn
-            )
 
-    def test_direct_route_prepare_swap_router_transactions_from_quotes(self):
+    def test_direct_route_prepare_swap_transactions_from_quotes(self):
         sp = self.get_suggested_params()
         user_private_key, user_address = generate_account()
         asset_in = AssetAmount(self.asset_in, 1_000_000)
         asset_out = AssetAmount(self.asset_out, 2_000_000)
         swap_type = "fixed-input"
+
+        route = Route(
+            asset_in=self.asset_in,
+            asset_out=self.asset_out,
+            pools=[self.pool]
+        )
 
         quote = V2SwapQuote(
             swap_type=swap_type,
@@ -697,16 +618,12 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
             slippage=0.05,
             price_impact=None,
         )
-        route_pools_and_quotes = [
-            (self.pool, quote),
-        ]
+        quotes = [quote]
 
-        txn_group = prepare_swap_router_transactions_from_quotes(
-            route_pools_and_quotes=route_pools_and_quotes,
-            swap_type=swap_type,
+        txn_group = route.prepare_swap_transactions_from_quotes(
+            quotes=quotes,
             user_address=user_address,
             suggested_params=sp,
-            slippage=0,
         )
         self.assertEqual(len(txn_group.transactions), 2)
         self.assertDictEqual(
@@ -747,7 +664,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
             },
         )
 
-    def test_v1_direct_route_prepare_swap_router_transactions_from_quotes(self):
+    def test_v1_direct_route_prepare_swap_transactions_from_quotes(self):
         sp = self.get_suggested_params()
         user_private_key, user_address = generate_account()
         asset_in = AssetAmount(self.asset_in, 1_000_000)
@@ -764,6 +681,12 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         v1_pool.exists = True
         v1_pool.liquidity_asset = Asset(id=99, name="TM", unit_name="TM", decimals=6)
 
+        route = Route(
+            asset_in=self.asset_in,
+            asset_out=self.asset_out,
+            pools=[v1_pool]
+        )
+
         quote = V1SwapQuote(
             swap_type=swap_type,
             amount_in=asset_in,
@@ -772,23 +695,129 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
             slippage=0.05,
             price_impact=None,
         )
-        route_pools_and_quotes = [
-            (v1_pool, quote),
-        ]
+        quotes = [quote]
 
         with patch(
             "algosdk.v2client.algod.AlgodClient.suggested_params",
             return_value=self.get_suggested_params(),
         ):
-            txn_group = prepare_swap_router_transactions_from_quotes(
-                route_pools_and_quotes=route_pools_and_quotes,
-                swap_type=swap_type,
+            txn_group = route.prepare_swap_transactions_from_quotes(
+                quotes=quotes,
                 user_address=user_address,
                 suggested_params=sp,
-                slippage=0,
             )
 
         self.assertEqual(len(txn_group.transactions), 4)
         self.assertEqual(
             dict(txn_group.transactions[1].dictify())["apid"], self.VALIDATOR_APP_ID_V1
         )
+
+    def test_swap_route_opt_in(self):
+        sp = self.get_suggested_params()
+        user_private_key, user_address = generate_account()
+        router_app_address = get_application_address(self.ROUTER_APP_ID)
+        algod = AlgodClient("TEST", "https://test.test.network")
+
+        route = Route(
+            asset_in=self.asset_in,
+            asset_out=self.asset_out,
+            pools=[self.pool_1, self.pool_2]
+        )
+        opt_in_app_call_txn = {
+            "apaa": [b"asset_opt_in"],
+            "apan": OnComplete.NoOpOC,
+            "apas": ANY,
+            "apid": self.ROUTER_APP_ID,
+            "fee": ANY,
+            "fv": ANY,
+            "gh": ANY,
+            "grp": ANY,
+            "lv": ANY,
+            "snd": decode_address(user_address),
+            "type": "appl",
+        }
+
+        # 3 Opt-in
+        account_info = self.get_mock_account_info(
+            address=router_app_address,
+            assets=[],
+        )
+        with patch(
+            "algosdk.v2client.algod.AlgodClient.account_info", return_value=account_info
+        ):
+            opt_in_required_asset_ids = get_swap_router_app_opt_in_required_asset_ids(
+                algod_client=algod,
+                router_app_id=self.ROUTER_APP_ID,
+                asset_ids=route.asset_ids,
+            )
+            self.assertEqual(opt_in_required_asset_ids, opt_in_app_call_txn["apas"])
+
+            opt_in_txn_group = prepare_swap_router_asset_opt_in_transaction(
+                router_app_id=self.ROUTER_APP_ID,
+                asset_ids=opt_in_required_asset_ids,
+                user_address=user_address,
+                suggested_params=sp
+            )
+
+            self.assertEqual(len(opt_in_txn_group.transactions), 1)
+            self.assertDictEqual(
+                dict(opt_in_txn_group.transactions[0].dictify()), opt_in_app_call_txn
+            )
+
+        # 2 Opt-in
+        account_info = self.get_mock_account_info(
+            address=router_app_address,
+            assets=[
+                {"amount": 0, "asset-id": self.asset_in.id, "is-frozen": False},
+            ],
+        )
+        with patch(
+            "algosdk.v2client.algod.AlgodClient.account_info", return_value=account_info
+        ):
+            opt_in_app_call_txn["apas"] = [
+                self.asset_out.id,
+                self.intermediary_asset.id,
+            ]
+            opt_in_app_call_txn["fee"] = 3 * 1000
+
+            opt_in_required_asset_ids = get_swap_router_app_opt_in_required_asset_ids(
+                algod_client=algod,
+                router_app_id=self.ROUTER_APP_ID,
+                asset_ids=route.asset_ids,
+            )
+            self.assertEqual(opt_in_required_asset_ids, opt_in_app_call_txn["apas"])
+
+            opt_in_txn_group = prepare_swap_router_asset_opt_in_transaction(
+                router_app_id=self.ROUTER_APP_ID,
+                asset_ids=opt_in_required_asset_ids,
+                user_address=user_address,
+                suggested_params=sp
+            )
+
+            self.assertEqual(len(opt_in_txn_group.transactions), 1)
+            self.assertDictEqual(
+                dict(opt_in_txn_group.transactions[0].dictify()), opt_in_app_call_txn
+            )
+
+        # No opt-in + Slippage
+        account_info = self.get_mock_account_info(
+            address=router_app_address,
+            assets=[
+                {"amount": 0, "asset-id": self.asset_in.id, "is-frozen": False},
+                {
+                    "amount": 0,
+                    "asset-id": self.intermediary_asset.id,
+                    "is-frozen": False,
+                },
+                {"amount": 0, "asset-id": self.asset_out.id, "is-frozen": False},
+            ],
+        )
+        with patch(
+            "algosdk.v2client.algod.AlgodClient.account_info", return_value=account_info
+        ):
+            opt_in_required_asset_ids = get_swap_router_app_opt_in_required_asset_ids(
+                algod_client=algod,
+                router_app_id=self.ROUTER_APP_ID,
+                asset_ids=route.asset_ids,
+            )
+            self.assertEqual(opt_in_required_asset_ids, [])

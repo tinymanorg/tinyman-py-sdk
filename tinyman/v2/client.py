@@ -46,12 +46,13 @@ class TinymanV2TestnetClient(TinymanV2Client):
         algod_client: AlgodClient,
         user_address: Optional[str] = None,
         client_name: Optional[str] = None,
+        api_base_url: Optional[str] = None
     ):
         super().__init__(
             algod_client,
             validator_app_id=TESTNET_VALIDATOR_APP_ID,
             router_app_id=TESTNET_SWAP_ROUTER_APP_ID_V1,
-            api_base_url="https://testnet.analytics.tinyman.org/api/",
+            api_base_url=api_base_url or "https://testnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=TESTNET_STAKING_APP_ID,
             client_name=client_name,
@@ -64,12 +65,13 @@ class TinymanV2MainnetClient(TinymanV2Client):
         algod_client: AlgodClient,
         user_address: Optional[str] = None,
         client_name: Optional[str] = None,
+        api_base_url: Optional[str] = None
     ):
         super().__init__(
             algod_client,
             validator_app_id=MAINNET_VALIDATOR_APP_ID,
             router_app_id=MAINNET_SWAP_ROUTER_APP_ID_V1,
-            api_base_url="https://mainnet.analytics.tinyman.org/api/",
+            api_base_url=api_base_url or "https://mainnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=MAINNET_STAKING_APP_ID,
             client_name=client_name,

@@ -6,7 +6,7 @@ from algosdk.encoding import decode_address
 from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset, AssetAmount
-from tinyman.exceptions import InsufficientReserves
+from tinyman.exceptions import InsufficientReserves, PoolHasNoLiquidity
 from tinyman.optin import prepare_asset_optin_transactions
 from tinyman.utils import get_state_int, calculate_price_impact
 from tinyman.v1.bootstrap import prepare_bootstrap_transactions
@@ -371,7 +371,7 @@ class Pool:
             output_supply = self.asset1_reserves
 
         if not input_supply or not output_supply:
-            raise Exception("Pool has no liquidity!")
+            raise PoolHasNoLiquidity()
 
         # k = input_supply * output_supply
         # ignoring fees, k must remain constant

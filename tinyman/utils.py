@@ -114,7 +114,7 @@ def calculate_price_impact(
 ):
     swap_price = swap_output_amount / swap_input_amount
     pool_price = output_supply / input_supply
-    price_impact = abs(round((swap_price / pool_price) - 1, 5))
+    price_impact = abs(round(1 - (swap_price / pool_price), 5))
     return price_impact
 
 

@@ -150,7 +150,6 @@ def fetch_best_route_suggestion(
         json=payload,
     )
 
-    # TODO: Handle all errors properly.
     if raw_response.status_code != 200:
         raise HTTPError(response=raw_response)
 

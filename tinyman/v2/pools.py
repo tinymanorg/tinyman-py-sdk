@@ -143,7 +143,7 @@ class Pool:
             self.update_from_info(info, fetch)
 
     def __repr__(self):
-        return f"Pool {self.asset_1.unit_name}({self.asset_1.id})-{self.asset_2.unit_name}({self.asset_2.id}) {self.address}"
+        return f"Pool V2 {self.asset_1.unit_name}({self.asset_1.id})-{self.asset_2.unit_name}({self.asset_2.id}) {self.address}"
 
     @classmethod
     def from_account_info(

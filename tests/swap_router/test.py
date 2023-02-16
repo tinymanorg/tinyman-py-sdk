@@ -17,8 +17,10 @@ from tinyman.swap_router.routes import (
 )
 from tinyman.swap_router.swap_router import (
     prepare_swap_router_asset_opt_in_transaction,
-    prepare_swap_router_transactions, get_swap_router_app_opt_in_required_asset_ids,
+    prepare_swap_router_transactions,
+    get_swap_router_app_opt_in_required_asset_ids,
 )
+from tinyman.swap_router.utils import parse_swap_router_event_log
 from tinyman.v1.client import TinymanClient
 from tinyman.v1.constants import TESTNET_VALIDATOR_APP_ID
 from tinyman.v1.pools import Pool as V1Pool
@@ -519,7 +521,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         route = Route(
             asset_in=self.asset_in,
             asset_out=self.asset_out,
-            pools=[self.pool_1, self.pool_2]
+            pools=[self.pool_1, self.pool_2],
         )
 
         quote_1 = V2SwapQuote(
@@ -605,9 +607,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         swap_type = "fixed-input"
 
         route = Route(
-            asset_in=self.asset_in,
-            asset_out=self.asset_out,
-            pools=[self.pool]
+            asset_in=self.asset_in, asset_out=self.asset_out, pools=[self.pool]
         )
 
         quote = V2SwapQuote(
@@ -681,11 +681,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         v1_pool.exists = True
         v1_pool.liquidity_asset = Asset(id=99, name="TM", unit_name="TM", decimals=6)
 
-        route = Route(
-            asset_in=self.asset_in,
-            asset_out=self.asset_out,
-            pools=[v1_pool]
-        )
+        route = Route(asset_in=self.asset_in, asset_out=self.asset_out, pools=[v1_pool])
 
         quote = V1SwapQuote(
             swap_type=swap_type,
@@ -721,7 +717,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         route = Route(
             asset_in=self.asset_in,
             asset_out=self.asset_out,
-            pools=[self.pool_1, self.pool_2]
+            pools=[self.pool_1, self.pool_2],
         )
         opt_in_app_call_txn = {
             "apaa": [b"asset_opt_in"],
@@ -756,7 +752,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
                 router_app_id=self.ROUTER_APP_ID,
                 asset_ids=opt_in_required_asset_ids,
                 user_address=user_address,
-                suggested_params=sp
+                suggested_params=sp,
             )
 
             self.assertEqual(len(opt_in_txn_group.transactions), 1)
@@ -791,7 +787,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
                 router_app_id=self.ROUTER_APP_ID,
                 asset_ids=opt_in_required_asset_ids,
                 user_address=user_address,
-                suggested_params=sp
+                suggested_params=sp,
             )
 
             self.assertEqual(len(opt_in_txn_group.transactions), 1)
@@ -821,3 +817,31 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
                 asset_ids=route.asset_ids,
             )
             self.assertEqual(opt_in_required_asset_ids, [])
+
+
+class EventLogParserTestCase(TestCase):
+    def test_bytes_log(self):
+        raw_log = b"\x81b\xda\x9e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x03\xe8\x00\x00\x00\x00\x00\x00&\xbb"
+        result = parse_swap_router_event_log(log=raw_log)
+        self.assertDictEqual(
+            result,
+            {
+                "input_asset_id": 0,
+                "output_asset_id": 5,
+                "input_amount": 1000,
+                "output_amount": 9915,
+            },
+        )
+
+    def test_string_log(self):
+        raw_log = "gWLangAAAAAAn5c9AAAAAAQwcrUAAAAAAAGGoAAAAAAAA5u2"
+        result = parse_swap_router_event_log(log=raw_log)
+        self.assertDictEqual(
+            result,
+            {
+                "input_asset_id": 10458941,
+                "output_asset_id": 70283957,
+                "input_amount": 100000,
+                "output_amount": 236470,
+            },
+        )

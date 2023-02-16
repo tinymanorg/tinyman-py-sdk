@@ -20,7 +20,7 @@ class Route:
     pools: Union[list[TinymanV2Pool], list[TinymanV1Pool]]
 
     def __str__(self):
-        return "Route: " + "-> ".join(f"{pool}" for pool in self.pools)
+        return "Route: " + " -> ".join(f"{pool}" for pool in self.pools)
 
     def get_fixed_input_quotes(self, amount_in: int, slippage: float = 0.05):
         quotes = []
@@ -96,7 +96,9 @@ class Route:
             pool = self.pools[0]
             quote = quotes[0]
 
-            if isinstance(pool, TinymanV1Pool) and isinstance(quote, TinymanV1SwapQuote):
+            if isinstance(pool, TinymanV1Pool) and isinstance(
+                quote, TinymanV1SwapQuote
+            ):
                 txn_group = pool.prepare_swap_transactions_from_quote(
                     quote=quote,
                     swapper_address=user_address,
@@ -104,7 +106,9 @@ class Route:
                 )
                 return txn_group
 
-            elif isinstance(pool, TinymanV2Pool) and isinstance(quote, TinymanV2SwapQuote):
+            elif isinstance(pool, TinymanV2Pool) and isinstance(
+                quote, TinymanV2SwapQuote
+            ):
                 txn_group = pool.prepare_swap_transactions_from_quote(
                     quote=quote,
                     user_address=user_address,
@@ -118,6 +122,7 @@ class Route:
             pools = self.pools
             swap_type = quotes[0].swap_type
             tinyman_client = pools[0].client
+            user_address = user_address or tinyman_client.user_address
 
             router_app_id = tinyman_client.router_app_id
             validator_app_id = tinyman_client.validator_app_id
@@ -170,7 +175,9 @@ class Route:
     @classmethod
     def calculate_price_impact_from_quotes(cls, quotes):
         swap_price = math.prod([quote.price for quote in quotes])
-        pool_price = math.prod([quote.price / (1 - quote.price_impact) for quote in quotes])
+        pool_price = math.prod(
+            [quote.price / (1 - quote.price_impact) for quote in quotes]
+        )
         price_impact = round(1 - (swap_price / pool_price), 5)
         return price_impact
 

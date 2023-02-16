@@ -113,7 +113,9 @@ def prepare_swap_router_transactions(
     return txn_group
 
 
-def get_swap_router_app_opt_in_required_asset_ids(algod_client: AlgodClient, router_app_id: int, asset_ids=list[int]) -> list[int]:
+def get_swap_router_app_opt_in_required_asset_ids(
+    algod_client: AlgodClient, router_app_id: int, asset_ids=list[int]
+) -> list[int]:
     swap_router_app_address = get_application_address(router_app_id)
     account_info = algod_client.account_info(swap_router_app_address)
 
@@ -153,31 +155,26 @@ def fetch_best_route_suggestion(
         raise HTTPError(response=raw_response)
 
     response = raw_response.json()
-    print(response)
 
     pools = []
     for pool in response["pools"]:
         pool = TinymanV2Pool(
             client=tinyman_client,
             asset_a=Asset(
-                id=pool["asset_1_id"]["id"],
-                name=pool["asset_1_id"]["name"],
-                unit_name=pool["asset_1_id"]["unit_name"],
-                decimals=pool["asset_1_id"]["decimals"],
+                id=int(pool["asset_1"]["id"]),
+                name=pool["asset_1"]["name"],
+                unit_name=pool["asset_1"]["unit_name"],
+                decimals=pool["asset_1"]["decimals"],
             ),
             asset_b=Asset(
-                id=pool["asset_2_id"]["id"],
-                name=pool["asset_2_id"]["name"],
-                unit_name=pool["asset_2_id"]["unit_name"],
-                decimals=pool["asset_2_id"]["decimals"],
+                id=int(pool["asset_2"]["id"]),
+                name=pool["asset_2"]["name"],
+                unit_name=pool["asset_2"]["unit_name"],
+                decimals=pool["asset_2"]["decimals"],
             ),
             fetch=True,
         )
         pools.append(pool)
 
-    route = Route(
-        asset_in=asset_in,
-        asset_out=asset_out,
-        pools=pools
-    )
+    route = Route(asset_in=asset_in, asset_out=asset_out, pools=pools)
     return route

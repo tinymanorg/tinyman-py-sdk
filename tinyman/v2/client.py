@@ -46,7 +46,7 @@ class TinymanV2TestnetClient(TinymanV2Client):
         algod_client: AlgodClient,
         user_address: Optional[str] = None,
         client_name: Optional[str] = None,
-        api_base_url: Optional[str] = None
+        api_base_url: Optional[str] = None,
     ):
         super().__init__(
             algod_client,
@@ -65,7 +65,7 @@ class TinymanV2MainnetClient(TinymanV2Client):
         algod_client: AlgodClient,
         user_address: Optional[str] = None,
         client_name: Optional[str] = None,
-        api_base_url: Optional[str] = None
+        api_base_url: Optional[str] = None,
     ):
         super().__init__(
             algod_client,

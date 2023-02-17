@@ -172,13 +172,40 @@ class Route:
 
         return asset_ids
 
-    @classmethod
-    def calculate_price_impact_from_quotes(cls, quotes):
+    @property
+    def price(self):
+        input_asset_id = self.asset_in.id
+
+        pool_prices = []
+        for pool in self.pools:
+            if isinstance(pool, TinymanV2Pool):
+                asset_1_id = pool.asset_1.id
+                asset_2_id = pool.asset_2.id
+                pool_asset_1_price = pool.asset_1_price
+                pool_asset_2_price = pool.asset_2_price
+
+            elif isinstance(pool, TinymanV1Pool):
+                asset_1_id = pool.asset1.id
+                asset_2_id = pool.asset2.id
+                pool_asset_1_price = pool.asset1_price
+                pool_asset_2_price = pool.asset2_price
+
+            else:
+                raise NotImplementedError()
+
+            if input_asset_id == asset_1_id:
+                pool_prices.append(pool_asset_1_price)
+                input_asset_id = asset_2_id
+            else:
+                pool_prices.append(pool_asset_2_price)
+                input_asset_id = asset_1_id
+
+        return math.prod(pool_prices)
+
+    def calculate_price_impact_from_quotes(self, quotes):
         swap_price = math.prod([quote.price for quote in quotes])
-        pool_price = math.prod(
-            [quote.price / (1 - quote.price_impact) for quote in quotes]
-        )
-        price_impact = round(1 - (swap_price / pool_price), 5)
+        route_price = self.price
+        price_impact = round(1 - (swap_price / route_price), 5)
         return price_impact
 
 

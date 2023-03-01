@@ -1,8 +1,8 @@
 from typing import Optional
 
+import requests
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
-from requests import request, HTTPError
 
 from tinyman.assets import Asset
 from tinyman.compat import (
@@ -148,16 +148,11 @@ def fetch_best_route_suggestion(
         "amount": str(amount),
     }
 
-    raw_response = request(
-        method="POST",
-        url=tinyman_client.api_base_url + "v1/swap-router/quotes/",
-        json=payload,
+    r = requests.post(
+        tinyman_client.api_base_url + "v1/swap-router/quotes/", json=payload
     )
-
-    if raw_response.status_code != 200:
-        raise HTTPError(response=raw_response)
-
-    response = raw_response.json()
+    r.raise_for_status()
+    response = r.json()
 
     pools = []
     for quote in response["route"]:

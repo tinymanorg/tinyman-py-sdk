@@ -11,7 +11,10 @@ from tinyman.optin import prepare_asset_optin_transactions
 from tinyman.swap_router.routes import Route
 from tinyman.swap_router.routes import get_best_fixed_input_route
 from tinyman.swap_router.swap_router import fetch_best_route_suggestion
-from tinyman.swap_router.swap_router import get_swap_router_app_opt_in_required_asset_ids, prepare_swap_router_asset_opt_in_transaction
+from tinyman.swap_router.swap_router import (
+    get_swap_router_app_opt_in_required_asset_ids,
+    prepare_swap_router_asset_opt_in_transaction,
+)
 from tinyman.v1.client import TinymanClient
 from tinyman.v1.pools import Pool as TinymanV1Pool
 from tinyman.v2.client import TinymanV2Client
@@ -47,7 +50,9 @@ def fetch_routes(
             fetch=True,
         )
         if v1_pool.exists and v1_pool.issued_liquidity:
-            v1_direct_route = Route(asset_in=asset_in, asset_out=asset_out, pools=[v1_pool])
+            v1_direct_route = Route(
+                asset_in=asset_in, asset_out=asset_out, pools=[v1_pool]
+            )
             routes.append(v1_direct_route)
 
     v2_pool = TinymanV2Pool(
@@ -77,7 +82,9 @@ def swap(asset_in_id, asset_out_id, amount, account):
     algod = get_algod()
 
     # tinyman_v1_client = TinymanTestnetClient(algod_client=algod, user_address=account["address"])
-    tinyman_v2_client = TinymanV2TestnetClient(algod_client=algod, user_address=account["address"])
+    tinyman_v2_client = TinymanV2TestnetClient(
+        algod_client=algod, user_address=account["address"]
+    )
 
     asset_in = tinyman_v2_client.fetch_asset(asset_in_id)
     asset_out = tinyman_v2_client.fetch_asset(asset_out_id)
@@ -89,7 +96,7 @@ def swap(asset_in_id, asset_out_id, amount, account):
         asset_in=asset_in,
         asset_out=asset_out,
         swap_type="fixed-input",
-        amount=asset_amount_in.amount
+        amount=asset_amount_in.amount,
     )
 
     if routes:
@@ -101,7 +108,9 @@ def swap(asset_in_id, asset_out_id, amount, account):
         return
 
     print("Best Route:")
-    best_route = get_best_fixed_input_route(routes=routes, amount_in=asset_amount_in.amount)
+    best_route = get_best_fixed_input_route(
+        routes=routes, amount_in=asset_amount_in.amount
+    )
     print(best_route)
 
     if best_route:
@@ -121,7 +130,9 @@ def swap(asset_in_id, asset_out_id, amount, account):
 
         # 1 - Transfer input to swap router app account
         # 2 - Swap router app call
-        txn_group = best_route.prepare_swap_router_transactions_from_quotes(quotes=quotes, suggested_params=suggested_params)
+        txn_group = best_route.prepare_swap_router_transactions_from_quotes(
+            quotes=quotes, suggested_params=suggested_params
+        )
 
         # Swap router app account may require to opt in to some assets.
         opt_in_required_asset_ids = get_swap_router_app_opt_in_required_asset_ids(
@@ -134,7 +145,7 @@ def swap(asset_in_id, asset_out_id, amount, account):
                 router_app_id=tinyman_v2_client.router_app_id,
                 asset_ids=opt_in_required_asset_ids,
                 user_address=account["address"],
-                suggested_params=suggested_params
+                suggested_params=suggested_params,
             )
             txn_group = opt_in_txn_group + txn_group
 
@@ -159,7 +170,9 @@ def swap(asset_in_id, asset_out_id, amount, account):
             raise NotImplementedError()
 
     # User account may require to opt in to output asset.
-    if not tinyman_v2_client.asset_is_opted_in(asset_id=asset_out_id, user_address=account["address"]):
+    if not tinyman_v2_client.asset_is_opted_in(
+        asset_id=asset_out_id, user_address=account["address"]
+    ):
         user_opt_in_txn_group = prepare_asset_optin_transactions(
             asset_id=asset_out_id,
             sender=account["address"],
@@ -180,7 +193,7 @@ def swap(asset_in_id, asset_out_id, amount, account):
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # TODO: Set Account
     account = {
         "address": "ALGORAND_ADDRESS_HERE",

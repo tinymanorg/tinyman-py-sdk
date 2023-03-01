@@ -23,8 +23,6 @@ from tinyman.swap_router.swap_router import (
 from tinyman.swap_router.utils import parse_swap_router_event_log
 from tinyman.v1.client import TinymanClient
 from tinyman.v1.constants import TESTNET_VALIDATOR_APP_ID
-from tinyman.v1.pools import Pool as V1Pool
-from tinyman.v1.pools import SwapQuote as V1SwapQuote
 from tinyman.v2.client import TinymanV2Client
 from tinyman.v2.constants import TESTNET_VALIDATOR_APP_ID_V2
 from tinyman.v2.contracts import get_pool_logicsig as v2_get_pool_logicsig
@@ -258,9 +256,8 @@ class RouteTestCase(BaseTestCase):
         best_route = get_best_fixed_input_route(routes=routes, amount_in=amount_in)
         self.assertEqual(best_route, self.direct_route)
 
-        last_quote = best_route.get_fixed_input_last_quote(
-            amount_in=amount_in, slippage=0.05
-        )
+        quotes = best_route.get_fixed_input_quotes(amount_in=amount_in)
+        last_quote = quotes[-1]
         self.assertEqual(last_quote.amount_out.amount, 3323)
 
     def test_fixed_input_indirect_best_route(self):
@@ -270,9 +267,8 @@ class RouteTestCase(BaseTestCase):
         best_route = get_best_fixed_input_route(routes=routes, amount_in=amount_in)
         self.assertEqual(best_route, self.indirect_route)
 
-        last_quote = best_route.get_fixed_input_last_quote(
-            amount_in=amount_in, slippage=0.05
-        )
+        quotes = best_route.get_fixed_input_quotes(amount_in=amount_in)
+        last_quote = quotes[-1]
         self.assertEqual(last_quote.amount_out.amount, 2484)
 
     def test_fixed_output_direct_best_route(self):
@@ -291,9 +287,8 @@ class RouteTestCase(BaseTestCase):
         best_route = get_best_fixed_output_route(routes=routes, amount_out=amount_out)
         self.assertEqual(best_route, self.direct_route)
 
-        first_quote = best_route.get_fixed_output_first_quote(
-            amount_out=amount_out, slippage=0.05
-        )
+        quotes = best_route.get_fixed_output_quotes(amount_out=amount_out)
+        first_quote = quotes[0]
         self.assertEqual(first_quote.amount_in.amount, 30091)
         self.assertEqual(first_quote.amount_out.amount, amount_out)
 
@@ -304,9 +299,8 @@ class RouteTestCase(BaseTestCase):
         best_route = get_best_fixed_output_route(routes=routes, amount_out=amount_out)
         self.assertEqual(best_route, self.indirect_route)
 
-        first_quote = best_route.get_fixed_output_first_quote(
-            amount_out=amount_out, slippage=0.05
-        )
+        quotes = best_route.get_fixed_output_quotes(amount_out=amount_out)
+        first_quote = quotes[0]
         self.assertEqual(first_quote.amount_in.amount, 40243)
 
 
@@ -509,7 +503,7 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         )
         self.assertEqual(txn_group.transactions[1].dictify()["type"], "appl")
 
-    def test_indirect_route_prepare_swap_transactions_from_quotes(self):
+    def test_indirect_route_prepare_swap_router_transactions_from_quotes(self):
         sp = self.get_suggested_params()
         user_private_key, user_address = generate_account()
         router_app_address = get_application_address(self.ROUTER_APP_ID)
@@ -542,19 +536,6 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         )
         quotes = [quote_1, quote_2]
 
-        opt_in_app_call_txn = {
-            "apaa": [b"asset_opt_in"],
-            "apan": OnComplete.NoOpOC,
-            "apas": ANY,
-            "apid": self.ROUTER_APP_ID,
-            "fee": ANY,
-            "fv": ANY,
-            "gh": ANY,
-            "grp": ANY,
-            "lv": ANY,
-            "snd": decode_address(user_address),
-            "type": "appl",
-        }
         transfer_input_txn = {
             "aamt": asset_in.amount,
             "arcv": b"\xd4\xb4\xce\xaa\xc35V\xffg\xfa\xae\xcbz\xd0\x8a\xb3\x8f\x85\x1a\x9e\x06b\x8a\xf4X:\x0b\xae[\x93i\xde",
@@ -584,9 +565,10 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
             "lv": ANY,
             "snd": decode_address(user_address),
             "type": "appl",
+            "note": b'tinyman/v2:j{"origin":"tinyman-py-sdk"}',
         }
 
-        txn_group = route.prepare_swap_transactions_from_quotes(
+        txn_group = route.prepare_swap_router_transactions_from_quotes(
             quotes=quotes,
             user_address=user_address,
             suggested_params=sp,
@@ -597,115 +579,6 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
         )
         self.assertDictEqual(
             dict(txn_group.transactions[1].dictify()), swap_app_call_txn
-        )
-
-    def test_direct_route_prepare_swap_transactions_from_quotes(self):
-        sp = self.get_suggested_params()
-        user_private_key, user_address = generate_account()
-        asset_in = AssetAmount(self.asset_in, 1_000_000)
-        asset_out = AssetAmount(self.asset_out, 2_000_000)
-        swap_type = "fixed-input"
-
-        route = Route(
-            asset_in=self.asset_in, asset_out=self.asset_out, pools=[self.pool]
-        )
-
-        quote = V2SwapQuote(
-            swap_type=swap_type,
-            amount_in=asset_in,
-            amount_out=asset_out,
-            swap_fees=None,
-            slippage=0.05,
-            price_impact=None,
-        )
-        quotes = [quote]
-
-        txn_group = route.prepare_swap_transactions_from_quotes(
-            quotes=quotes,
-            user_address=user_address,
-            suggested_params=sp,
-        )
-        self.assertEqual(len(txn_group.transactions), 2)
-        self.assertDictEqual(
-            dict(txn_group.transactions[0].dictify()),
-            {
-                "aamt": asset_in.amount,
-                "arcv": decode_address(self.pool.address),
-                "fee": ANY,
-                "fv": ANY,
-                "gh": ANY,
-                "grp": ANY,
-                "lv": ANY,
-                "snd": decode_address(user_address),
-                "type": "axfer",
-                "xaid": self.asset_in.id,
-            },
-        )
-        self.assertDictEqual(
-            dict(txn_group.transactions[1].dictify()),
-            {
-                "apaa": [
-                    b"swap",
-                    b"fixed-input",
-                    quote.amount_out_with_slippage.amount.to_bytes(8, "big"),
-                ],
-                "apan": OnComplete.NoOpOC,
-                "apas": [self.asset_out.id, self.asset_in.id],
-                "apat": [decode_address(self.pool.address)],
-                "apid": self.VALIDATOR_APP_ID_V2,
-                "fee": ANY,
-                "fv": ANY,
-                "gh": ANY,
-                "grp": ANY,
-                "lv": ANY,
-                "note": ANY,
-                "snd": decode_address(user_address),
-                "type": "appl",
-            },
-        )
-
-    def test_v1_direct_route_prepare_swap_transactions_from_quotes(self):
-        sp = self.get_suggested_params()
-        user_private_key, user_address = generate_account()
-        asset_in = AssetAmount(self.asset_in, 1_000_000)
-        asset_out = AssetAmount(self.asset_out, 2_000_000)
-        swap_type = "fixed-input"
-
-        v1_pool = V1Pool(
-            client=self.get_tinyman_v1_client(),
-            asset_a=self.asset_in,
-            asset_b=self.asset_out,
-            validator_app_id=self.VALIDATOR_APP_ID_V1,
-            fetch=False,
-        )
-        v1_pool.exists = True
-        v1_pool.liquidity_asset = Asset(id=99, name="TM", unit_name="TM", decimals=6)
-
-        route = Route(asset_in=self.asset_in, asset_out=self.asset_out, pools=[v1_pool])
-
-        quote = V1SwapQuote(
-            swap_type=swap_type,
-            amount_in=asset_in,
-            amount_out=asset_out,
-            swap_fees=None,
-            slippage=0.05,
-            price_impact=None,
-        )
-        quotes = [quote]
-
-        with patch(
-            "algosdk.v2client.algod.AlgodClient.suggested_params",
-            return_value=self.get_suggested_params(),
-        ):
-            txn_group = route.prepare_swap_transactions_from_quotes(
-                quotes=quotes,
-                user_address=user_address,
-                suggested_params=sp,
-            )
-
-        self.assertEqual(len(txn_group.transactions), 4)
-        self.assertEqual(
-            dict(txn_group.transactions[1].dictify())["apid"], self.VALIDATOR_APP_ID_V1
         )
 
     def test_swap_route_opt_in(self):

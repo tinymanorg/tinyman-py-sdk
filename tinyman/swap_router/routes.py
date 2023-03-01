@@ -103,7 +103,9 @@ class Route:
             return txn_group
 
         elif quote_count == 1:
-            raise NotImplementedError("Use prepare_swap_transactions function of the pool directly.")
+            raise NotImplementedError(
+                "Use prepare_swap_transactions function of the pool directly."
+            )
         else:
             raise NotImplementedError()
 
@@ -159,7 +161,9 @@ class Route:
         return math.prod(pool_prices)
 
     @classmethod
-    def get_swap_price_from_quotes(cls, quotes, asset_in_algo_price: Optional[int] = None):
+    def get_swap_price_from_quotes(
+        cls, quotes, asset_in_algo_price: Optional[int] = None
+    ):
         amount_in = quotes[0].amount_in.amount
         amount_out = quotes[-1].amount_out.amount
 
@@ -196,7 +200,9 @@ class Route:
         return transaction_count
 
 
-def get_best_fixed_input_route(routes: list[Route], amount_in: int, asset_in_algo_price: Optional[float] = None) -> Optional[Route]:
+def get_best_fixed_input_route(
+    routes: list[Route], amount_in: int, asset_in_algo_price: Optional[float] = None
+) -> Optional[Route]:
     best_route = None
     best_route_price_impact = None
     best_route_swap_price = None
@@ -221,7 +227,9 @@ def get_best_fixed_input_route(routes: list[Route], amount_in: int, asset_in_alg
     return best_route
 
 
-def get_best_fixed_output_route(routes: list[Route], amount_out: int, asset_in_algo_price: Optional[float] = None):
+def get_best_fixed_output_route(
+    routes: list[Route], amount_out: int, asset_in_algo_price: Optional[float] = None
+):
     best_route = None
     best_route_price_impact = None
     best_route_swap_price = None

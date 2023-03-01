@@ -145,6 +145,7 @@ class Route:
                 swap_type=swap_type,
                 user_address=user_address,
                 suggested_params=suggested_params,
+                app_call_note=tinyman_client.generate_app_call_note(),
             )
             return txn_group
 

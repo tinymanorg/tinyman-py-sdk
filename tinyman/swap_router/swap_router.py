@@ -1,3 +1,5 @@
+from typing import Optional
+
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 from requests import request, HTTPError
@@ -54,6 +56,7 @@ def prepare_swap_router_transactions(
     swap_type: [str, bytes],
     user_address: str,
     suggested_params: SuggestedParams,
+    app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
     pool_1_logicsig = get_pool_logicsig(
         validator_app_id, input_asset_id, intermediary_asset_id
@@ -88,6 +91,7 @@ def prepare_swap_router_transactions(
             accounts=[pool_1_address, pool_2_address],
             foreign_apps=[validator_app_id],
             foreign_assets=[input_asset_id, intermediary_asset_id, output_asset_id],
+            note=app_call_note,
         ),
     ]
 
@@ -156,20 +160,20 @@ def fetch_best_route_suggestion(
     response = raw_response.json()
 
     pools = []
-    for pool in response["pools"]:
+    for quote in response["route"]:
         pool = TinymanV2Pool(
             client=tinyman_client,
             asset_a=Asset(
-                id=int(pool["asset_1"]["id"]),
-                name=pool["asset_1"]["name"],
-                unit_name=pool["asset_1"]["unit_name"],
-                decimals=pool["asset_1"]["decimals"],
+                id=int(quote["pool"]["asset_1"]["id"]),
+                name=quote["pool"]["asset_1"]["name"],
+                unit_name=quote["pool"]["asset_1"]["unit_name"],
+                decimals=quote["pool"]["asset_1"]["decimals"],
             ),
             asset_b=Asset(
-                id=int(pool["asset_2"]["id"]),
-                name=pool["asset_2"]["name"],
-                unit_name=pool["asset_2"]["unit_name"],
-                decimals=pool["asset_2"]["decimals"],
+                id=int(quote["pool"]["asset_2"]["id"]),
+                name=quote["pool"]["asset_2"]["name"],
+                unit_name=quote["pool"]["asset_2"]["unit_name"],
+                decimals=quote["pool"]["asset_2"]["decimals"],
             ),
             fetch=True,
         )

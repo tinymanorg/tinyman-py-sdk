@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from typing import Optional
 from typing import Union
 
+from algosdk.constants import MIN_TXN_FEE
+
 from tinyman.assets import Asset, AssetAmount
 from tinyman.compat import SuggestedParams
 from tinyman.exceptions import PoolHasNoLiquidity, InsufficientReserves
@@ -203,17 +205,48 @@ class Route:
 
         return math.prod(pool_prices)
 
-    def calculate_price_impact_from_quotes(self, quotes):
-        swap_price = math.prod([quote.price for quote in quotes])
+    @classmethod
+    def get_swap_price_from_quotes(cls, quotes, asset_in_algo_price: Optional[int] = None):
+        amount_in = quotes[0].amount_in.amount
+        amount_out = quotes[-1].amount_out.amount
+
+        if asset_in_algo_price and asset_in_algo_price > 0:
+            transaction_count = cls.get_transaction_count(quotes)
+
+            txn_fee_in_algo = MIN_TXN_FEE * transaction_count
+            txn_fee_in_asset_in = txn_fee_in_algo / asset_in_algo_price
+            amount_in += txn_fee_in_asset_in
+
+        swap_price = amount_out / amount_in
+        return swap_price
+
+    def get_price_impact_from_quotes(self, quotes):
+        swap_price = self.get_swap_price_from_quotes(quotes)
         route_price = self.price
         price_impact = round(1 - (swap_price / route_price), 5)
         return price_impact
 
+    @classmethod
+    def get_transaction_count(cls, quotes) -> int:
+        if len(quotes) == 2:
+            transaction_count = 10
+        elif len(quotes) == 1:
+            if quotes[0].swap_type == "fixed-input":
+                transaction_count = 3
+            elif quotes[0].swap_type == "fixed-output":
+                transaction_count = 4
+            else:
+                raise NotImplementedError()
+        else:
+            raise NotImplementedError()
 
-def get_best_fixed_input_route(routes: list[Route], amount_in: int) -> Optional[Route]:
+        return transaction_count
+
+
+def get_best_fixed_input_route(routes: list[Route], amount_in: int, asset_in_algo_price: Optional[float] = None) -> Optional[Route]:
     best_route = None
     best_route_price_impact = None
-    best_route_amount_out = None
+    best_route_swap_price = None
 
     for route in routes:
         try:
@@ -221,24 +254,24 @@ def get_best_fixed_input_route(routes: list[Route], amount_in: int) -> Optional[
         except (InsufficientReserves, PoolHasNoLiquidity):
             continue
 
-        last_quote = quotes[-1]
-        price_impact = route.calculate_price_impact_from_quotes(quotes)
+        swap_price = route.get_swap_price_from_quotes(quotes, asset_in_algo_price)
+        price_impact = route.get_price_impact_from_quotes(quotes)
 
         if (not best_route) or (
-            (best_route_amount_out, -best_route_price_impact)
-            < (last_quote.amount_out, -price_impact)
+            (best_route_swap_price, -best_route_price_impact)
+            < (swap_price, -price_impact)
         ):
             best_route = route
-            best_route_amount_out = last_quote.amount_out
+            best_route_swap_price = swap_price
             best_route_price_impact = price_impact
 
     return best_route
 
 
-def get_best_fixed_output_route(routes: list[Route], amount_out: int):
+def get_best_fixed_output_route(routes: list[Route], amount_out: int, asset_in_algo_price: Optional[float] = None):
     best_route = None
     best_route_price_impact = None
-    best_route_amount_in = None
+    best_route_swap_price = None
 
     for route in routes:
         try:
@@ -246,15 +279,15 @@ def get_best_fixed_output_route(routes: list[Route], amount_out: int):
         except (InsufficientReserves, PoolHasNoLiquidity):
             continue
 
-        first_quote = quotes[0]
-        price_impact = route.calculate_price_impact_from_quotes(quotes)
+        swap_price = route.get_swap_price_from_quotes(quotes, asset_in_algo_price)
+        price_impact = route.get_price_impact_from_quotes(quotes)
 
         if (not best_route) or (
-            (best_route_amount_in, best_route_price_impact)
-            > (first_quote.amount_in, price_impact)
+            (best_route_swap_price, -best_route_price_impact)
+            < (swap_price, -price_impact)
         ):
             best_route = route
-            best_route_amount_in = first_quote.amount_in
+            best_route_swap_price = swap_price
             best_route_price_impact = price_impact
 
     return best_route

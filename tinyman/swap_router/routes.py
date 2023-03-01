@@ -10,7 +10,6 @@ from tinyman.compat import SuggestedParams
 from tinyman.exceptions import PoolHasNoLiquidity, InsufficientReserves
 from tinyman.utils import TransactionGroup
 from tinyman.v1.pools import Pool as TinymanV1Pool
-from tinyman.v1.pools import SwapQuote as TinymanV1SwapQuote
 from tinyman.v2.pools import Pool as TinymanV2Pool
 from tinyman.v2.quotes import SwapQuote as TinymanV2SwapQuote
 
@@ -40,18 +39,8 @@ class Route:
             quotes.append(quote)
             current_asset_in_amount = quote.amount_out
 
-        last_quote = quotes[-1]
-        assert last_quote.amount_out.asset.id == self.asset_out.id
+        assert quotes[-1].amount_out.asset.id == self.asset_out.id
         return quotes
-
-    def get_fixed_input_last_quote(self, amount_in: int, slippage: float = 0.05):
-        try:
-            quotes = self.get_fixed_input_quotes(amount_in=amount_in, slippage=slippage)
-        except (InsufficientReserves, PoolHasNoLiquidity):
-            return None
-
-        last_quote = quotes[-1]
-        return last_quote
 
     def get_fixed_output_quotes(self, amount_out: int, slippage: float = 0.05):
         quotes = []
@@ -70,57 +59,19 @@ class Route:
             current_asset_out_amount = quote.amount_in
 
         quotes.reverse()
-        first_quote = quotes[0]
-        assert first_quote.amount_in.asset.id == self.asset_in.id
+        assert quotes[0].amount_in.asset.id == self.asset_in.id
         return quotes
 
-    def get_fixed_output_first_quote(self, amount_out: int, slippage: float = 0.05):
-        try:
-            quotes = self.get_fixed_output_quotes(
-                amount_out=amount_out, slippage=slippage
-            )
-        except (InsufficientReserves, PoolHasNoLiquidity):
-            return None
-
-        first_quote = quotes[0]
-        return first_quote
-
-    def prepare_swap_transactions_from_quotes(
+    def prepare_swap_router_transactions_from_quotes(
         self,
-        quotes: list[Union[TinymanV2SwapQuote, TinymanV1SwapQuote]],
+        quotes: list[TinymanV2SwapQuote],
         user_address: Optional[str] = None,
         suggested_params: Optional[SuggestedParams] = None,
     ) -> TransactionGroup:
         from tinyman.swap_router.swap_router import prepare_swap_router_transactions
 
         quote_count = len(quotes)
-        if quote_count == 1:
-            pool = self.pools[0]
-            quote = quotes[0]
-
-            if isinstance(pool, TinymanV1Pool) and isinstance(
-                quote, TinymanV1SwapQuote
-            ):
-                txn_group = pool.prepare_swap_transactions_from_quote(
-                    quote=quote,
-                    swapper_address=user_address,
-                    # suggested_params=suggested_params,
-                )
-                return txn_group
-
-            elif isinstance(pool, TinymanV2Pool) and isinstance(
-                quote, TinymanV2SwapQuote
-            ):
-                txn_group = pool.prepare_swap_transactions_from_quote(
-                    quote=quote,
-                    user_address=user_address,
-                    suggested_params=suggested_params,
-                )
-                return txn_group
-            else:
-                raise NotImplementedError()
-
-        elif quote_count == 2:
+        if quote_count == 2:
             pools = self.pools
             swap_type = quotes[0].swap_type
             tinyman_client = pools[0].client
@@ -151,6 +102,8 @@ class Route:
             )
             return txn_group
 
+        elif quote_count == 1:
+            raise NotImplementedError("Use prepare_swap_transactions function of the pool directly.")
         else:
             raise NotImplementedError()
 

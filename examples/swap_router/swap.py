@@ -73,7 +73,7 @@ def fetch_routes(
     return routes
 
 
-def swap(asset_in_id, asset_out_id, account):
+def swap(asset_in_id, asset_out_id, amount, account):
     algod = get_algod()
 
     # tinyman_v1_client = TinymanTestnetClient(algod_client=algod, user_address=account["address"])
@@ -82,7 +82,7 @@ def swap(asset_in_id, asset_out_id, account):
     asset_in = tinyman_v2_client.fetch_asset(asset_in_id)
     asset_out = tinyman_v2_client.fetch_asset(asset_out_id)
 
-    asset_amount_in = AssetAmount(asset_in, 100_000)
+    asset_amount_in = AssetAmount(asset_in, amount)
     routes = fetch_routes(
         tinyman_v1_client=None,
         tinyman_v2_client=tinyman_v2_client,
@@ -115,12 +115,13 @@ def swap(asset_in_id, asset_out_id, account):
 
     suggested_params = tinyman_v2_client.algod.suggested_params()
 
-    # 1 - Transfer input to swap router app account
-    # 2 - Swap router app call
-    txn_group = best_route.prepare_swap_transactions_from_quotes(quotes=quotes, suggested_params=suggested_params)
-
     if len(quotes) > 1:
+        # Swap Router Flow
         print("The best route is single hop swap. Prepare swap router transactions.")
+
+        # 1 - Transfer input to swap router app account
+        # 2 - Swap router app call
+        txn_group = best_route.prepare_swap_router_transactions_from_quotes(quotes=quotes, suggested_params=suggested_params)
 
         # Swap router app account may require to opt in to some assets.
         opt_in_required_asset_ids = get_swap_router_app_opt_in_required_asset_ids(
@@ -137,24 +138,34 @@ def swap(asset_in_id, asset_out_id, account):
             )
             txn_group = opt_in_txn_group + txn_group
 
-        # User account may require to opt in to output asset.
-        if asset_out_id:
-            account_info = algod.account_info(account["address"])
-            opted_in_asset_ids = {
-                int(asset["asset-id"]) for asset in account_info["assets"]
-            }
-            if asset_out_id not in opted_in_asset_ids:
-                user_opt_in_txn_group = prepare_asset_optin_transactions(
-                    asset_id=asset_out_id,
-                    sender=account["address"],
-                    suggested_params=suggested_params,
-                )
-                txn_group = user_opt_in_txn_group + txn_group
-
     else:
-        print()
-        print("The best route is direct swap.")
-        return
+        # Direct Swap Flow
+        pool = best_route.pools[0]
+        quote = quotes[0]
+
+        if pool.client.version == "v1":
+            print(f"The best route is direct swap using {pool}.")
+            print("V1 swap flow is not handled in this example.")
+            return
+
+        elif pool.client.version == "v2":
+            print(f"The best route is direct swap using {pool}.")
+            txn_group = pool.prepare_swap_transactions_from_quote(
+                quote=quote,
+                user_address=account["address"],
+                suggested_params=suggested_params,
+            )
+        else:
+            raise NotImplementedError()
+
+    # User account may require to opt in to output asset.
+    if not tinyman_v2_client.asset_is_opted_in(asset_id=asset_out_id, user_address=account["address"]):
+        user_opt_in_txn_group = prepare_asset_optin_transactions(
+            asset_id=asset_out_id,
+            sender=account["address"],
+            suggested_params=suggested_params,
+        )
+        txn_group = user_opt_in_txn_group + txn_group
 
     # Sign
     txn_group.sign_with_private_key(account["address"], account["private_key"])
@@ -165,7 +176,7 @@ def swap(asset_in_id, asset_out_id, account):
     print(txn_info)
 
     print(
-        f"Check the transaction group on Algoexplorer: https://testnet.algoexplorer.io/tx/group/{quote_plus(txn_group.id)}"
+        f"\nCheck the transaction group on Algoexplorer: https://testnet.algoexplorer.io/tx/group/{quote_plus(txn_group.id)}"
     )
 
 
@@ -179,4 +190,4 @@ if __name__ == '__main__':
     # TODO: Set asset ids
     asset_in_id, asset_out_id = 0, 21582668
 
-    swap(asset_in_id, asset_out_id, account)
+    swap(asset_in_id, asset_out_id, 1_000_000, account)

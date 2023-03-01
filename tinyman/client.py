@@ -80,6 +80,11 @@ class BaseTinymanClient:
 
     def asset_is_opted_in(self, asset_id, user_address=None):
         user_address = user_address or self.user_address
+
+        if asset_id == 0:
+            # ALGO
+            return True
+
         account_info = self.algod.account_info(user_address)
         for a in account_info.get("assets", []):
             if a["asset-id"] == asset_id:

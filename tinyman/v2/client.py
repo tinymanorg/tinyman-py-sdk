@@ -17,7 +17,7 @@ from tinyman.v2.constants import (
     TESTNET_VALIDATOR_APP_ID,
     MAINNET_VALIDATOR_APP_ID,
 )
-from tinyman.v2.utils import lookup_error
+from tinyman.v2.utils import lookup_error, get_tealishmap
 
 
 class TinymanV2Client(BaseTinymanClient):
@@ -34,9 +34,11 @@ class TinymanV2Client(BaseTinymanClient):
         error = parse_error(exception)
         if isinstance(error, LogicError):
             app_id = find_app_id_from_txn_id(txn_group, error.txn_id)
-            if app_id in (TESTNET_VALIDATOR_APP_ID, MAINNET_VALIDATOR_APP_ID):
+            tealishmap = get_tealishmap(app_id)
+            if tealishmap:
                 error.app_id = app_id
-                error.message = lookup_error(error.pc, error.message)
+                error.message = lookup_error(error.pc, error.message, tealishmap)
+
         raise error from None
 
 

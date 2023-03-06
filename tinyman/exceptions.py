@@ -16,3 +16,7 @@ class PoolAlreadyInitialized(Exception):
 
 class InsufficientReserves(Exception):
     pass
+
+
+class LowSwapAmountError(Exception):
+    pass

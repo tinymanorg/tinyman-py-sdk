@@ -7,7 +7,7 @@ from algosdk.constants import MIN_TXN_FEE
 
 from tinyman.assets import Asset, AssetAmount
 from tinyman.compat import SuggestedParams
-from tinyman.exceptions import PoolHasNoLiquidity, InsufficientReserves
+from tinyman.exceptions import PoolHasNoLiquidity, InsufficientReserves, LowSwapAmountError
 from tinyman.utils import TransactionGroup
 from tinyman.v1.pools import Pool as TinymanV1Pool
 from tinyman.v2.pools import Pool as TinymanV2Pool
@@ -210,7 +210,7 @@ def get_best_fixed_input_route(
     for route in routes:
         try:
             quotes = route.get_fixed_input_quotes(amount_in=amount_in)
-        except (InsufficientReserves, PoolHasNoLiquidity):
+        except (InsufficientReserves, LowSwapAmountError, PoolHasNoLiquidity):
             continue
 
         swap_price = route.get_swap_price_from_quotes(quotes, asset_in_algo_price)
@@ -237,7 +237,7 @@ def get_best_fixed_output_route(
     for route in routes:
         try:
             quotes = route.get_fixed_output_quotes(amount_out=amount_out)
-        except (InsufficientReserves, PoolHasNoLiquidity):
+        except (InsufficientReserves, LowSwapAmountError, PoolHasNoLiquidity):
             continue
 
         swap_price = route.get_swap_price_from_quotes(quotes, asset_in_algo_price)

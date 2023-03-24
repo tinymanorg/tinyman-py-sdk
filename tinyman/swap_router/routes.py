@@ -9,6 +9,7 @@ from tinyman.assets import Asset, AssetAmount
 from tinyman.compat import SuggestedParams
 from tinyman.exceptions import PoolHasNoLiquidity, InsufficientReserves, LowSwapAmountError
 from tinyman.utils import TransactionGroup
+from tinyman.swap_router.constants import FIXED_INPUT_SWAP_TYPE, FIXED_OUTPUT_SWAP_TYPE
 from tinyman.v1.pools import Pool as TinymanV1Pool
 from tinyman.v2.pools import Pool as TinymanV2Pool
 from tinyman.v2.quotes import SwapQuote as TinymanV2SwapQuote
@@ -185,18 +186,22 @@ class Route:
 
     @classmethod
     def get_transaction_count(cls, quotes) -> int:
-        if len(quotes) == 2:
-            transaction_count = 10
-        elif len(quotes) == 1:
-            if quotes[0].swap_type == "fixed-input":
-                transaction_count = 3
-            elif quotes[0].swap_type == "fixed-output":
-                transaction_count = 4
-            else:
-                raise NotImplementedError()
-        else:
-            raise NotImplementedError()
+        transaction_count_mapping = {
+            # Single Swap
+            1: {
+                FIXED_INPUT_SWAP_TYPE: 3,
+                FIXED_OUTPUT_SWAP_TYPE: 4,
+            },
+            # Swap Router (1 hop)
+            2: {
+                FIXED_INPUT_SWAP_TYPE: 8,
+                FIXED_OUTPUT_SWAP_TYPE: 9,
+            }
+        }
 
+        swap_count = len(quotes)
+        swap_type = quotes[0].swap_type
+        transaction_count = transaction_count_mapping[swap_count][swap_type]
         return transaction_count
 
 

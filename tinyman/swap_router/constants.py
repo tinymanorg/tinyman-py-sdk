@@ -1,5 +1,5 @@
 TESTNET_SWAP_ROUTER_APP_ID_V1 = 159521633  # TODO: temp app for testing.
-MAINNET_SWAP_ROUTER_APP_ID_V1 = 0  # TODO
+MAINNET_SWAP_ROUTER_APP_ID_V1 = 1071281873  # TODO: temp app for testing.
 
 FIXED_INPUT_SWAP_TYPE = "fixed-input"
 FIXED_OUTPUT_SWAP_TYPE = "fixed-output"

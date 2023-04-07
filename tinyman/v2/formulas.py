@@ -239,6 +239,7 @@ def calculate_output_amount_of_fixed_input_swap(
 ) -> int:
     k = input_supply * output_supply
     output_amount = output_supply - int(k / (input_supply + swap_amount))
+    output_amount -= 1
 
     # On-chain app raises an error if output_amount is less than zero.
     output_amount = max(output_amount, 0)

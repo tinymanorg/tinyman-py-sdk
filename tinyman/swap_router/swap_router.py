@@ -14,6 +14,8 @@ from tinyman.compat import (
 from tinyman.swap_router.constants import (
     FIXED_INPUT_SWAP_TYPE,
     FIXED_OUTPUT_SWAP_TYPE,
+    SWAP_APP_ARGUMENT,
+    ASSET_OPT_IN_APP_ARGUMENT,
 )
 from tinyman.swap_router.routes import Route
 from tinyman.utils import TransactionGroup
@@ -34,7 +36,7 @@ def prepare_swap_router_asset_opt_in_transaction(
         sender=user_address,
         sp=suggested_params,
         index=router_app_id,
-        app_args=["asset_opt_in"],
+        app_args=[ASSET_OPT_IN_APP_ARGUMENT],
         foreign_assets=asset_ids,
     )
     min_fee = suggested_params.min_fee
@@ -87,7 +89,7 @@ def prepare_swap_router_transactions(
             sender=user_address,
             sp=suggested_params,
             index=router_app_id,
-            app_args=["swap", swap_type, asset_out_amount],
+            app_args=[SWAP_APP_ARGUMENT, swap_type, asset_out_amount],
             accounts=[pool_1_address, pool_2_address],
             foreign_apps=[validator_app_id],
             foreign_assets=[input_asset_id, intermediary_asset_id, output_asset_id],

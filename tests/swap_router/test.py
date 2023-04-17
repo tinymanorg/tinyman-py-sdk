@@ -506,7 +506,6 @@ class SwapRouterTransactionsTestCase(BaseTestCase):
     def test_indirect_route_prepare_swap_router_transactions_from_quotes(self):
         sp = self.get_suggested_params()
         user_private_key, user_address = generate_account()
-        router_app_address = get_application_address(self.ROUTER_APP_ID)
         asset_in = AssetAmount(self.asset_in, 1_000_000)
         asset_out = AssetAmount(self.asset_out, 2_000_000)
         asset_intermediary = AssetAmount(self.intermediary_asset, 9_999_999)

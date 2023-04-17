@@ -19,6 +19,9 @@ setuptools.setup(
     install_requires=["py-algorand-sdk >= 1.10.0"],
     packages=setuptools.find_packages(),
     python_requires=">=3.8",
-    package_data={"tinyman.v1": ["asc.json"], "tinyman.v2": ["amm_approval.map.json", "swap_router_approval.map.json"]},
+    package_data={
+        "tinyman.v1": ["asc.json"],
+        "tinyman.v2": ["amm_approval.map.json", "swap_router_approval.map.json"],
+    },
     include_package_data=True,
 )

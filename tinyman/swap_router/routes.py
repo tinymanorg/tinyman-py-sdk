@@ -7,7 +7,11 @@ from algosdk.constants import MIN_TXN_FEE
 
 from tinyman.assets import Asset, AssetAmount
 from tinyman.compat import SuggestedParams
-from tinyman.exceptions import PoolHasNoLiquidity, InsufficientReserves, LowSwapAmountError
+from tinyman.exceptions import (
+    PoolHasNoLiquidity,
+    InsufficientReserves,
+    LowSwapAmountError,
+)
 from tinyman.utils import TransactionGroup
 from tinyman.swap_router.constants import FIXED_INPUT_SWAP_TYPE, FIXED_OUTPUT_SWAP_TYPE
 from tinyman.v1.pools import Pool as TinymanV1Pool
@@ -196,7 +200,7 @@ class Route:
             2: {
                 FIXED_INPUT_SWAP_TYPE: 8,
                 FIXED_OUTPUT_SWAP_TYPE: 9,
-            }
+            },
         }
 
         swap_count = len(quotes)

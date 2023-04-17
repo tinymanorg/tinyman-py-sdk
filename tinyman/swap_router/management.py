@@ -4,7 +4,11 @@ from tinyman.compat import (
     ApplicationNoOpTxn,
     SuggestedParams,
 )
-from tinyman.swap_router.constants import CLAIM_EXTRA_APP_ARGUMENT, SET_MANAGER_APP_ARGUMENT, SET_EXTRA_COLLECTOR_APP_ARGUMENT
+from tinyman.swap_router.constants import (
+    CLAIM_EXTRA_APP_ARGUMENT,
+    SET_MANAGER_APP_ARGUMENT,
+    SET_EXTRA_COLLECTOR_APP_ARGUMENT,
+)
 from tinyman.utils import TransactionGroup
 
 
@@ -22,7 +26,7 @@ def prepare_claim_extra_transactions(
         index=router_app_id,
         app_args=[CLAIM_EXTRA_APP_ARGUMENT],
         foreign_assets=asset_ids,
-        note=app_call_note
+        note=app_call_note,
     )
     min_fee = suggested_params.min_fee
     inner_transaction_count = len(asset_ids)
@@ -72,5 +76,3 @@ def prepare_set_extra_collector_transactions(
     ]
     txn_group = TransactionGroup(txns)
     return txn_group
-
-

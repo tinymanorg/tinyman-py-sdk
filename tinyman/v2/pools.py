@@ -1,9 +1,10 @@
 from typing import Optional
 
-from tinyman.compat import LogicSigAccount, Transaction, SuggestedParams
 from algosdk.v2client.algod import AlgodClient
 
 from tinyman.assets import Asset, AssetAmount
+from tinyman.compat import LogicSigAccount, Transaction, SuggestedParams
+from tinyman.exceptions import LowSwapAmountError
 from tinyman.optin import prepare_asset_optin_transactions
 from tinyman.utils import TransactionGroup
 from .add_liquidity import (
@@ -143,7 +144,7 @@ class Pool:
             self.update_from_info(info, fetch)
 
     def __repr__(self):
-        return f"Pool {self.asset_1.unit_name}({self.asset_1.id})-{self.asset_2.unit_name}({self.asset_2.id}) {self.address}"
+        return f"Pool V2 {self.asset_1.unit_name}({self.asset_1.id})-{self.asset_2.unit_name}({self.asset_2.id}) {self.address}"
 
     @classmethod
     def from_account_info(
@@ -331,7 +332,6 @@ class Pool:
         refresh: bool = True,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-
         user_address = user_address or self.client.user_address
 
         if refresh:
@@ -913,6 +913,9 @@ class Pool:
         )
         amount_out = AssetAmount(asset_out, swap_output_amount)
 
+        if not total_fee_amount:
+            raise LowSwapAmountError()
+
         quote = SwapQuote(
             swap_type="fixed-input",
             amount_in=amount_in,
@@ -953,6 +956,9 @@ class Pool:
             total_fee_share=self.total_fee_share,
         )
         amount_in = AssetAmount(asset_in, swap_input_amount)
+
+        if not total_fee_amount:
+            raise LowSwapAmountError()
 
         quote = SwapQuote(
             swap_type="fixed-output",

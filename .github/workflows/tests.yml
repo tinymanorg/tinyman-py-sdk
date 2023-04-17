@@ -9,8 +9,11 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.10", "3.9", "3.8"]
-        py-algorand-sdk-version: ["1.10.0", "1.11.0", "1.12.0", "1.13.0", "1.13.1", "1.14.0", "1.15.0", "1.16.0", "1.16.1", 
-                                  "1.17.0", "1.18.0", "1.19.0", "1.20.0", "1.20.1", "1.20.2", "2.0.0"]
+        py-algorand-sdk-version: [
+          "1.10.0", "1.11.0", "1.12.0", "1.13.0", "1.13.1", "1.14.0", "1.15.0", "1.16.0",
+          "1.16.1","1.17.0", "1.18.0","1.19.0", "1.20.0", "1.20.1", "1.20.2",
+          "2.0.0", "2.1.0", "2.1.1", "2.1.2"
+        ]
 
     steps:
       - uses: actions/checkout@v3
@@ -23,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black py-algorand-sdk==${{ matrix.py-algorand-sdk-version }}
+          pip install flake8 black==23.3.0 py-algorand-sdk==${{ matrix.py-algorand-sdk-version }} requests
 
       - name: Run flake8
         run: flake8 ${{ github.workspace }} --ignore=E501,F403,F405,E126,E121,W503,E203

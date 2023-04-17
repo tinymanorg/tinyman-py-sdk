@@ -13,11 +13,13 @@ class BaseTinymanClient:
         self,
         algod_client: AlgodClient,
         validator_app_id: int,
+        api_base_url: Optional[str] = None,
         user_address: Optional[str] = None,
         staking_app_id: Optional[int] = None,
         client_name: Optional[str] = None,
     ):
         self.algod = algod_client
+        self.api_base_url = api_base_url
         self.validator_app_id = validator_app_id
         self.staking_app_id = staking_app_id
         self.assets_cache = {}
@@ -27,7 +29,9 @@ class BaseTinymanClient:
     def fetch_pool(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def fetch_asset(self, asset_id):
+    def fetch_asset(self, asset_id: int):
+        asset_id = int(asset_id)
+
         if asset_id not in self.assets_cache:
             asset = Asset(asset_id)
             asset.fetch(self.algod)
@@ -76,6 +80,11 @@ class BaseTinymanClient:
 
     def asset_is_opted_in(self, asset_id, user_address=None):
         user_address = user_address or self.user_address
+
+        if asset_id == 0:
+            # ALGO
+            return True
+
         account_info = self.algod.account_info(user_address)
         for a in account_info.get("assets", []):
             if a["asset-id"] == asset_id:

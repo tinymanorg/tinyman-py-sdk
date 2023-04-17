@@ -1,19 +1,22 @@
 import math
-from dataclasses import dataclass
 from base64 import b64encode
-from algosdk.v2client.algod import AlgodClient
+from dataclasses import dataclass
+
 from algosdk.encoding import decode_address
-from .contracts import get_pool_logicsig
-from tinyman.utils import get_state_int, calculate_price_impact
+from algosdk.v2client.algod import AlgodClient
+
 from tinyman.assets import Asset, AssetAmount
-from .swap import prepare_swap_transactions
-from .bootstrap import prepare_bootstrap_transactions
-from .mint import prepare_mint_transactions
-from .burn import prepare_burn_transactions
-from .redeem import prepare_redeem_transactions
+from tinyman.exceptions import InsufficientReserves, PoolHasNoLiquidity
 from tinyman.optin import prepare_asset_optin_transactions
-from .fees import prepare_redeem_fees_transactions
-from .client import TinymanClient
+from tinyman.utils import get_state_int, calculate_price_impact
+from tinyman.v1.bootstrap import prepare_bootstrap_transactions
+from tinyman.v1.burn import prepare_burn_transactions
+from tinyman.v1.client import TinymanClient
+from tinyman.v1.fees import prepare_redeem_fees_transactions
+from tinyman.v1.mint import prepare_mint_transactions
+from tinyman.v1.redeem import prepare_redeem_transactions
+from tinyman.v1.swap import prepare_swap_transactions
+from .contracts import get_pool_logicsig
 
 
 def get_pool_info(client: AlgodClient, validator_app_id, asset1_id, asset2_id):
@@ -188,6 +191,9 @@ class Pool:
             self.refresh()
         elif info is not None:
             self.update_from_info(info)
+
+    def __repr__(self):
+        return f"Pool V1 {self.asset1.unit_name}({self.asset1.id})-{self.asset2.unit_name}({self.asset2.id}) {self.address}"
 
     @classmethod
     def from_account_info(cls, account_info, client=None):
@@ -365,7 +371,7 @@ class Pool:
             output_supply = self.asset1_reserves
 
         if not input_supply or not output_supply:
-            raise Exception("Pool has no liquidity!")
+            raise PoolHasNoLiquidity()
 
         # k = input_supply * output_supply
         # ignoring fees, k must remain constant
@@ -410,6 +416,9 @@ class Pool:
             asset_in = self.asset1
             input_supply = self.asset1_reserves
             output_supply = self.asset2_reserves
+
+        if output_supply <= amount_out.amount:
+            raise InsufficientReserves()
 
         # k = input_supply * output_supply
         # ignoring fees, k must remain constant

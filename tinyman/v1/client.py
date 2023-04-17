@@ -1,16 +1,16 @@
 from base64 import b64decode
 from typing import Optional
 
-from algosdk.v2client.algod import AlgodClient
 from algosdk.encoding import encode_address
+from algosdk.v2client.algod import AlgodClient
+
 from tinyman.assets import AssetAmount
 from tinyman.client import BaseTinymanClient
+from tinyman.optin import prepare_app_optin_transactions
 from tinyman.staking.constants import (
     TESTNET_STAKING_APP_ID,
     MAINNET_STAKING_APP_ID,
 )
-
-from tinyman.optin import prepare_app_optin_transactions
 from tinyman.v1.constants import (
     TESTNET_VALIDATOR_APP_ID,
     MAINNET_VALIDATOR_APP_ID,
@@ -76,6 +76,7 @@ class TinymanTestnetClient(TinymanClient):
         super().__init__(
             algod_client,
             validator_app_id=TESTNET_VALIDATOR_APP_ID,
+            api_base_url="https://testnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=TESTNET_STAKING_APP_ID,
             client_name=client_name,
@@ -92,6 +93,7 @@ class TinymanMainnetClient(TinymanClient):
         super().__init__(
             algod_client,
             validator_app_id=MAINNET_VALIDATOR_APP_ID,
+            api_base_url="https://mainnet.analytics.tinyman.org/api/",
             user_address=user_address,
             staking_app_id=MAINNET_STAKING_APP_ID,
             client_name=client_name,

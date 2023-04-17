@@ -332,7 +332,6 @@ class Pool:
         refresh: bool = True,
         suggested_params: SuggestedParams = None,
     ) -> TransactionGroup:
-
         user_address = user_address or self.client.user_address
 
         if refresh:

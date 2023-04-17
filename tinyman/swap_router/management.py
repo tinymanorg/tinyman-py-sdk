@@ -19,7 +19,6 @@ def prepare_claim_extra_transactions(
     suggested_params: SuggestedParams,
     app_call_note: Optional[str] = None,
 ) -> TransactionGroup:
-
     claim_extra_app_call = ApplicationNoOpTxn(
         sender=sender,
         sp=suggested_params,

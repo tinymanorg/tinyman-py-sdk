@@ -31,7 +31,6 @@ def prepare_swap_router_asset_opt_in_transaction(
     user_address: str,
     suggested_params: SuggestedParams,
 ) -> TransactionGroup:
-
     asset_opt_in_app_call = ApplicationNoOpTxn(
         sender=user_address,
         sp=suggested_params,

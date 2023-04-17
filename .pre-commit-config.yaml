@@ -7,7 +7,7 @@ repos:
         exclude: ^(env|venv)
 
   - repo: https://github.com/psf/black
-    rev: 22.8.0
+    rev: 23.3.0
     hooks:
       - id: black
         args: ['.', '--check']

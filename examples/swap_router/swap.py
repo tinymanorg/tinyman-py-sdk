@@ -29,7 +29,7 @@ def fetch_routes(
     asset_out: Asset,
     swap_type: str,
     amount: int,
-) -> list[Route]:
+) -> "list[Route]":
     """
     This is an example route list preparation.
     You can build yor own route list according to your needs.

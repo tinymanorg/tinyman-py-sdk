@@ -23,7 +23,7 @@ from tinyman.v2.quotes import SwapQuote as TinymanV2SwapQuote
 class Route:
     asset_in: Asset
     asset_out: Asset
-    pools: Union[list[TinymanV2Pool], list[TinymanV1Pool]]
+    pools: "Union[list[TinymanV2Pool], list[TinymanV1Pool]]"
 
     def __str__(self):
         return "Route: " + " -> ".join(f"{pool}" for pool in self.pools)
@@ -69,7 +69,7 @@ class Route:
 
     def prepare_swap_router_transactions_from_quotes(
         self,
-        quotes: list[TinymanV2SwapQuote],
+        quotes: "list[TinymanV2SwapQuote]",
         user_address: Optional[str] = None,
         suggested_params: Optional[SuggestedParams] = None,
     ) -> TransactionGroup:
@@ -115,7 +115,7 @@ class Route:
             raise NotImplementedError()
 
     @property
-    def asset_ids(self) -> list[int]:
+    def asset_ids(self) -> "list[int]":
         asset_ids = [self.asset_in.id]
 
         for pool in self.pools:
@@ -210,7 +210,7 @@ class Route:
 
 
 def get_best_fixed_input_route(
-    routes: list[Route], amount_in: int, asset_in_algo_price: Optional[float] = None
+    routes: "list[Route]", amount_in: int, asset_in_algo_price: Optional[float] = None
 ) -> Optional[Route]:
     best_route = None
     best_route_price_impact = None
@@ -237,7 +237,7 @@ def get_best_fixed_input_route(
 
 
 def get_best_fixed_output_route(
-    routes: list[Route], amount_out: int, asset_in_algo_price: Optional[float] = None
+    routes: "list[Route]", amount_out: int, asset_in_algo_price: Optional[float] = None
 ):
     best_route = None
     best_route_price_impact = None

@@ -119,8 +119,8 @@ def prepare_swap_router_transactions(
 
 
 def get_swap_router_app_opt_in_required_asset_ids(
-    algod_client: AlgodClient, router_app_id: int, asset_ids=list[int]
-) -> list[int]:
+    algod_client: AlgodClient, router_app_id: int, asset_ids: "list[int]"
+) -> "list[int]":
     swap_router_app_address = get_application_address(router_app_id)
     account_info = algod_client.account_info(swap_router_app_address)
 

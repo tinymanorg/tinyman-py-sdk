@@ -153,9 +153,15 @@ def parse_program_state(address, state):
     result["end_date"] = timestamp_to_date_str(state[b"end_time"])
     result["pools"] = []
     asset_ids = bytes_to_int_list(state[b"assets"])
-    result["asset_ids"] = asset_ids
+    if state.get(b"assets_1"):
+        asset_ids += bytes_to_int_list(state[b"assets_1"])
     mins = bytes_to_int_list(state[b"mins"])
+    if state.get(b"mins_1"):
+        mins += bytes_to_int_list(state[b"mins_1"])
+
+    result["asset_ids"] = asset_ids
     result["mins"] = mins
+
     empty_rewards_bytes = int_list_to_bytes([0] * 15)
     rewards = []
     for i in range(1, 8):
@@ -193,8 +199,9 @@ def prepare_setup_transaction(
     sender,
     suggested_params,
 ):
-    assets = [0] * 14
-    mins = [0] * 14
+    max_asset_count = 30
+    assets = [0] * max_asset_count
+    mins = [0] * max_asset_count
     for i in range(len(asset_ids)):
         assets[i] = asset_ids[i]
         mins[i] = min_amounts[i]

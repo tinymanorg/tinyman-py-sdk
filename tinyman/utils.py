@@ -58,8 +58,8 @@ def sign_and_submit_transactions(
     return txn_info
 
 
-def int_to_bytes(num):
-    return num.to_bytes(8, "big")
+def int_to_bytes(num, length=8):
+    return num.to_bytes(length, "big")
 
 
 def int_list_to_bytes(nums):
@@ -87,6 +87,12 @@ def get_state_bytes(state, key):
     if type(key) == str:
         key = b64encode(key.encode())
     return state.get(key.decode(), {"bytes": ""})["bytes"]
+
+
+def lpad(string: bytes, n: int) -> bytes:
+    assert(n > 0)
+
+    return b"\x00" * (n - len(string)) + string
 
 
 def apply_delta(state, delta):
@@ -131,7 +137,7 @@ def get_version(tinyman_app_id: int) -> str:
 
 
 def generate_app_call_note(
-    version: str, client_name: Optional[str] = None, extra_data: Optional[dict] = None
+    version: str, client_name: Optional[str] = None, extra_data: Optional[dict] = None, dapp_name: str = "tinyman",
 ) -> str:
     # https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0002.md
     # <dapp-name>:<data-format><data>
@@ -151,7 +157,7 @@ def generate_app_call_note(
     serialized_data = json.dumps(data, separators=(",", ":"), sort_keys=True)
 
     note = note_template.format(
-        dapp_name="tinyman", dapp_version=version, data_format="j", data=serialized_data
+        dapp_name=dapp_name, dapp_version=version, data_format="j", data=serialized_data
     )
     return note
 
@@ -222,8 +228,10 @@ class TransactionGroup:
         )
         return self.sign_with_logicsig(logicsig)
 
-    def sign_with_logicsig(self, logicsig):
-        address = logicsig.address()
+    def sign_with_logicsig(self, logicsig, address=None):
+        if address is None:
+            address = logicsig.address()
+
         for i, txn in enumerate(self.transactions):
             if txn.sender == address:
                 self.signed_transactions[i] = LogicSigTransaction(txn, logicsig)
@@ -277,3 +285,24 @@ def find_app_id_from_txn_id(transaction_group, txn_id):
             app_id = txn.index
             break
     return app_id
+
+
+def parse_global_state_from_application_info(application_info: dict) -> dict:
+    raw_global_state = application_info["params"]["global-state"]
+
+    global_state = {}
+    for pair in raw_global_state:
+        key = b64decode(pair["key"]).decode()
+        if pair["value"]["type"] == 1:
+            value = b64decode(pair["value"].get("bytes", ""))
+        else:
+            value = pair["value"].get("uint", 0)
+        global_state[key] = value
+
+    return global_state
+
+
+def get_global_state(algod, app_id: int) -> dict:
+    application_info = algod.application_info(app_id)
+    global_state = parse_global_state_from_application_info(application_info)
+    return global_state

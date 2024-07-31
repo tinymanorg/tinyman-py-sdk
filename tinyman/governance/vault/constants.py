@@ -1,5 +1,5 @@
 from tinyman.constants import MINIMUM_BALANCE_REQUIREMENT_PER_BOX, MINIMUM_BALANCE_REQUIREMENT_PER_BOX_BYTE
-from tinyman.governance.constants import DAY, WEEK
+from tinyman.governance.constants import WEEK
 
 MIN_LOCK_TIME = 4 * WEEK                # 4 WEEK
 MAX_LOCK_TIME = 4 * 52 * WEEK           # 364 * 4 Days

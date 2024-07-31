@@ -90,7 +90,7 @@ def get_state_bytes(state, key):
 
 
 def lpad(string: bytes, n: int) -> bytes:
-    assert(n > 0)
+    assert (n > 0)
 
     return b"\x00" * (n - len(string)) + string
 

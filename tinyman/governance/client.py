@@ -602,7 +602,7 @@ class TinymanGovernanceClient:
         if required_tiny_power := self.get_required_tiny_power_to_create_proposal():
             if account_tiny_power < required_tiny_power:
                 raise InsufficientTinyPower()
-        
+
         if executor:
             executor = decode_address(executor)
         else:

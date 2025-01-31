@@ -1,0 +1,29 @@
+{
+  "structs": {
+    "UserState": {
+      "size": 32,
+      "fields": {
+        "staked_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 0
+        },
+        "accumulated_rewards_per_unit_at_last_update": {
+          "type": "int",
+          "size": 8,
+          "offset": 8
+        },
+        "accumulated_rewards": {
+          "type": "int",
+          "size": 8,
+          "offset": 16
+        },
+        "timestamp": {
+          "type": "int",
+          "size": 8,
+          "offset": 24
+        }
+      }
+    }
+  }
+}

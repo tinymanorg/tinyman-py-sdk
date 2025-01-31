@@ -66,6 +66,21 @@ class BaseClient():
     def add_key(self, address, key):
         self.keys[address] = key
 
+    def get_globals(self, app_id=None):
+        app_id = app_id or self.app_id
+        gs = self.algod.application_info(app_id)["params"]["global-state"]
+        global_state = {s["key"]: s["value"] for s in gs}
+        state = {}
+        for key in global_state:
+            k = b64decode(key)
+            value = global_state[key]
+            if value["type"] == 2:
+                state[k] = value["uint"]
+            else:
+                state[k] = b64decode(value["bytes"])
+        state = dict(sorted(state.items(), key=lambda x: x[0]))
+        return state
+
     def get_global(self, key, default=None, app_id=None):
         app_id = app_id or self.app_id
         global_state = {s["key"]: s["value"] for s in self.algod.application_info(app_id)["params"]["global-state"]}

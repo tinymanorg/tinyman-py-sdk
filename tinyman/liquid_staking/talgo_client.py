@@ -105,6 +105,25 @@ class TAlgoClient(BaseClient):
         ]
         return self._submit(transactions, additional_fees=1)
 
+    def get_state(self):
+        state = self.get_globals()
+        state[b"account_0"] = encode_address(state[b"account_0"])
+        state[b"account_1"] = encode_address(state[b"account_1"])
+        state[b"account_2"] = encode_address(state[b"account_2"])
+        state[b"account_3"] = encode_address(state[b"account_3"])
+        state[b"account_4"] = encode_address(state[b"account_4"])
+        state[b"node_manager_0"] = encode_address(state[b"node_manager_0"])
+        state[b"node_manager_1"] = encode_address(state[b"node_manager_1"])
+        state[b"node_manager_2"] = encode_address(state[b"node_manager_2"])
+        state[b"node_manager_3"] = encode_address(state[b"node_manager_3"])
+        state[b"node_manager_4"] = encode_address(state[b"node_manager_4"])
+        state[b"manager"] = encode_address(state[b"manager"])
+        state[b"stake_manager"] = encode_address(state[b"stake_manager"])
+        if b"proposed_manager" in state:
+            state[b"proposed_manager"] = encode_address(state[b"proposed_manager"])
+        state[b"fee_collector"] = encode_address(state[b"fee_collector"])
+        return state
+
     def go_online(self, node_index, vote_pk, selection_pk, state_proof_pk, vote_first, vote_last, vote_key_dilution, fee):
         account_address = encode_address(self.get_global(b"account_%i" % node_index))
         # Use the user keys for signing transactions from the account_address

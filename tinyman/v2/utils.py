@@ -43,7 +43,7 @@ else:
 def decode_logs(logs: "list") -> dict:
     decoded_logs = dict()
     for log in logs:
-        if type(log) == str:
+        if isinstance(log, str):
             log = b64decode(log.encode())
         if b"%i" in log:
             i = log.index(b"%i")

@@ -4,9 +4,9 @@ from algosdk import transaction
 from algosdk.encoding import decode_address
 from algosdk.logic import get_application_address
 
-from tinyman.liquid_staking.base_client import BaseClient
-from tinyman.liquid_staking.constants import *
-from tinyman.liquid_staking.struct import get_struct
+from .base_client import BaseClient
+from .constants import *
+from .struct import get_struct
 
 
 UserState = get_struct("UserState")
@@ -37,6 +37,52 @@ class TAlgoStakingClient(BaseClient):
                 sp=sp,
                 index=self.app_id,
                 app_args=["set_reward_rate", total_reward_amount, end_timestamp],
+                foreign_assets=[self.tiny_asset_id]
+            )
+        ]
+
+        return self._submit(transactions)
+
+    def propose_manager(self, new_manager_address):
+        sp = self.get_suggested_params()
+
+        transactions = [
+            transaction.ApplicationCallTxn(
+                sender=self.user_address,
+                on_complete=transaction.OnComplete.NoOpOC,
+                sp=sp,
+                index=self.app_id,
+                app_args=["propose_manager", decode_address(new_manager_address)],
+            )
+        ]
+
+        return self._submit(transactions)
+
+    def accept_manager(self):
+        sp = self.get_suggested_params()
+
+        transactions = [
+            transaction.ApplicationCallTxn(
+                sender=self.user_address,
+                on_complete=transaction.OnComplete.NoOpOC,
+                sp=sp,
+                index=self.app_id,
+                app_args=["accept_manager"],
+            )
+        ]
+
+        return self._submit(transactions)
+
+    def set_tiny_power_threshold(self, threshold: int):
+        sp = self.get_suggested_params()
+
+        transactions = [
+            transaction.ApplicationCallTxn(
+                sender=self.user_address,
+                on_complete=transaction.OnComplete.NoOpOC,
+                sp=sp,
+                index=self.app_id,
+                app_args=["set_tiny_power_threshold", threshold],
             )
         ]
 

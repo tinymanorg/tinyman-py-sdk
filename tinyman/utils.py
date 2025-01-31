@@ -67,7 +67,7 @@ def int_list_to_bytes(nums):
 
 
 def bytes_to_int(b):
-    if type(b) == str:
+    if isinstance(b, str):
         b = b64decode(b)
     return int.from_bytes(b, "big")
 
@@ -78,13 +78,13 @@ def bytes_to_int_list(b):
 
 
 def get_state_int(state, key):
-    if type(key) == str:
+    if isinstance(key, str):
         key = b64encode(key.encode())
     return state.get(key.decode(), {"uint": 0})["uint"]
 
 
 def get_state_bytes(state, key):
-    if type(key) == str:
+    if isinstance(key, str):
         key = b64encode(key.encode())
     return state.get(key.decode(), {"bytes": ""})["bytes"]
 

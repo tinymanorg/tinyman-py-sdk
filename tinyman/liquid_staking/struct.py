@@ -1,14 +1,15 @@
 # TODO: move struct to parent.
+import importlib.resources
 import json
 import re
 from typing import Any
-
+import tinyman.liquid_staking
 
 MINIMUM_BALANCE_REQUIREMENT_PER_BOX = 2_500
 MINIMUM_BALANCE_REQUIREMENT_PER_BOX_BYTE = 400
 
 
-structs = json.load(open("structs.json"))["structs"]
+structs = json.load(importlib.resources.files(tinyman.liquid_staking).joinpath("structs.json").read_text())["structs"]
 
 
 class Struct():

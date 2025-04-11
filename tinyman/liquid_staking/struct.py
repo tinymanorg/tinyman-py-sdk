@@ -9,7 +9,7 @@ MINIMUM_BALANCE_REQUIREMENT_PER_BOX = 2_500
 MINIMUM_BALANCE_REQUIREMENT_PER_BOX_BYTE = 400
 
 
-structs = json.load(importlib.resources.files(tinyman.liquid_staking).joinpath("structs.json").read_text())["structs"]
+structs = json.loads(importlib.resources.files(tinyman.liquid_staking).joinpath("structs.json").read_text())["structs"]
 
 
 class Struct():

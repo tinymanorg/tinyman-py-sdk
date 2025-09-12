@@ -49,7 +49,7 @@ class BaseClient():
         result = []
         if isinstance(txns, transaction.Transaction):
             result = [txns]
-        elif type(txns) == list:
+        elif isinstance(txns, list):
             for txn in txns:
                 result += self.flatten_transactions(txn)
         return result

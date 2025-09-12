@@ -34,7 +34,7 @@ class StructRegistry:
         elif "[" in name:
             name, length = re.match(r"([A-Za-z_0-9]+)\[(\d+)\]", name).groups()
             return ArrayData(
-                Struct(name=name, manager=self, **self.struct_definitions[name]), 
+                Struct(name=name, manager=self, **self.struct_definitions[name]),
                 int(length)
             )
         else:

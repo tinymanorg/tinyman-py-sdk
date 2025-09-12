@@ -1,6 +1,5 @@
 from typing import List
 
-from algosdk.encoding import decode_address
 from algosdk import transaction
 from algosdk.encoding import decode_address, encode_address
 from algosdk.logic import get_application_address
@@ -145,7 +144,7 @@ class OrderingClient(BaseClient):
     def get_recurring_order_box_name(self, id: int):
         return b"r" + int_to_bytes(id)
 
-    def put_trigger_order(self, asset_id: int, amount: int, target_asset_id: int, target_amount: int, is_partial_allowed: bool, duration: int=0, order_id: int=None):
+    def put_trigger_order(self, asset_id: int, amount: int, target_asset_id: int, target_amount: int, is_partial_allowed: bool, duration: int = 0, order_id: int = None):
         sp = self.get_suggested_params()
 
         if order_id is None:
@@ -335,7 +334,7 @@ class OrderingClient(BaseClient):
 
         return self._submit(transactions, additional_fees=2)
 
-    def put_recurring_order(self, asset_id: int, amount: int, target_asset_id: int, target_recurrence: int, interval: int, min_target_amount: int=0, max_target_amount: int=0, order_id: int=None):
+    def put_recurring_order(self, asset_id: int, amount: int, target_asset_id: int, target_recurrence: int, interval: int, min_target_amount: int = 0, max_target_amount: int = 0, order_id: int = None):
         sp = self.get_suggested_params()
 
         if order_id is None:
@@ -556,7 +555,7 @@ class RegistryClient(BaseClient):
         ]
 
         return self._submit(transactions, additional_fees=1)
-    
+
     def set_order_fee_rate(self, fee_rate: int):
         sp = self.get_suggested_params()
 
@@ -571,7 +570,7 @@ class RegistryClient(BaseClient):
         ]
 
         return self._submit(transactions)
-    
+
     def set_governor_order_fee_rate(self, fee_rate: int):
         sp = self.get_suggested_params()
 

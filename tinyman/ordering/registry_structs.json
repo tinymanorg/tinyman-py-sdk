@@ -1,0 +1,29 @@
+{
+  "structs": {
+    "Entry": {
+      "size": 8,
+      "fields": {
+        "app_id": {
+          "type": "int",
+          "size": 8,
+          "offset": 0
+        }
+      }
+    },
+    "AppVersion": {
+      "size": 982,
+      "fields": {
+        "approval_hash": {
+          "type": "bytes[32]",
+          "size": 32,
+          "offset": 0
+        },
+        "unused": {
+          "type": "bytes[950]",
+          "size": 950,
+          "offset": 32
+        }
+      }
+    }
+  }
+}

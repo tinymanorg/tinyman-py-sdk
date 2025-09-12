@@ -1,0 +1,119 @@
+{
+  "structs": {
+    "TriggerOrder": {
+      "size": 80,
+      "fields": {
+        "asset_id": {
+          "type": "int",
+          "size": 8,
+          "offset": 0
+        },
+        "amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 8
+        },
+        "target_asset_id": {
+          "type": "int",
+          "size": 8,
+          "offset": 16
+        },
+        "target_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 24
+        },
+        "filled_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 32
+        },
+        "collected_target_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 40
+        },
+        "is_partial_allowed": {
+          "type": "int",
+          "size": 8,
+          "offset": 48
+        },
+        "fee_rate": {
+          "type": "int",
+          "size": 8,
+          "offset": 56
+        },
+        "creation_timestamp": {
+          "type": "int",
+          "size": 8,
+          "offset": 64
+        },
+        "expiration_timestamp": {
+          "type": "int",
+          "size": 8,
+          "offset": 72
+        }
+      }
+    },
+    "RecurringOrder": {
+      "size": 88,
+      "fields": {
+        "asset_id": {
+          "type": "int",
+          "size": 8,
+          "offset": 0
+        },
+        "amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 8
+        },
+        "target_asset_id": {
+          "type": "int",
+          "size": 8,
+          "offset": 16
+        },
+        "collected_target_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 24
+        },
+        "min_target_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 32
+        },
+        "max_target_amount": {
+          "type": "int",
+          "size": 8,
+          "offset": 40
+        },
+        "remaining_recurrences": {
+          "type": "int",
+          "size": 8,
+          "offset": 48
+        },
+        "interval": {
+          "type": "int",
+          "size": 8,
+          "offset": 56
+        },
+        "fee_rate": {
+          "type": "int",
+          "size": 8,
+          "offset": 64
+        },
+        "last_fill_timestamp": {
+          "type": "int",
+          "size": 8,
+          "offset": 72
+        },
+        "creation_timestamp": {
+          "type": "int",
+          "size": 8,
+          "offset": 80
+        }
+      }
+    }
+  }
+}

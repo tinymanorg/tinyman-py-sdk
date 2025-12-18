@@ -127,7 +127,9 @@ def prepare_create_reward_period_transactions(
         (rewards_app_id, reward_history_box_name),
         (rewards_app_id, reward_period_box_name),
         (vault_app_id, total_power_period_start_box_name),
+        (vault_app_id, get_total_power_box_name(box_index=total_power_period_start_box_index + 1)),
         (vault_app_id, total_power_period_end_box_name),
+        (vault_app_id, get_total_power_box_name(box_index=total_power_period_end_box_index - 1)),
         (vault_app_id, total_power_next_box_name),
     ]
     txns = [

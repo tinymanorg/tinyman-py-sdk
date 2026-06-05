@@ -23,8 +23,8 @@ ENTRY_COUNT_KEY = b"entry_count"
 IS_ENDORSED_KEY = b"is_endorsed"
 
 # App Creation Config
-order_approval_program = requests.get("https://raw.githubusercontent.com/tinymanorg/tinyman-order-protocol/refs/tags/v4/contracts/order/build/order_approval.teal.tok").content
-order_clear_state_program = requests.get("https://raw.githubusercontent.com/tinymanorg/tinyman-order-protocol/refs/tags/v4/contracts/order/build/order_clear_state.teal.tok").content
+order_approval_program = requests.get("https://raw.githubusercontent.com/tinymanorg/tinyman-order-protocol/refs/tags/v5/contracts/order/build/order_approval.teal.tok").content
+order_clear_state_program = requests.get("https://raw.githubusercontent.com/tinymanorg/tinyman-order-protocol/refs/tags/v5/contracts/order/build/order_clear_state.teal.tok").content
 order_app_global_schema = transaction.StateSchema(num_uints=16, num_byte_slices=16)
 order_app_local_schema = transaction.StateSchema(num_uints=0, num_byte_slices=0)
 order_app_extra_pages = 3
